@@ -1,0 +1,138 @@
+.carousel-container {
+  position: relative;
+  height: 500px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+
+.carousel-nav-button {
+  position: absolute;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.carousel-nav-button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.carousel-nav-button.left {
+  left: 0;
+}
+
+.carousel-nav-button.right {
+  right: 0;
+}
+
+.carousel-main {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+}
+
+.carousel-slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+.carousel-card {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.carousel-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 50%);
+  z-index: 1;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+  z-index: 2;
+  color: white;
+}
+
+.carousel-side-card {
+  position: absolute;
+  width: 30%;
+  height: 60%;
+  opacity: 0.6;
+  filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+.carousel-side-card.left {
+  left: -15%;
+  transform: translateX(-30%) rotateY(30deg) translateZ(-100px);
+}
+
+.carousel-side-card.right {
+  right: -15%;
+  transform: translateX(30%) rotateY(-30deg) translateZ(-100px);
+}
+
+.carousel-side-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Media Queries */
+@media (min-width: 900px) {
+  .carousel-nav-button.left {
+    left: -20px;
+  }
+  
+  .carousel-nav-button.right {
+    right: -20px;
+  }
+}
+/* Add pointer cursor to clickable elements */
+.carousel-slide {
+  cursor: pointer;
+}
+
+.carousel-side-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.carousel-side-card:hover {
+  opacity: 0.8;
+  filter: blur(2px);
+}

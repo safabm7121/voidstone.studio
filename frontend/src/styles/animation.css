@@ -1,0 +1,60 @@
+/* Fade + Slide-in with Blur */
+.fade-blur {
+  opacity: 0;
+  transform: translateY(20px);
+  filter: blur(10px);
+  transition: opacity 0.6s ease, transform 0.6s ease, filter 0.6s ease;
+}
+
+.fade-blur.visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Backdrop Blur + Motion */
+.blur-card {
+  background: rgba(255, 255, 255, 0.2);
+ 
+  -webkit-backdrop-filter: blur(20px);
+   backdrop-filter: blur(20px);
+  border-radius: 12px;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.blur-card.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Capsule Slider - without scrollbar-width */
+.capsule-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.capsule-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.capsule-slide {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  width: 280px;
+}
+
+.capsule-slide.active {
+  transform: scale(1.05);
+  filter: blur(0);
+}
+
+.capsule-slide:not(.active) {
+  filter: blur(4px);
+  transform: scale(0.95);
+}

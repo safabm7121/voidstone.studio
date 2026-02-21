@@ -1,0 +1,67 @@
+{
+  "users": [
+    {
+      "id": "69946be0e965f289c82b08c8",
+      "email": "test@voidstone.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "admin",
+      "isVerified": true
+    },
+    {
+      "id": "6998a457b92ec8585aee01e7",
+      "email": "newuser@example.com",
+      "firstName": "New",
+      "lastName": "User",
+      "role": "client",
+      "isVerified": false
+    },
+    {
+      "id": "6998a7b93a8f063a857cec78",
+      "email": "safabenmiledd@example.com",
+      "firstName": "safa",
+      "lastName": "ben miled",
+      "role": "client",
+      "isVerified": true
+    }
+  ],
+  "products": [
+    {
+  "id": "new-product-1",
+  "name": "Voidstone Leather Jacket",
+  "description": "Premium leather jacket",
+  "price": 299.99,
+  "category": "Men",
+  "designer": "John Doe",
+  "stock_quantity": 15,
+  "images": ["data:image/png;base64,iVBORw0..."],
+  "tags": ["jacket", "leather"]
+},
+    {
+      "id": "699857e518f42be54d522097",
+      "name": "Voidstone Black T-Shirt",
+      "description": "Premium cotton black t-shirt with Voidstone logo",
+      "price": 89.99,
+      "category": "Men",
+      "designer": "John Doe",
+      "stock_quantity": 50,
+      "images": [
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      ],
+      "tags": ["tshirt", "cotton", "black"]
+    },
+    {
+      "id": "699857f118f42be54d52209a",
+      "name": "Voidstone Silk Scarf",
+      "description": "Luxury silk scarf with hand-rolled edges",
+      "price": 149.99,
+      "category": "Accessories",
+      "designer": "Jane Smith",
+      "stock_quantity": 25,
+      "images": [
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      ],
+      "tags": ["scarf", "silk", "luxury"]
+    }
+  ]
+}

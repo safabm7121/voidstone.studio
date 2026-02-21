@@ -1,0 +1,103 @@
+version: '3.8'
+
+networks:
+  voidstone-network:
+    driver: bridge
+    name: voidstone-network
+
+volumes:
+  postgres_data:
+    driver: local
+  mongo_data:
+    driver: local
+  consul_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  redis_data:
+    driver: local
+
+services:
+  # Service Discovery - Consul
+  consul:
+    image: hashicorp/consul:1.18.0
+    container_name: voidstone-consul
+    restart: unless-stopped
+    command: agent -server -bootstrap -ui -client=0.0.0.0 -data-dir=/consul/data
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    volumes:
+      - consul_data:/consul/data
+    networks:
+      - voidstone-network
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL for Products (Base64 images)
+  postgres:
+    image: postgres:15-alpine
+    container_name: voidstone-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: voidstone_products
+      POSTGRES_USER: voidstone_admin
+      POSTGRES_PASSWORD: Voidstone2026!
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/conf/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+    networks:
+      - voidstone-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voidstone_admin -d voidstone_products"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB for Users
+  mongodb:
+    image: mongo:7-jammy
+    container_name: voidstone-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: Mongo2026!
+      MONGO_INITDB_DATABASE: voidstone_users
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - voidstone-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Caching
+  redis:
+    image: redis:7-alpine
+    container_name: voidstone-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass Redis2026!
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - voidstone-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
