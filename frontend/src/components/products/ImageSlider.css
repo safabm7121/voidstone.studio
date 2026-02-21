@@ -1,0 +1,242 @@
+/* ImageSlider.css */
+
+.slider-container {
+  position: relative;
+  width: 100%;
+}
+
+.slider-settings-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.slider-settings-button button {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+}
+
+.slider-settings-button button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.slider-play-pause {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+}
+
+.slider-play-pause button {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+}
+
+.slider-play-pause button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.slider-add-image {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.slider-add-image button {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+}
+
+.slider-add-image button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.slider-main {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
+  overflow: visible;
+  cursor: grab;
+}
+
+.slider-main.dragging {
+  cursor: grabbing;
+}
+
+.slider-nav-left,
+.slider-nav-right {
+  position: absolute;
+  z-index: 5;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.slider-nav-left:hover,
+.slider-nav-right:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.slider-nav-left {
+  left: 0;
+}
+
+.slider-nav-right {
+  right: 0;
+}
+
+.slider-image-container {
+  position: absolute;
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+.slider-image-box {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.slider-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slider-image-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.slider-image-badge span {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  color: white !important;
+  font-size: 0.8rem;
+}
+
+.slider-delete-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 0, 0, 0.8) !important;
+  color: white !important;
+  padding: 4px;
+}
+
+.slider-delete-button:hover {
+  background-color: rgba(255, 0, 0, 1) !important;
+}
+
+.slider-no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+}
+
+.slider-side-card {
+  position: absolute;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0.6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.slider-side-card:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.slider-side-card.left {
+  left: calc(50% - 300px);
+}
+
+.slider-side-card.right {
+  right: calc(50% - 300px);
+}
+
+.slider-side-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slider-thumbnails {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.slider-thumbnail {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.slider-thumbnail.active {
+  border: 3px solid black;
+  opacity: 1;
+}
+
+.slider-thumbnail.inactive {
+  border: 1px solid #ddd;
+  opacity: 0.6;
+}
+
+.slider-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slider-reorder-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+  padding: 2px;
+}
+
+.slider-reorder-handle:hover {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.slider-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #ccc;
+}
+
+.slider-placeholder svg {
+  color: #ccc;
+}
+
+.slider-settings-paper {
+  padding: 24px;
+  width: 300px;
+}
+
+.slider-settings-title {
+  margin-bottom: 16px;
+}

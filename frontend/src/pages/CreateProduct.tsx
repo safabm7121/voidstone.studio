@@ -1,52 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container, Paper, Typography, TextField, Button, Grid, Chip, Box, Alert, IconButton
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { productApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const CreateProduct: React.FC = () => {
   const { t } = useTranslation();
-  const { token, user } = useAuth(); // Added user for debugging
+  const { token, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('id');
+  const isEditMode = !!productId;
+  
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(false);
   const [error, setError] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [formData, setFormData] = useState({
-    name: '', description: '', price: '', category: '', designer: '', stock_quantity: ''
+    name: '', 
+    description: '', 
+    price: '', 
+    category: '', 
+    designer: '', 
+    stock_quantity: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  // Load product if in edit mode
+  useEffect(() => {
+    if (productId) {
+      loadProductForEdit(productId);
+    }
+  }, [productId]);
+
+  const loadProductForEdit = async (id: string) => {
+    setLoadingProduct(true);
+    setError('');
+    try {
+      const response = await productApi.get(`/products/${id}`);
+      const product = response.data.product;
+      
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price?.toString() || '',
+        category: product.category || '',
+        designer: product.designer || '',
+        stock_quantity: product.stock_quantity?.toString() || '0'
+      });
+      
+      setImages(product.images || []);
+      setTags(product.tags || []);
+      
+      toast.info(`Editing "${product.name}"`);
+    } catch (error: any) {
+      console.error('Error loading product:', error);
+      setError(error.response?.data?.error || 'Failed to load product for editing');
+      toast.error('Failed to load product');
+    } finally {
+      setLoadingProduct(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       Array.from(files).forEach(file => {
         const reader = new FileReader();
-        reader.onloadend = () => setImages(prev => [...prev, reader.result as string]);
+        reader.onloadend = () => {
+          setImages(prev => [...prev, reader.result as string]);
+        };
         reader.readAsDataURL(file);
       });
     }
   };
 
-  const removeImage = (index: number) => setImages(prev => prev.filter((_, i) => i !== index));
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && tagInput.trim()) {
       e.preventDefault();
-      if (!tags.includes(tagInput.trim())) setTags([...tags, tagInput.trim()]);
+      if (!tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()]);
+      }
       setTagInput('');
     }
   };
 
-  const removeTag = (tag: string) => setTags(tags.filter(t => t !== tag));
+  const removeTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +113,9 @@ const CreateProduct: React.FC = () => {
     console.log('🔍 Authentication Debug:');
     console.log('Token from useAuth:', token);
     console.log('User from useAuth:', user);
-    console.log('LocalStorage token:', localStorage.getItem('token'));
+    console.log('Is admin?', user?.role === 'admin');
+    console.log('Is edit mode?', isEditMode);
+    console.log('Product ID:', productId);
     
     // Validate inputs
     if (!formData.name || !formData.description || !formData.price || !formData.category) {
@@ -81,53 +139,70 @@ const CreateProduct: React.FC = () => {
     console.log('📦 Product data being sent:', productData);
     
     try {
-      // Use the token from context, not localStorage directly
-      const response = await productApi.post('/products', productData, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      let response;
       
-      console.log('✅ Product created successfully:', response.data);
+      if (isEditMode) {
+        // UPDATE existing product
+        response = await productApi.put(`/products/${productId}`, productData, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        toast.success('Product updated successfully!');
+        console.log('✅ Product updated:', response.data);
+      } else {
+        // CREATE new product
+        response = await productApi.post('/products', productData, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        toast.success('Product created successfully!');
+        console.log('✅ Product created:', response.data);
+      }
+      
       navigate('/products');
       
     } catch (err: any) {
-      console.error('❌ Error creating product:', err);
+      console.error(`❌ Error ${isEditMode ? 'updating' : 'creating'} product:`, err);
       
-      // Detailed error handling
       if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         console.error('Error response data:', err.response.data);
         console.error('Error response status:', err.response.status);
-        console.error('Error response headers:', err.response.headers);
         
         if (err.response.status === 403) {
-          setError('You do not have permission to create products. Please check your role.');
+          setError('You do not have permission. Admin role required.');
         } else if (err.response.status === 401) {
           setError('Your session has expired. Please login again.');
         } else {
-          setError(err.response.data?.error || t('createProduct.error'));
+          setError(err.response.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} product`);
         }
       } else if (err.request) {
-        // The request was made but no response was received
-        console.error('Error request:', err.request);
         setError('No response from server. Please check if product-service is running.');
       } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Error message:', err.message);
-        setError('Failed to create product: ' + err.message);
+        setError(`Failed to ${isEditMode ? 'update' : 'create'} product: ${err.message}`);
       }
     } finally {
       setLoading(false);
     }
   };
 
+  if (loadingProduct) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4, textAlign: 'center' }}>
+        <Typography>Loading product...</Typography>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h4" gutterBottom>{t('createProduct.title')}</Typography>
+        <Typography variant="h4" gutterBottom>
+          {isEditMode ? 'Edit Product' : t('createProduct.title')}
+        </Typography>
         
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         
@@ -141,7 +216,7 @@ const CreateProduct: React.FC = () => {
                 value={formData.name} 
                 onChange={handleChange} 
                 required 
-                error={!formData.name && error.includes('fill')}
+                disabled={loading}
               />
             </Grid>
             
@@ -154,7 +229,7 @@ const CreateProduct: React.FC = () => {
                 value={formData.description} 
                 onChange={handleChange} 
                 required 
-                error={!formData.description && error.includes('fill')}
+                disabled={loading}
               />
             </Grid>
             
@@ -168,7 +243,7 @@ const CreateProduct: React.FC = () => {
                 onChange={handleChange} 
                 required 
                 inputProps={{ step: '0.01', min: '0' }} 
-                error={!formData.price && error.includes('fill')}
+                disabled={loading}
               />
             </Grid>
             
@@ -182,6 +257,7 @@ const CreateProduct: React.FC = () => {
                 onChange={handleChange} 
                 required 
                 inputProps={{ min: '0' }} 
+                disabled={loading}
               />
             </Grid>
             
@@ -193,7 +269,7 @@ const CreateProduct: React.FC = () => {
                 value={formData.category} 
                 onChange={handleChange} 
                 required 
-                error={!formData.category && error.includes('fill')}
+                disabled={loading}
               />
             </Grid>
             
@@ -204,14 +280,15 @@ const CreateProduct: React.FC = () => {
                 label={t('createProduct.designer')} 
                 value={formData.designer} 
                 onChange={handleChange} 
+                disabled={loading}
               />
             </Grid>
             
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>{t('createProduct.images')}</Typography>
-              <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />} sx={{ mb: 2 }}>
+              <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />} sx={{ mb: 2 }} disabled={loading}>
                 {t('createProduct.upload')}
-                <input type="file" hidden multiple accept="image/*" onChange={handleImageUpload} />
+                <input type="file" hidden multiple accept="image/*" onChange={handleImageUpload} disabled={loading} />
               </Button>
               
               <Grid container spacing={2}>
@@ -228,6 +305,7 @@ const CreateProduct: React.FC = () => {
                         size="small" 
                         sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'rgba(255,255,255,0.8)' }} 
                         onClick={() => removeImage(idx)}
+                        disabled={loading}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -245,15 +323,16 @@ const CreateProduct: React.FC = () => {
                 onChange={(e) => setTagInput(e.target.value)} 
                 onKeyDown={handleAddTag} 
                 placeholder={t('createProduct.tagPlaceholder')} 
+                disabled={loading}
               />
               <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {tags.map(tag => <Chip key={tag} label={tag} onDelete={() => removeTag(tag)} />)}
+                {tags.map(tag => <Chip key={tag} label={tag} onDelete={() => removeTag(tag)} disabled={loading} />)}
               </Box>
             </Grid>
             
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button variant="outlined" onClick={() => navigate('/products')}>
+                <Button variant="outlined" onClick={() => navigate('/products')} disabled={loading}>
                   {t('common.cancel')}
                 </Button>
                 <Button 
@@ -261,7 +340,7 @@ const CreateProduct: React.FC = () => {
                   variant="contained" 
                   disabled={loading}
                 >
-                  {loading ? t('common.creating') : t('createProduct.create')}
+                  {loading ? (isEditMode ? 'Updating...' : t('common.creating')) : (isEditMode ? 'Update Product' : t('createProduct.create'))}
                 </Button>
               </Box>
             </Grid>

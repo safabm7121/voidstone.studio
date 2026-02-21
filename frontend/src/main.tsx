@@ -10,6 +10,7 @@ import '@fontsource/inter/700.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import './styles/animation.css'
 
+import './styles/parallax.css';
 const savedLang = localStorage.getItem('language');
 if (savedLang === 'ar') {
   document.dir = 'rtl';

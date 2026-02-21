@@ -13,6 +13,17 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
+// Format price in Tunisian Dinar
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('tn-TN', {
+    style: 'currency',
+    currency: 'TND',
+    currencyDisplay: 'code',
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
+  }).format(price).replace('TND', 'DT').trim();
+};
+
 const Cart: React.FC = () => {
   const { t } = useTranslation();
   const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
@@ -82,7 +93,7 @@ const Cart: React.FC = () => {
                       {item.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      ${item.price.toFixed(2)} {t('cart.each')}
+                      {formatPrice(item.price)} {t('cart.each')}
                     </Typography>
                   </Grid>
                   <Grid item xs={6} sm={3}>
@@ -108,7 +119,7 @@ const Cart: React.FC = () => {
                   </Grid>
                   <Grid item xs={4} sm={1}>
                     <Typography variant="subtitle1" fontWeight={700}>
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatPrice(item.price * item.quantity)}
                     </Typography>
                   </Grid>
                   <Grid item xs={2} sm={1}>
@@ -156,7 +167,7 @@ const Cart: React.FC = () => {
             <Box sx={{ my: 3 }}>
               <Box display="flex" justifyContent="space-between" mb={2}>
                 <Typography color="text.secondary">{t('cart.subtotal')} ({cart.length} {t('cart.items')})</Typography>
-                <Typography fontWeight={500}>${cartTotal.toFixed(2)}</Typography>
+                <Typography fontWeight={500}>{formatPrice(cartTotal)}</Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" mb={2}>
                 <Typography color="text.secondary">{t('cart.shipping')}</Typography>
@@ -173,7 +184,7 @@ const Cart: React.FC = () => {
             <Box display="flex" justifyContent="space-between" mb={3}>
               <Typography variant="h6">{t('cart.total')}</Typography>
               <Typography variant="h6" color="primary.main" fontWeight={700}>
-                ${cartTotal.toFixed(2)}
+                {formatPrice(cartTotal)}
               </Typography>
             </Box>
             

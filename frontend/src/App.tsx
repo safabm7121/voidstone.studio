@@ -22,6 +22,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import './i18n';
 
+
 function App() {
   const { i18n } = useTranslation();
   const [direction, setDirection] = useState<'ltr' | 'rtl'>(

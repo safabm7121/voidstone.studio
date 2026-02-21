@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext';
+import { formatCurrency } from '../utils/helpers';
 
 interface CartItem {
   _id: string;
@@ -19,6 +20,7 @@ interface CartContextType {
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
+  formattedCartTotal: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -41,7 +43,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      setCart(JSON.parse(savedCart));
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Error parsing cart:', error);
+        localStorage.removeItem('cart');
+      }
     }
   }, []);
 
@@ -65,10 +72,20 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-        toast.success(`Updated ${product.name} quantity in cart`);
+        toast.success(
+          <span>
+            Updated <strong>{product.name}</strong> quantity<br />
+            <small>Total: {formatCurrency((existingItem.quantity + quantity) * product.price)}</small>
+          </span>
+        );
         return updatedCart;
       } else {
-        toast.success(`${product.name} added to cart`);
+        toast.success(
+          <span>
+            <strong>{product.name}</strong> added to cart<br />
+            <small>Price: {formatCurrency(product.price)}</small>
+          </span>
+        );
         return [...prevCart, {
           _id: product._id,
           name: product.name,
@@ -85,7 +102,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setCart(prevCart => {
       const item = prevCart.find(item => item._id === productId);
       if (item) {
-        toast.info(`${item.name} removed from cart`);
+        toast.info(
+          <span>
+            <strong>{item.name}</strong> removed from cart<br />
+            <small>Saved: {formatCurrency(item.price * item.quantity)}</small>
+          </span>
+        );
       }
       return prevCart.filter(item => item._id !== productId);
     });
@@ -111,6 +133,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
+  const formattedCartTotal = formatCurrency(cartTotal);
 
   return (
     <CartContext.Provider value={{
@@ -120,7 +143,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       updateQuantity,
       clearCart,
       cartTotal,
-      cartCount
+      cartCount,
+      formattedCartTotal
     }}>
       {children}
     </CartContext.Provider>

@@ -1,3 +1,5 @@
+/* ========== CORE ANIMATIONS ========== */
+
 /* Fade + Slide-in with Blur */
 .fade-blur {
   opacity: 0;
@@ -15,9 +17,8 @@
 /* Backdrop Blur + Motion */
 .blur-card {
   background: rgba(255, 255, 255, 0.2);
- 
   -webkit-backdrop-filter: blur(20px);
-   backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border-radius: 12px;
   opacity: 0;
   transform: scale(0.95);
@@ -29,32 +30,80 @@
   transform: scale(1);
 }
 
-/* Capsule Slider - without scrollbar-width */
-.capsule-slider {
+/* Card Entrance Animation */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.product-card-entrance {
+  animation: cardEntrance 0.5s ease-out forwards;
+}
+
+/* Staggered animation delays */
+.product-card-entrance:nth-child(3n+1) {
+  animation-delay: 0.1s;
+}
+.product-card-entrance:nth-child(3n+2) {
+  animation-delay: 0.2s;
+}
+.product-card-entrance:nth-child(3n+3) {
+  animation-delay: 0.3s;
+}
+
+/* Fade animations */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+}
+
+/* Loading state */
+.loading-container {
   display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  gap: 1rem;
-  padding: 1rem 0;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
 }
 
-.capsule-slider::-webkit-scrollbar {
-  display: none;
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 4rem 0;
 }
 
-.capsule-slide {
-  flex: 0 0 auto;
-  scroll-snap-align: center;
-  transition: transform 0.3s ease, filter 0.3s ease;
-  width: 280px;
+.empty-state h5 {
+  margin-bottom: 1rem;
 }
 
-.capsule-slide.active {
-  transform: scale(1.05);
-  filter: blur(0);
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
 }
 
-.capsule-slide:not(.active) {
-  filter: blur(4px);
-  transform: scale(0.95);
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
 }

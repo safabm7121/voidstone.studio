@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Product } from '../types'; // ← Only this import, no local interface!
+import { Product } from '../types';
 import {
   Container, Typography, CircularProgress, Box, ToggleButtonGroup, ToggleButton,
   TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem,
@@ -7,6 +7,7 @@ import {
   DialogTitle, DialogContent, DialogActions, DialogContentText
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
 import SearchIcon from '@mui/icons-material/Search';
@@ -18,10 +19,12 @@ import CapsuleSlider from '../components/products/CapsuleSlider';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import { formatCurrency } from '../utils/helpers';
 
 const Products: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +77,7 @@ const Products: React.FC = () => {
     try {
       await productApi.delete(`/products/${productToDelete._id}`);
       toast.success(`"${productToDelete.name}" deleted successfully`);
-      fetchProducts(); // Refresh the list
+      fetchProducts();
     } catch (error: any) {
       console.error('Error deleting product:', error);
       toast.error(error.response?.data?.error || 'Failed to delete product');
@@ -90,12 +93,13 @@ const Products: React.FC = () => {
   };
 
   const handleEdit = (product: Product) => {
-    // Navigate to edit page with product ID
-    window.location.href = `/create-product?id=${product._id}`;
+    // Use navigate instead of window.location.href for better SPA experience
+    navigate(`/create-product?id=${product._id}`);
   };
 
   const filterAndSortProducts = () => {
     let filtered = [...products];
+    
     if (searchTerm) {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,9 +107,11 @@ const Products: React.FC = () => {
         product.tags?.some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
+    
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(product => product.category?.toLowerCase() === selectedCategory.toLowerCase());
     }
+    
     filtered = filtered.filter(product => product.price >= priceRange[0] && product.price <= priceRange[1]);
 
     switch (sortBy) {
@@ -118,12 +124,20 @@ const Products: React.FC = () => {
         (a.created_at ? new Date(a.created_at).getTime() : 0)
       ); break;
     }
+    
     setFilteredProducts(filtered);
     setPage(1);
   };
 
   const paginatedProducts = filteredProducts.slice((page - 1) * itemsPerPage, page * itemsPerPage);
   const pageCount = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  // Debug: Log user role to console
+  console.log('Current user:', user);
+  console.log('Is admin?', user?.role === 'admin');
+  
+  // Check if user is admin (case insensitive)
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
 
   if (loading) return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
 
@@ -138,18 +152,25 @@ const Products: React.FC = () => {
       <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
-            <TextField fullWidth placeholder={t('products.search')} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} />
+            <TextField 
+              fullWidth 
+              placeholder={t('products.search')} 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} 
+            />
           </Grid>
           <Grid item xs={6} md={2}>
-            <FormControl fullWidth><InputLabel>{t('products.category')}</InputLabel>
+            <FormControl fullWidth>
+              <InputLabel>{t('products.category')}</InputLabel>
               <Select value={selectedCategory} label={t('products.category')} onChange={(e) => setSelectedCategory(e.target.value)}>
                 {categories.map((cat) => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>
           <Grid item xs={6} md={2}>
-            <FormControl fullWidth><InputLabel>{t('products.sortBy')}</InputLabel>
+            <FormControl fullWidth>
+              <InputLabel>{t('products.sortBy')}</InputLabel>
               <Select value={sortBy} label={t('products.sortBy')} onChange={(e) => setSortBy(e.target.value)}>
                 <MenuItem value="newest">{t('products.newest')}</MenuItem>
                 <MenuItem value="price-low">{t('products.priceLow')}</MenuItem>
@@ -177,8 +198,17 @@ const Products: React.FC = () => {
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
               <Divider sx={{ my: 2 }} />
               <Box sx={{ px: 2 }}>
-                <Typography gutterBottom>{t('products.priceRange')}: ${priceRange[0]} - ${priceRange[1]}</Typography>
-                <Slider value={priceRange} onChange={(_, newValue) => setPriceRange(newValue as number[])} valueLabelDisplay="auto" min={0} max={500} />
+                <Typography gutterBottom>
+                  {t('products.priceRange')}: {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}
+                </Typography>
+                <Slider 
+                  value={priceRange} 
+                  onChange={(_, newValue) => setPriceRange(newValue as number[])} 
+                  valueLabelDisplay="auto" 
+                  min={0} 
+                  max={500} 
+                  valueLabelFormat={(value) => formatCurrency(value)}
+                />
               </Box>
             </motion.div>
           )}
@@ -187,8 +217,15 @@ const Products: React.FC = () => {
 
       {(searchTerm || selectedCategory !== 'All' || priceRange[0] > 0 || priceRange[1] < 500) && (
         <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-          <Typography variant="body1" color="text.secondary">{filteredProducts.length} {t('products.productsFound')}</Typography>
-          <Button variant="text" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); setPriceRange([0, 500]); setSortBy('newest'); }}>
+          <Typography variant="body1" color="text.secondary">
+            {filteredProducts.length} {t('products.productsFound')}
+          </Typography>
+          <Button variant="text" onClick={() => { 
+            setSearchTerm(''); 
+            setSelectedCategory('All'); 
+            setPriceRange([0, 500]); 
+            setSortBy('newest');
+          }}>
             {t('products.clearFilters')}
           </Button>
         </Box>
@@ -197,7 +234,12 @@ const Products: React.FC = () => {
       {filteredProducts.length === 0 ? (
         <Box textAlign="center" py={8}>
           <Typography variant="h5" color="text.secondary" gutterBottom>{t('products.noProducts')}</Typography>
-          <Button variant="contained" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); setPriceRange([0, 500]); setSortBy('newest'); }}>
+          <Button variant="contained" onClick={() => { 
+            setSearchTerm(''); 
+            setSelectedCategory('All'); 
+            setPriceRange([0, 500]); 
+            setSortBy('newest');
+          }}>
             {t('products.clearFilters')}
           </Button>
         </Box>
@@ -206,7 +248,7 @@ const Products: React.FC = () => {
           {viewMode === 'grid' ? (
             <ProductGrid 
               products={paginatedProducts} 
-              isAdmin={user?.role === 'admin'} 
+              isAdmin={isAdmin} 
               onDelete={handleDeleteClick}
               onEdit={handleEdit}
             />

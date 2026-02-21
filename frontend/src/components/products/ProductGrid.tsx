@@ -1,7 +1,7 @@
 import React from 'react';
 import { Grid } from '@mui/material';
 import ProductCard from './ProductCard';
-import { Product } from '../../types'; // ← IMPORT SHARED TYPE
+import { Product } from '../../types';
 
 interface ProductGridProps {
   products: Product[];
@@ -12,12 +12,12 @@ interface ProductGridProps {
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, isAdmin, onDelete, onEdit }) => {
   return (
-    <Grid container spacing={4}>
+    <Grid container spacing={3}>
       {products.map((product) => (
         <Grid item key={product._id} xs={12} sm={6} md={4}>
-          <ProductCard 
-            product={product} 
-            isAdmin={isAdmin} 
+          <ProductCard
+            product={product}
+            isAdmin={isAdmin}
             onDelete={onDelete}
             onEdit={onEdit}
           />

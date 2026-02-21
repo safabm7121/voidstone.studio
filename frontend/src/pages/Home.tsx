@@ -6,7 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { productApi } from '../services/api';
 import ThreeDCarousel from '../components/home/ThreeDCarousel';
-
+import ParallaxSection from '../components/common/ParallaxSection';
+import '../styles/animation.css';
+import '../styles/parallax.css';
+import '../styles/home.css';
 interface Product {
   _id: string;
   name: string;
@@ -39,86 +42,46 @@ const Home: React.FC = () => {
 
   return (
     <Box>
-      {/* Hero Section */}
-      <Box
-        sx={{
-          height: '90vh',
-          background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.1,
-            background: 'radial-gradient(circle at 30% 50%, rgba(255,255,255,0.2) 0%, transparent 50%)',
-          }}
-        />
-        
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <motion.div
-            ref={heroRef}
-            initial={{ opacity: 0, y: 30 }}
-            animate={heroVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
-          >
-            <Typography
-              variant="h1"
-              sx={{
-                fontSize: { xs: '3rem', md: '5rem' },
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                mb: 2,
-                background: 'linear-gradient(135deg, #ffffff 0%, #cccccc 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
+      {/* Hero Section with Parallax */}
+      <ParallaxSection height="vh-90" speed={0.3}>
+        <Box className="hero-section">
+          <Box className="hero-overlay" />
+          
+          <Container maxWidth="lg" className="hero-content">
+            <motion.div
+              ref={heroRef}
+              initial={{ opacity: 0, y: 30 }}
+              animate={heroVisible ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8 }}
             >
-              {t('home.title')}
-            </Typography>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: { xs: '1.5rem', md: '2rem' },
-                fontWeight: 400,
-                color: 'rgba(255,255,255,0.7)',
-                mb: 4,
-                maxWidth: '600px',
-              }}
-            >
-              {t('home.subtitle')}
-            </Typography>
-            <Button
-              component={Link}
-              to="/products"
-              variant="contained"
-              size="large"
-              sx={{
-                bgcolor: 'white',
-                color: 'black',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.9)',
-                },
-                px: 4,
-                py: 1.5,
-              }}
-            >
-              {t('home.explore')}
-            </Button>
-          </motion.div>
-        </Container>
-      </Box>
+              <Typography
+                variant="h1"
+                className="hero-title"
+              >
+                {t('home.title')}
+              </Typography>
+              <Typography
+                variant="h2"
+                className="hero-subtitle"
+              >
+                {t('home.subtitle')}
+              </Typography>
+              <Button
+                component={Link}
+                to="/products"
+                variant="contained"
+                size="large"
+                className="hero-button"
+              >
+                {t('home.explore')}
+              </Button>
+            </motion.div>
+          </Container>
+        </Box>
+      </ParallaxSection>
 
       {/* 3D Carousel Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
+      <Container maxWidth="lg" className="featured-section">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -126,9 +89,7 @@ const Home: React.FC = () => {
         >
           <Typography
             variant="h3"
-            align="center"
-            gutterBottom
-            sx={{ fontWeight: 600, mb: 6 }}
+            className="featured-title"
           >
             {t('home.featured')}
           </Typography>
@@ -140,18 +101,18 @@ const Home: React.FC = () => {
       </Container>
 
       {/* Brand Story Section */}
-      <Box sx={{ bgcolor: '#f5f5f5', py: 8 }}>
-        <Container maxWidth="md">
+      <Box className="story-section">
+        <Container maxWidth="md" className="story-container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <Typography variant="h3" align="center" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant="h3" className="story-title">
               {t('home.story')}
             </Typography>
-            <Typography variant="body1" align="center" paragraph sx={{ fontSize: '1.2rem', color: '#666' }}>
+            <Typography variant="body1" className="story-text">
               {t('home.storyText')}
             </Typography>
           </motion.div>

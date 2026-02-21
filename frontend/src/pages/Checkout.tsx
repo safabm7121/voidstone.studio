@@ -12,6 +12,17 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { sendOrderEmails, generateOrderId } from '../services/orderService';
 
+// Format price in Tunisian Dinar
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('tn-TN', {
+    style: 'currency',
+    currency: 'TND',
+    currencyDisplay: 'code',
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
+  }).format(price).replace('TND', 'DT').trim();
+};
+
 const steps = ['shippingInfo', 'paymentMethod', 'reviewOrder'];
 
 const Checkout: React.FC = () => {
@@ -198,7 +209,7 @@ const Checkout: React.FC = () => {
                     </Grid>
                     <Grid item xs={5}><Typography>{item.name}</Typography></Grid>
                     <Grid item xs={2}><Typography>{t('cart.quantity')} {item.quantity}</Typography></Grid>
-                    <Grid item xs={3}><Typography fontWeight={600}>${(item.price * item.quantity).toFixed(2)}</Typography></Grid>
+                    <Grid item xs={3}><Typography fontWeight={600}>{formatPrice(item.price * item.quantity)}</Typography></Grid>
                   </Grid>
                   {index < cart.length - 1 && <Divider sx={{ my: 2 }} />}
                 </Box>
@@ -210,7 +221,7 @@ const Checkout: React.FC = () => {
               <Typography>{shippingInfo.address}, {shippingInfo.city}, {shippingInfo.zipCode}</Typography>
             </Paper>
             <Paper variant="outlined" sx={{ p: 2 }}>
-              <Typography variant="h6">{t('cart.total')}: ${cartTotal.toFixed(2)}</Typography>
+              <Typography variant="h6">{t('cart.total')}: {formatPrice(cartTotal)}</Typography>
             </Paper>
           </Box>
         );
