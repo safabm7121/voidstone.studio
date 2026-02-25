@@ -1,0 +1,73 @@
+:root {
+  /* Light theme (default) */
+  --color-background: #ffffff;
+  --color-background-paper: #f5f5f5;
+  --color-text-primary: rgba(0, 0, 0, 0.87);
+  --color-text-secondary: rgba(0, 0, 0, 0.6);
+  --color-text-disabled: rgba(0, 0, 0, 0.38);
+  --color-primary: #000000;
+  --color-primary-light: #333333;
+  --color-primary-dark: #000000;
+  --color-secondary: #666666;
+  --color-secondary-light: #999999;
+  --color-secondary-dark: #333333;
+  --color-error: #d32f2f;
+  --color-warning: #ed6c02;
+  --color-info: #0288d1;
+  --color-success: #2e7d32;
+  --color-divider: rgba(0, 0, 0, 0.12);
+  --color-border: rgba(0, 0, 0, 0.23);
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-overlay: rgba(0, 0, 0, 0.3);
+  
+  /* RGB versions for rgba() usage */
+  --color-background-rgb: 255, 255, 255;
+  --color-text-primary-rgb: 0, 0, 0;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* Breakpoints */
+  --breakpoint-xs: 0px;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 900px;
+  --breakpoint-lg: 1200px;
+  --breakpoint-xl: 1536px;
+
+  /* Z-index */
+  --z-index-drawer: 1200;
+  --z-index-modal: 1300;
+  --z-index-snackbar: 1400;
+  --z-index-tooltip: 1500;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --color-background: #121212;
+  --color-background-paper: #1e1e1e;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-disabled: rgba(255, 255, 255, 0.5);
+  --color-primary: #ffffff;
+  --color-primary-light: #f5f5f5;
+  --color-primary-dark: #e0e0e0;
+  --color-secondary: #bdbdbd;
+  --color-secondary-light: #e0e0e0;
+  --color-secondary-dark: #9e9e9e;
+  --color-error: #f44336;
+  --color-warning: #ffa726;
+  --color-info: #29b6f6;
+  --color-success: #66bb6a;
+  --color-divider: rgba(255, 255, 255, 0.12);
+  --color-border: rgba(255, 255, 255, 0.23);
+  --color-shadow: rgba(255, 255, 255, 0.1);
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  
+  --color-background-rgb: 18, 18, 18;
+  --color-text-primary-rgb: 255, 255, 255;
+}

@@ -1,271 +1,379 @@
-import { Request, Response } from 'express';
-import { Appointment } from '../models/Appointment';
-import { Availability } from '../models/Availability';
+import { Response } from 'express';
+import mongoose from 'mongoose';
+import Appointment from '../models/Appointment';
+import Availability from '../models/Availability';
 import { AuthRequest } from '../middleware/auth';
-import axios from 'axios';
-import { sendAppointmentEmails } from '../utils/emailService';
+import {
+  bookAppointmentSchema,
+  getAvailabilitySchema,
+  cancelAppointmentSchema
+} from '../utils/validation';
+import {
+  sendAppointmentConfirmationToCustomer,
+  sendAppointmentNotificationToAdmin,
+  sendAppointmentConfirmedToCustomer
+} from '../utils/emailService';
 
-// Get all designers (users with role 'designer')
-export const getDesigners = async (req: Request, res: Response) => {
-  try {
-    // Fetch designers from auth-service
-    const response = await axios.get(`${process.env.AUTH_SERVICE_URL}/users?role=designer`);
-    res.json({ designers: response.data.users });
-  } catch (error) {
-    console.error('Error fetching designers:', error);
-    res.status(500).json({ error: 'Failed to fetch designers' });
+const VOIDSTONE_DESIGNER_ID = 'voidstone-studio-designer';
+
+// Helper: generate slots 10am–4pm for weekdays only
+const generateTimeSlots = (date: Date): { time: string; isAvailable: boolean }[] => {
+  const slots = [];
+  const day = date.getDay(); // 0 = Sunday, 6 = Saturday
+
+  // No slots on weekends
+  if (day === 0 || day === 6) {
+    return [];
   }
+
+  // 10:00 – 16:00 inclusive (7 slots)
+  for (let hour = 10; hour <= 16; hour++) {
+    const start = `${hour.toString().padStart(2, '0')}:00`;
+    const end = `${(hour + 1).toString().padStart(2, '0')}:00`;
+    slots.push({
+      time: `${start}-${end}`,
+      isAvailable: true
+    });
+  }
+  return slots;
 };
 
-// Get available time slots for a designer on a specific date
-export const getAvailability = async (req: Request, res: Response) => {
-  try {
-    const { designerId } = req.params;
-    const { date } = req.query;
+export class AppointmentController {
+  // -----------------------------------------------------------------
+  //  GET AVAILABILITY for a date range (includes all weekdays)
+  // -----------------------------------------------------------------
+  async getAvailability(req: AuthRequest, res: Response) {
+    try {
+      console.log('📅 getAvailability query:', req.query);
+      const { startDate, endDate } = req.query;
 
-    if (!date) {
-      return res.status(400).json({ error: 'Date is required' });
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'startDate and endDate are required' });
+      }
+
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+      start.setUTCHours(0, 0, 0, 0);
+      end.setUTCHours(23, 59, 59, 999);
+
+      // Fetch any already‑stored availabilities in this range
+      const existingAvailabilities = await Availability.find({
+        designerId: VOIDSTONE_DESIGNER_ID,
+        date: { $gte: start, $lte: end }
+      }).sort({ date: 1 });
+
+      // Build a map for quick lookup
+      const availabilityMap = new Map<string, any>();
+      existingAvailabilities.forEach((doc) => {
+        const key = doc.date.toDateString();
+        availabilityMap.set(key, doc);
+      });
+
+      // We will collect the final list of days (with slots)
+      const result: any[] = [];
+
+      // Loop day by day through the whole range
+      for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+        const currentDate = new Date(d);
+        currentDate.setUTCHours(0, 0, 0, 0);
+        const dayOfWeek = currentDate.getUTCDay();
+
+        // Skip weekends
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          console.log(`📅 Skipping weekend: ${currentDate.toDateString()}`);
+          continue;
+        }
+
+        const dateKey = currentDate.toDateString();
+
+        // If we already have an entry in the database, use it (and adjust for booked slots)
+        if (availabilityMap.has(dateKey)) {
+          const dbEntry = availabilityMap.get(dateKey);
+          const bookedSlots = await Appointment.find({
+            designerId: VOIDSTONE_DESIGNER_ID,
+            date: currentDate,
+            status: { $in: ['pending', 'confirmed'] }
+          });
+
+          const dayObj = dbEntry.toObject();
+          const updatedSlots = dayObj.slots.map((slot: any) => {
+            const isBooked = bookedSlots.some((apt) => apt.timeSlot === slot.time);
+            return {
+              time: slot.time,
+              isAvailable: slot.isAvailable && !isBooked,
+              bookedBy: slot.bookedBy
+            };
+          });
+
+          result.push({ ...dayObj, slots: updatedSlots });
+        } else {
+          // No availability in DB → generate fresh default slots
+          const freshSlots = generateTimeSlots(currentDate);
+          if (freshSlots.length > 0) {
+            console.log(`📅 Generated ${freshSlots.length} slots for ${currentDate.toDateString()}`);
+            result.push({
+              _id: new mongoose.Types.ObjectId().toString(),
+              designerId: VOIDSTONE_DESIGNER_ID,
+              date: currentDate,
+              slots: freshSlots
+            });
+          }
+        }
+      }
+
+      console.log(`✅ Returning ${result.length} days of availability`);
+      return res.json({ availability: result });
+    } catch (error) {
+      console.error('❌ getAvailability error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
     }
+  }
 
-    const selectedDate = new Date(date as string);
-    selectedDate.setHours(0, 0, 0, 0);
+  // -----------------------------------------------------------------
+  //  BOOK AN APPOINTMENT
+  // -----------------------------------------------------------------
+  async bookAppointment(req: AuthRequest, res: Response) {
+    try {
+      console.log('🔍 BOOKING STARTED', { user: req.user, body: req.body });
 
-    // Check if designer has set custom availability
-    let availability = await Availability.findOne({
-      designerId,
-      date: selectedDate
-    });
+      if (!req.user) {
+        return res.status(401).json({ error: 'Please login to book an appointment' });
+      }
 
-    if (availability) {
-      return res.json({ slots: availability.slots });
-    }
+      // Validate input
+      const { error } = bookAppointmentSchema.validate(req.body);
+      if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+      }
 
-    // Generate default time slots (9 AM to 5 PM)
-    const defaultSlots = [];
-    for (let hour = 9; hour < 17; hour++) {
-      const timeSlot = `${hour.toString().padStart(2, '0')}:00-${(hour + 1).toString().padStart(2, '0')}:00`;
-      
-      // Check if slot is already booked
-      const existingBooking = await Appointment.findOne({
-        designerId,
-        date: selectedDate,
+      const { date, timeSlot, consultationType, notes, customerPhone, customerName } = req.body;
+      const appointmentDate = new Date(date);
+      appointmentDate.setUTCHours(0, 0, 0, 0);
+
+      console.log('📅 Appointment date (UTC):', appointmentDate.toISOString());
+
+      // ---- Business rules ----
+      // 1. No weekends
+      const dayOfWeek = appointmentDate.getUTCDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        return res.status(400).json({ error: 'Appointments are only available on weekdays' });
+      }
+
+      // 2. Time must be between 10:00 and 16:00
+      const hour = parseInt(timeSlot.split(':')[0]);
+      if (hour < 10 || hour > 16) {
+        return res.status(400).json({ error: 'Appointments are only available from 10 AM to 4 PM' });
+      }
+
+      // 3. No double‑booking
+      const existingAppointment = await Appointment.findOne({
+        designerId: VOIDSTONE_DESIGNER_ID,
+        date: appointmentDate,
         timeSlot,
         status: { $in: ['pending', 'confirmed'] }
       });
+      if (existingAppointment) {
+        return res.status(400).json({ error: 'This time slot is already booked' });
+      }
 
-      defaultSlots.push({
-        time: timeSlot,
-        isAvailable: !existingBooking
+      // ---- Ensure an Availability document exists for this date ----
+      let availability = await Availability.findOne({
+        designerId: VOIDSTONE_DESIGNER_ID,
+        date: appointmentDate
       });
-    }
 
-    res.json({ slots: defaultSlots });
-  } catch (error) {
-    console.error('Error fetching availability:', error);
-    res.status(500).json({ error: 'Failed to fetch availability' });
-  }
-};
+      if (!availability) {
+        // Create fresh availability for this day
+        const slots = generateTimeSlots(appointmentDate);
+        availability = new Availability({
+          designerId: VOIDSTONE_DESIGNER_ID,
+          date: appointmentDate,
+          slots
+        });
+        await availability.save();
+        console.log('✅ Created new availability for', appointmentDate.toDateString());
+        console.log('💾 Saved availability date:', availability.date.toISOString());
+        console.log('🕒 Saved slots:', availability.slots.map(s => s.time));
+      }
 
-// Book an appointment
-export const bookAppointment = async (req: AuthRequest, res: Response) => {
-  try {
-    const { designerId, date, timeSlot, notes, customerPhone } = req.body;
-    const customerId = req.user?.id;
-    const customerName = `${req.user?.firstName} ${req.user?.lastName}`;
-    const customerEmail = req.user?.email;
+      // ---- Verify the chosen slot is still available ----
+      const slotIndex = availability.slots.findIndex((s) => s.time === timeSlot);
+      if (slotIndex === -1) {
+        return res.status(400).json({ error: 'Invalid time slot' });
+      }
+      if (!availability.slots[slotIndex].isAvailable) {
+        return res.status(400).json({ error: 'Selected time slot is not available' });
+      }
 
-    if (!designerId || !date || !timeSlot) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+      // ---- Create the appointment ----
+      const finalCustomerName = customerName || `${req.user.email}`;
+      const appointment = new Appointment({
+        designerId: VOIDSTONE_DESIGNER_ID,
+        customerId: req.user.userId,
+        customerName: finalCustomerName,
+        customerEmail: req.user.email,
+        customerPhone,
+        date: appointmentDate,
+        timeSlot,
+        consultationType,
+        notes,
+        status: 'pending'
+      });
 
-    const appointmentDate = new Date(date);
-    appointmentDate.setHours(0, 0, 0, 0);
+      // Save appointment first, then update availability
+      await appointment.save();
+      console.log('✅ Appointment saved, id:', appointment._id);
 
-    // Check if slot is already booked
-    const existingAppointment = await Appointment.findOne({
-      designerId,
-      date: appointmentDate,
-      timeSlot,
-      status: { $in: ['pending', 'confirmed'] }
-    });
+      // Mark slot as taken
+      availability.slots[slotIndex].isAvailable = false;
+      availability.slots[slotIndex].bookedBy = req.user.userId;
+      await availability.save();
+      console.log('✅ Availability updated');
 
-    if (existingAppointment) {
-      return res.status(400).json({ error: 'Time slot already booked' });
-    }
+      // ---- Send emails (non‑blocking) ----
+      try {
+        await sendAppointmentConfirmationToCustomer(
+          req.user.email,
+          finalCustomerName,
+          { date, timeSlot, consultationType, notes }
+        );
+        await sendAppointmentNotificationToAdmin(
+          { date, timeSlot, consultationType, notes, _id: appointment._id },
+          finalCustomerName,
+          req.user.email
+        );
+        console.log('✅ Confirmation emails sent');
+      } catch (emailErr) {
+        console.error('❌ Email sending failed (non‑critical):', emailErr);
+      }
 
-    // Create appointment
-    const appointment = new Appointment({
-      designerId,
-      customerId,
-      date: appointmentDate,
-      timeSlot,
-      notes,
-      customerName,
-      customerEmail,
-      customerPhone,
-      status: 'pending'
-    });
-
-    await appointment.save();
-
-    // Fetch designer details from auth-service
-    const designerResponse = await axios.get(
-      `${process.env.AUTH_SERVICE_URL}/users/${designerId}`
-    );
-
-    // Send confirmation emails
-    await sendAppointmentEmails(
-      appointment,
-      { name: designerResponse.data.user.firstName + ' ' + designerResponse.data.user.lastName },
-      { name: customerName, email: customerEmail }
-    );
-
-    res.status(201).json({
-      message: 'Appointment booked successfully',
-      appointment
-    });
-  } catch (error) {
-    console.error('Error booking appointment:', error);
-    res.status(500).json({ error: 'Failed to book appointment' });
-  }
-};
-
-// Get user's appointments (both as customer and designer)
-export const getMyAppointments = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const userRole = req.user?.role;
-
-    let query = {};
-    
-    if (userRole === 'designer') {
-      // Designers see appointments where they are the designer
-      query = { designerId: userId };
-    } else {
-      // Clients see appointments they booked
-      query = { customerId: userId };
-    }
-
-    const appointments = await Appointment.find(query)
-      .sort({ date: 1, timeSlot: 1 });
-
-    // Fetch user details for each appointment
-    const enrichedAppointments = await Promise.all(
-      appointments.map(async (apt) => {
-        const otherUserId = userRole === 'designer' ? apt.customerId : apt.designerId;
-        try {
-          const userResponse = await axios.get(
-            `${process.env.AUTH_SERVICE_URL}/users/${otherUserId}`
-          );
-          return {
-            ...apt.toObject(),
-            otherUser: userResponse.data.user
-          };
-        } catch {
-          return apt;
+      // Return success
+      return res.status(201).json({
+        message: 'Appointment booked successfully',
+        appointment: {
+          _id: appointment._id,
+          date: appointment.date,
+          timeSlot: appointment.timeSlot,
+          consultationType: appointment.consultationType,
+          status: appointment.status
         }
-      })
-    );
-
-    res.json({ appointments: enrichedAppointments });
-  } catch (error) {
-    console.error('Error fetching appointments:', error);
-    res.status(500).json({ error: 'Failed to fetch appointments' });
+      });
+    } catch (error) {
+      console.error('❌ FATAL booking error:', error);
+      return res.status(500).json({ error: 'Server error. Please try again.' });
+    }
   }
-};
 
-// Cancel appointment
-export const cancelAppointment = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user?.id;
-    const userRole = req.user?.role;
-
-    const appointment = await Appointment.findById(id);
-
-    if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
+  // -----------------------------------------------------------------
+  //  GET MY APPOINTMENTS (customer)
+  // -----------------------------------------------------------------
+  async getMyAppointments(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Please login' });
+      }
+      const appointments = await Appointment.find({ customerId: req.user.userId })
+        .sort({ date: -1 })
+        .limit(50);
+      res.json({ appointments });
+    } catch (error) {
+      console.error('❌ getMyAppointments error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    // Check permissions
-    if (userRole !== 'admin' && 
-        appointment.customerId !== userId && 
-        appointment.designerId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    // Can only cancel pending or confirmed appointments
-    if (!['pending', 'confirmed'].includes(appointment.status)) {
-      return res.status(400).json({ error: 'Cannot cancel this appointment' });
-    }
-
-    appointment.status = 'cancelled';
-    await appointment.save();
-
-    res.json({ message: 'Appointment cancelled successfully' });
-  } catch (error) {
-    console.error('Error cancelling appointment:', error);
-    res.status(500).json({ error: 'Failed to cancel appointment' });
   }
-};
 
-// Confirm appointment (designer/admin)
-export const confirmAppointment = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user?.id;
-    const userRole = req.user?.role;
+  // -----------------------------------------------------------------
+  //  CANCEL APPOINTMENT (customer or admin)
+  // -----------------------------------------------------------------
+  async cancelAppointment(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Please login' });
+      }
 
-    const appointment = await Appointment.findById(id);
+      const appointment = await Appointment.findById(req.params.id);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
 
-    if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
+      const isAuthorized =
+        req.user.role === 'admin' || appointment.customerId.toString() === req.user.userId;
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+
+      if (appointment.status === 'completed') {
+        return res.status(400).json({ error: 'Cannot cancel completed appointments' });
+      }
+
+      appointment.status = 'cancelled';
+      await appointment.save();
+
+      // Free the slot in availability
+      const availability = await Availability.findOne({
+        designerId: appointment.designerId,
+        date: appointment.date
+      });
+      if (availability) {
+        const slotIdx = availability.slots.findIndex((s) => s.time === appointment.timeSlot);
+        if (slotIdx !== -1) {
+          availability.slots[slotIdx].isAvailable = true;
+          availability.slots[slotIdx].bookedBy = undefined;
+          await availability.save();
+        }
+      }
+
+      res.json({ message: 'Appointment cancelled successfully' });
+    } catch (error) {
+      console.error('❌ cancelAppointment error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    // Only designer or admin can confirm
-    if (userRole !== 'admin' && appointment.designerId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    if (appointment.status !== 'pending') {
-      return res.status(400).json({ error: 'Appointment is not pending' });
-    }
-
-    appointment.status = 'confirmed';
-    await appointment.save();
-
-    res.json({ message: 'Appointment confirmed successfully' });
-  } catch (error) {
-    console.error('Error confirming appointment:', error);
-    res.status(500).json({ error: 'Failed to confirm appointment' });
   }
-};
 
-// Set custom availability (designers only)
-export const setAvailability = async (req: AuthRequest, res: Response) => {
-  try {
-    const designerId = req.user?.id;
-    const { date, slots } = req.body;
+  // -----------------------------------------------------------------
+  //  CONFIRM APPOINTMENT (admin only)
+  // -----------------------------------------------------------------
+  async confirmAppointment(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
 
-    if (req.user?.role !== 'designer' && req.user?.role !== 'admin') {
-      return res.status(403).json({ error: 'Only designers can set availability' });
+      const appointment = await Appointment.findById(req.params.id);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      appointment.status = 'confirmed';
+      await appointment.save();
+
+      await sendAppointmentConfirmedToCustomer(
+        appointment.customerEmail,
+        appointment.customerName,
+        appointment
+      );
+
+      res.json({ message: 'Appointment confirmed successfully' });
+    } catch (error) {
+      console.error('❌ confirmAppointment error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    const availabilityDate = new Date(date);
-    availabilityDate.setHours(0, 0, 0, 0);
-
-    const availability = await Availability.findOneAndUpdate(
-      { designerId, date: availabilityDate },
-      { designerId, date: availabilityDate, slots },
-      { upsert: true, new: true }
-    );
-
-    res.json({
-      message: 'Availability updated successfully',
-      availability
-    });
-  } catch (error) {
-    console.error('Error setting availability:', error);
-    res.status(500).json({ error: 'Failed to set availability' });
   }
-};
+
+  // -----------------------------------------------------------------
+  //  GET ALL APPOINTMENTS (admin only)
+  // -----------------------------------------------------------------
+  async getAllAppointments(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const appointments = await Appointment.find({}).sort({ date: -1 }).limit(100);
+      res.json({ appointments });
+    } catch (error) {
+      console.error('❌ getAllAppointments error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}

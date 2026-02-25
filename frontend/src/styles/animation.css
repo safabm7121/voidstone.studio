@@ -16,13 +16,17 @@
 
 /* Backdrop Blur + Motion */
 .blur-card {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(var(--color-background-rgb, 255, 255, 255), 0.2);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-radius: 12px;
   opacity: 0;
   transform: scale(0.95);
   transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+[data-theme="dark"] .blur-card {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .blur-card.visible {
@@ -50,9 +54,11 @@
 .product-card-entrance:nth-child(3n+1) {
   animation-delay: 0.1s;
 }
+
 .product-card-entrance:nth-child(3n+2) {
   animation-delay: 0.2s;
 }
+
 .product-card-entrance:nth-child(3n+3) {
   animation-delay: 0.3s;
 }
@@ -106,4 +112,17 @@
 /* Smooth scroll behavior */
 html {
   scroll-behavior: smooth;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .empty-state {
+    padding: 2rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .empty-state {
+    padding: 1.5rem 0;
+  }
 }

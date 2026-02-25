@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,37 +51,70 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return config;
   });
 
-  // Validate token on mount
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    if (!token) return null;
+    
+    try {
+      const response = await api.get('/auth/me');
+      return response.data.user;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  };
+
+  // Validate token and fetch user on mount
   useEffect(() => {
-    const validateToken = async () => {
+    const initializeAuth = async () => {
       if (!token) {
         setIsLoading(false);
         return;
       }
 
       try {
-        // You could add a /me endpoint to validate token and get user
-        // For now, we'll just check if token exists
-        setIsLoading(false);
+        const userData = await fetchUserProfile();
+        if (userData) {
+          setUser(userData);
+        } else {
+          // If profile fetch fails, token might be invalid
+          localStorage.removeItem('token');
+          setToken(null);
+        }
       } catch (error) {
         localStorage.removeItem('token');
         setToken(null);
+      } finally {
         setIsLoading(false);
       }
     };
 
-    validateToken();
+    initializeAuth();
   }, [token]);
+
+  const refreshUser = async () => {
+    const userData = await fetchUserProfile();
+    if (userData) {
+      setUser(userData);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, user } = response.data;
+      const { token: newToken, user: userData } = response.data;
       
-      localStorage.setItem('token', token);
-      setToken(token);
-      setUser(user);
-      toast.success(`Welcome back, ${user.firstName}!`);
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      setUser(userData);
+      
+      console.log('User logged in:', { 
+        email: userData.email, 
+        role: userData.role,
+        isAdmin: userData.role === 'admin'
+      });
+      
+      toast.success(`Welcome back, ${userData.firstName}!`);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Login failed';
       toast.error(errorMessage);
@@ -133,7 +167,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       verifyEmail,
       logout, 
       isAuthenticated: !!token,
-      isLoading 
+      isLoading,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>

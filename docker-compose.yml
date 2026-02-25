@@ -1,13 +1,9 @@
-version: '3.8'
-
 networks:
   voidstone-network:
     driver: bridge
     name: voidstone-network
 
 volumes:
-  postgres_data:
-    driver: local
   mongo_data:
     driver: local
   consul_data:
@@ -16,11 +12,12 @@ volumes:
     driver: local
   grafana_data:
     driver: local
-  redis_data:
+  jenkins_home:
+    driver: local
+  loki_data:
     driver: local
 
 services:
-  # Service Discovery - Consul
   consul:
     image: hashicorp/consul:1.18.0
     container_name: voidstone-consul
@@ -28,8 +25,6 @@ services:
     command: agent -server -bootstrap -ui -client=0.0.0.0 -data-dir=/consul/data
     ports:
       - "8500:8500"
-      - "8600:8600/tcp"
-      - "8600:8600/udp"
     volumes:
       - consul_data:/consul/data
     networks:
@@ -40,30 +35,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # PostgreSQL for Products (Base64 images)
-  postgres:
-    image: postgres:15-alpine
-    container_name: voidstone-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: voidstone_products
-      POSTGRES_USER: voidstone_admin
-      POSTGRES_PASSWORD: Voidstone2026!
-      PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./infrastructure/docker/postgres/conf/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
-    networks:
-      - voidstone-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U voidstone_admin -d voidstone_products"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # MongoDB for Users
   mongodb:
     image: mongo:7-jammy
     container_name: voidstone-mongodb
@@ -84,20 +55,184 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis for Caching
-  redis:
-    image: redis:7-alpine
-    container_name: voidstone-redis
+  auth-service:
+    build: ./auth-service
+    container_name: voidstone-auth
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass Redis2026!
     ports:
-      - "6379:6379"
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGODB_URI=mongodb://admin:Mongo2026!@mongodb:27017/voidstone_users?authSource=admin
+      - JWT_SECRET=voidstone-super-secret-key-2026
+      - JWT_REFRESH_SECRET=voidstone-refresh-secret-key-2026
+      - JWT_EXPIRY=15m
+      - JWT_REFRESH_EXPIRY=7d
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - EMAIL_USER=voidstonestudio@gmail.com
+      - EMAIL_PASS=rfinxybarsydjojl
     volumes:
-      - redis_data:/data
+      - ./auth-service:/app
+      - /app/node_modules
     networks:
       - voidstone-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+
+  product-service:
+    build: ./product-service
+    container_name: voidstone-product
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - MONGODB_URI=mongodb://admin:Mongo2026!@mongodb:27017/voidstone_products?authSource=admin
+      - JWT_SECRET=voidstone-super-secret-key-2026
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+    volumes:
+      - ./product-service:/app
+      - /app/node_modules
+    networks:
+      - voidstone-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+
+  appointment-service:
+    build: ./appointment-service
+    container_name: voidstone-appointment
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - MONGODB_URI=mongodb://admin:Mongo2026!@mongodb:27017/voidstone_appointments?authSource=admin
+      - JWT_SECRET=voidstone-super-secret-key-2026
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - AUTH_SERVICE_URL=http://auth-service:3001/api
+      - ADMIN_EMAIL=voidstonestudio@gmail.com
+    volumes:
+      - ./appointment-service:/app
+      - /app/node_modules
+    networks:
+      - voidstone-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: voidstone-gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - GATEWAY_PORT=3000
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    networks:
+      - voidstone-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      appointment-service:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: voidstone-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - voidstone-network
+    depends_on:
+      - consul
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: voidstone-grafana
+    restart: unless-stopped
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    networks:
+      - voidstone-network
+    depends_on:
+      - prometheus
+
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: voidstone-jenkins
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - voidstone-network
+
+  # ============= NEW: LOGGING STACK (LOKI + PROMTAIL) =============
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: voidstone-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    networks:
+      - voidstone-network
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: voidstone-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    networks:
+      - voidstone-network
+    depends_on:
+      - loki

@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { productApi } from '../services/api';
 import ProductGrid from '../components/products/ProductGrid';
 import CapsuleSlider from '../components/products/CapsuleSlider';
+import ProductModal from '../components/products/ProductModal';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -37,6 +38,11 @@ const Products: React.FC = () => {
   const [page, setPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  
   const itemsPerPage = 9;
   const { elementRef, isVisible } = useIntersectionObserver({ threshold: 0.1 });
 
@@ -92,9 +98,32 @@ const Products: React.FC = () => {
     setProductToDelete(null);
   };
 
+  // MODAL EDIT HANDLER
   const handleEdit = (product: Product) => {
-    // Use navigate instead of window.location.href for better SPA experience
-    navigate(`/create-product?id=${product._id}`);
+    setEditingProduct(product);
+    setModalOpen(true);
+  };
+
+  const handleSaveProduct = async (productData: any) => {
+    try {
+      if (editingProduct) {
+        await productApi.put(`/products/${editingProduct._id}`, productData);
+        toast.success('Product updated successfully!');
+      } else {
+        await productApi.post('/products', productData);
+        toast.success('Product created successfully!');
+      }
+      setModalOpen(false);
+      setEditingProduct(null);
+      fetchProducts();
+    } catch (error: any) {
+      console.error('Error saving product:', error);
+      toast.error(error.response?.data?.error || 'Failed to save product');
+    }
+  };
+
+  const handleViewHistory = (product: Product) => {
+    navigate(`/products/history/${product._id}`);
   };
 
   const filterAndSortProducts = () => {
@@ -251,6 +280,7 @@ const Products: React.FC = () => {
               isAdmin={isAdmin} 
               onDelete={handleDeleteClick}
               onEdit={handleEdit}
+              onViewHistory={handleViewHistory}
             />
           ) : (
             <CapsuleSlider products={paginatedProducts} />
@@ -262,6 +292,17 @@ const Products: React.FC = () => {
           )}
         </>
       )}
+
+      {/* Product Modal */}
+      <ProductModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingProduct(null);
+        }}
+        onSave={handleSaveProduct}
+        product={editingProduct}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>

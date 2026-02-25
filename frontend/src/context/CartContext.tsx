@@ -3,13 +3,15 @@ import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext';
 import { formatCurrency } from '../utils/helpers';
 
+// Simplified CartItem - NO IMAGES stored!
 interface CartItem {
   _id: string;
   name: string;
   price: number;
-  images: string[];
   quantity: number;
   category?: string;
+  // Store only a flag that image exists, not the actual base64
+  hasImage?: boolean;
 }
 
 interface CartContextType {
@@ -35,26 +37,44 @@ interface CartProviderProps {
   children: ReactNode;
 }
 
-export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const { isAuthenticated } = useAuth();
-
-  // Load cart from localStorage on mount
-  useEffect(() => {
+// Helper to safely load cart from localStorage
+const loadCartFromStorage = (): CartItem[] => {
+  try {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error parsing cart:', error);
-        localStorage.removeItem('cart');
-      }
+      return JSON.parse(savedCart);
     }
-  }, []);
+  } catch (error) {
+    console.error('Error loading cart from localStorage:', error);
+    localStorage.removeItem('cart');
+  }
+  return [];
+};
+
+// Helper to safely save cart to localStorage with quota handling
+const saveCartToStorage = (cart: CartItem[]) => {
+  try {
+    const cartString = JSON.stringify(cart);
+    // Check size before saving (warn if approaching limit)
+    if (cartString.length > 4_000_000) { // ~4MB warning threshold
+      console.warn('Cart is getting large:', Math.round(cartString.length / 1024 / 1024), 'MB');
+    }
+    localStorage.setItem('cart', cartString);
+  } catch (error) {
+    console.error('Error saving cart to localStorage:', error);
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      toast.error('Cart is too large. Please remove some items or clear your cart.');
+    }
+  }
+};
+
+export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+  const [cart, setCart] = useState<CartItem[]>(loadCartFromStorage);
+  const { isAuthenticated } = useAuth();
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    saveCartToStorage(cart);
   }, [cart]);
 
   const addToCart = (product: any, quantity: number = 1) => {
@@ -65,6 +85,16 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item._id === product._id);
+
+      // Create a minimal cart item - NO BASE64 IMAGES!
+      const cartItem: CartItem = {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        quantity: existingItem ? existingItem.quantity + quantity : quantity,
+        category: product.category,
+        hasImage: product.images?.length > 0 // Just store a flag, not the actual image
+      };
 
       if (existingItem) {
         const updatedCart = prevCart.map(item =>
@@ -86,14 +116,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             <small>Price: {formatCurrency(product.price)}</small>
           </span>
         );
-        return [...prevCart, {
-          _id: product._id,
-          name: product.name,
-          price: product.price,
-          images: product.images,
-          quantity: quantity,
-          category: product.category
-        }];
+        return [...prevCart, cartItem];
       }
     });
   };

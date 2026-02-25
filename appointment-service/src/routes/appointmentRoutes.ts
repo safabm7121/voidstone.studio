@@ -1,28 +1,29 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth';
-import {
-  getDesigners,
-  getAvailability,
-  bookAppointment,
-  getMyAppointments,
-  cancelAppointment,
-  confirmAppointment,
-  setAvailability
-} from '../controllers/appointmentController';
+import { AppointmentController } from '../controllers/appointmentController';
+import { authenticateToken, authorizeRoles } from '../middleware/auth';
 
 const router = Router();
+const controller = new AppointmentController();
 
 // Public routes
-router.get('/designers', getDesigners);
-router.get('/availability/:designerId', getAvailability);
+router.get('/availability', controller.getAvailability.bind(controller));
 
-// Protected routes (any authenticated user)
-router.post('/book', authenticateToken, bookAppointment);
-router.get('/my', authenticateToken, getMyAppointments);
-router.put('/:id/cancel', authenticateToken, cancelAppointment);
+// Protected routes
+router.post('/book', authenticateToken, controller.bookAppointment.bind(controller));
+router.get('/my-appointments', authenticateToken, controller.getMyAppointments.bind(controller));
+router.put('/cancel/:id', authenticateToken, controller.cancelAppointment.bind(controller));
 
-// Designer/Admin routes
-router.put('/:id/confirm', authenticateToken, confirmAppointment);
-router.post('/availability', authenticateToken, setAvailability);
+// Admin routes
+router.get('/all-appointments', 
+  authenticateToken, 
+  authorizeRoles('admin'),
+  controller.getAllAppointments.bind(controller)
+);
+
+router.put('/confirm/:id', 
+  authenticateToken, 
+  authorizeRoles('admin'),
+  controller.confirmAppointment.bind(controller)
+);
 
 export default router;

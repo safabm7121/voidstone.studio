@@ -1,106 +1,209 @@
-import nodemailer from 'nodemailer';
+import axios from 'axios';
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001/api';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'voidstonestudio@gmail.com';
 
-export const sendAppointmentEmails = async (
-  appointment: any,
-  designer: any,
-  customer: any
-) => {
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+export const sendAppointmentEmail = async (
+  to: string, 
+  subject: string, 
+  html: string
+): Promise<void> => {
+  try {
+    console.log(`📧 Sending email to: ${to}`);
+    console.log(`📧 Subject: ${subject}`);
+    
+    const response = await axios.post(`${AUTH_SERVICE_URL}/appointment-email`, {
+      to,
+      subject,
+      html
     });
-  };
+    
+    console.log(`✅ Email sent successfully to ${to}`);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to send email:', error);
+    throw error;
+  }
+};
 
-  // Email to customer
-  await transporter.sendMail({
-    from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
-    to: customer.email,
-    subject: `Appointment Confirmation - ${formatDate(appointment.date)}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
-          .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; }
-          .header { background: black; color: white; padding: 30px; text-align: center; }
-          .content { padding: 30px; }
-          .details { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .button { background: black; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>VOIDSTONE STUDIO</h1>
-          </div>
-          <div class="content">
-            <h2>Appointment Confirmed!</h2>
-            <p>Dear ${customer.name},</p>
-            <p>Your appointment with <strong>${designer.name}</strong> has been confirmed.</p>
-            
-            <div class="details">
-              <h3>📅 Appointment Details</h3>
-              <p><strong>Date:</strong> ${formatDate(appointment.date)}</p>
-              <p><strong>Time:</strong> ${appointment.timeSlot}</p>
-              <p><strong>Designer:</strong> ${designer.name}</p>
-              ${appointment.notes ? `<p><strong>Notes:</strong> ${appointment.notes}</p>` : ''}
-            </div>
-            
-            <p>Need to reschedule? <a href="http://localhost:5173/appointments/${appointment._id}">Manage appointment</a></p>
-          </div>
+export const sendAppointmentNotificationToAdmin = async (
+  appointmentDetails: any,
+  customerName: string,
+  customerEmail: string
+) => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .header { background: black; color: white; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .details { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .details p { margin: 10px 0; }
+        .label { font-weight: 600; color: #666; }
+        .value { color: #000; }
+        .footer { background: #f5f5f5; padding: 20px; text-align: center; color: #666; }
+        .badge { background: #ffd700; color: black; padding: 5px 10px; border-radius: 20px; display: inline-block; }
+        .button { background: black; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📅 NEW APPOINTMENT BOOKED</h1>
         </div>
-      </body>
-      </html>
-    `
-  });
+        <div class="content">
+          <p>A new appointment has been booked by <strong>${customerName}</strong>.</p>
+          
+          <div class="details">
+            <h3>Appointment Details:</h3>
+            <p><span class="label">Date:</span> <span class="value">${new Date(appointmentDetails.date).toLocaleDateString()}</span></p>
+            <p><span class="label">Time:</span> <span class="value">${appointmentDetails.timeSlot}</span></p>
+            <p><span class="label">Type:</span> <span class="badge">${appointmentDetails.consultationType}</span></p>
+            ${appointmentDetails.notes ? `<p><span class="label">Notes:</span> ${appointmentDetails.notes}</p>` : ''}
+          </div>
+          
+          <div class="details">
+            <h3>Customer Information:</h3>
+            <p><span class="label">Name:</span> ${customerName}</p>
+            <p><span class="label">Email:</span> ${customerEmail}</p>
+            ${appointmentDetails.customerPhone ? `<p><span class="label">Phone:</span> ${appointmentDetails.customerPhone}</p>` : ''}
+          </div>
+          
+          <p style="text-align: center;">
+            <a href="http://localhost:5173/admin/appointments" class="button">View in Dashboard</a>
+          </p>
+        </div>
+        <div class="footer">
+          <p>Voidstone Studio - Appointment System</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 
-  // Email to designer
-  await transporter.sendMail({
-    from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
-    to: designer.email,
-    subject: `New Appointment - ${customer.name}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
-          .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; }
-          .header { background: black; color: white; padding: 30px; text-align: center; }
-          .content { padding: 30px; }
-          .highlight { background: #fff3cd; padding: 5px 10px; border-radius: 4px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>📅 New Appointment</h1>
-          </div>
-          <div class="content">
-            <h2>You have a new appointment!</h2>
-            <p><strong>Client:</strong> ${customer.name}</p>
-            <p><strong>Email:</strong> ${customer.email}</p>
-            <p><strong>Date:</strong> ${formatDate(appointment.date)}</p>
-            <p><strong>Time:</strong> <span class="highlight">${appointment.timeSlot}</span></p>
-            ${appointment.notes ? `<p><strong>Notes:</strong> ${appointment.notes}</p>` : ''}
-          </div>
+  await sendAppointmentEmail(
+    ADMIN_EMAIL,
+    `📅 New Appointment: ${customerName} - ${appointmentDetails.consultationType}`,
+    html
+  );
+};
+
+export const sendAppointmentConfirmationToCustomer = async (
+  email: string,
+  name: string,
+  appointmentDetails: any
+) => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .header { background: black; color: white; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .details { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .details p { margin: 10px 0; }
+        .label { font-weight: 600; color: #666; }
+        .footer { background: #f5f5f5; padding: 20px; text-align: center; color: #666; }
+        .badge { background: #ffd700; color: black; padding: 5px 10px; border-radius: 20px; display: inline-block; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Appointment Request Received</h1>
         </div>
-      </body>
-      </html>
-    `
-  });
+        <div class="content">
+          <p>Dear <strong>${name}</strong>,</p>
+          <p>Thank you for booking an appointment with Voidstone Studio. Your appointment request has been received and is pending confirmation.</p>
+          
+          <div class="details">
+            <h3>Appointment Details:</h3>
+            <p><span class="label">Date:</span> ${new Date(appointmentDetails.date).toLocaleDateString()}</p>
+            <p><span class="label">Time:</span> ${appointmentDetails.timeSlot}</p>
+            <p><span class="label">Type:</span> <span class="badge">${appointmentDetails.consultationType}</span></p>
+            ${appointmentDetails.notes ? `<p><span class="label">Your Notes:</span> ${appointmentDetails.notes}</p>` : ''}
+          </div>
+          
+          <p>You will receive a confirmation email once your appointment is confirmed by our team.</p>
+          <p>If you need to make any changes, please contact us.</p>
+          
+          <p style="margin-top: 30px;">Best regards,<br>The Voidstone Studio Team</p>
+        </div>
+        <div class="footer">
+          <p>Voidstone Studio - Where Fashion Meets Art</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await sendAppointmentEmail(
+    email,
+    `Appointment Request Received - Voidstone Studio`,
+    html
+  );
+};
+
+export const sendAppointmentConfirmedToCustomer = async (
+  email: string,
+  name: string,
+  appointmentDetails: any
+) => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .header { background: #4CAF50; color: white; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .details { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .details p { margin: 10px 0; }
+        .label { font-weight: 600; color: #666; }
+        .footer { background: #f5f5f5; padding: 20px; text-align: center; color: #666; }
+        .badge { background: #4CAF50; color: white; padding: 5px 10px; border-radius: 20px; display: inline-block; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✅ Appointment Confirmed!</h1>
+        </div>
+        <div class="content">
+          <p>Dear <strong>${name}</strong>,</p>
+          <p>Great news! Your appointment has been <strong>confirmed</strong>.</p>
+          
+          <div class="details">
+            <h3>Appointment Details:</h3>
+            <p><span class="label">Date:</span> ${new Date(appointmentDetails.date).toLocaleDateString()}</p>
+            <p><span class="label">Time:</span> ${appointmentDetails.timeSlot}</p>
+            <p><span class="label">Type:</span> <span class="badge">${appointmentDetails.consultationType}</span></p>
+          </div>
+          
+          <p>We look forward to meeting with you!</p>
+          
+          <p style="margin-top: 30px;">Best regards,<br>The Voidstone Studio Team</p>
+        </div>
+        <div class="footer">
+          <p>Voidstone Studio - Where Fashion Meets Art</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await sendAppointmentEmail(
+    email,
+    `Appointment Confirmed - Voidstone Studio`,
+    html
+  );
 };

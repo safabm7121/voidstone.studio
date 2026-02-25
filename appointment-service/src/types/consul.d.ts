@@ -2,9 +2,6 @@ declare module 'consul' {
   interface ConsulOptions {
     host?: string;
     port?: string;
-    secure?: boolean;
-    ca?: string[];
-    defaults?: any;
   }
 
   interface ServiceRegisterOptions {
@@ -15,7 +12,6 @@ declare module 'consul' {
     tags?: string[];
     check?: {
       http?: string;
-      tcp?: string;
       interval?: string;
       timeout?: string;
       deregistercriticalserviceafter?: string;
@@ -26,8 +22,8 @@ declare module 'consul' {
     constructor(options?: ConsulOptions);
     agent: {
       service: {
-        register(options: ServiceRegisterOptions, callback?: (err: any, data: any) => void): Promise<any>;
-        deregister(id: string, callback?: (err: any, data: any) => void): Promise<any>;
+        register(options: ServiceRegisterOptions): Promise<any>;
+        deregister(id: string): Promise<any>;
       };
     };
   }

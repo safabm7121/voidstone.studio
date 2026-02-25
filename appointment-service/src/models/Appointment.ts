@@ -1,63 +1,71 @@
 import mongoose from 'mongoose';
 
 export interface IAppointment extends mongoose.Document {
-  designerId: string;      // References User in auth-service
-  customerId: string;      // References User in auth-service
-  date: Date;
-  timeSlot: string;        // "10:00-11:00"
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  notes?: string;
+  designerId: string; // Changed from ObjectId to string
+  customerId: string; // Changed from ObjectId to string
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
+  date: Date;
+  timeSlot: string;
+  duration: number;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no-show';
+  notes?: string;
+  consultationType: 'design' | 'fitting' | 'consultation' | 'custom';
   createdAt: Date;
   updatedAt: Date;
 }
 
 const appointmentSchema = new mongoose.Schema({
-  designerId: {
-    type: String,
-    required: true,
-    index: true
+  designerId: { 
+    type: String, // Changed from ObjectId to String
+    required: true 
   },
-  customerId: {
-    type: String,
-    required: true,
-    index: true
+  customerId: { 
+    type: String, // Changed from ObjectId to String
+    required: true 
   },
-  date: {
-    type: Date,
-    required: true,
-    index: true
+  customerName: { 
+    type: String, 
+    required: true 
   },
-  timeSlot: {
-    type: String,
-    required: true
+  customerEmail: { 
+    type: String, 
+    required: true 
   },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
-    default: 'pending',
-    index: true
+  customerPhone: String,
+  date: { 
+    type: Date, 
+    required: true 
   },
-  notes: {
-    type: String,
-    maxlength: 500
+  timeSlot: { 
+    type: String, 
+    required: true 
   },
-  customerName: {
-    type: String,
-    required: true
+  duration: { 
+    type: Number, 
+    default: 60 
   },
-  customerEmail: {
-    type: String,
-    required: true
+  status: { 
+    type: String, 
+    enum: ['pending', 'confirmed', 'cancelled', 'completed', 'no-show'],
+    default: 'pending'
   },
-  customerPhone: String
+  notes: String,
+  consultationType: { 
+    type: String, 
+    enum: ['design', 'fitting', 'consultation', 'custom'],
+    default: 'consultation'
+  }
 }, {
   timestamps: true
 });
 
-// Compound index to prevent double-booking
-appointmentSchema.index({ designerId: 1, date: 1, timeSlot: 1 }, { unique: true });
+// Indexes for faster queries
+appointmentSchema.index({ designerId: 1, date: 1 });
+appointmentSchema.index({ customerId: 1, date: 1 });
+appointmentSchema.index({ status: 1 });
+appointmentSchema.index({ date: 1 });
 
-export const Appointment = mongoose.model<IAppointment>('Appointment', appointmentSchema);
+const Appointment = mongoose.model<IAppointment>('Appointment', appointmentSchema);
+export default Appointment;

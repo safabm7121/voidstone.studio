@@ -27,7 +27,7 @@ export const sendOrderEmails = async (req: Request, res: Response) => {
     await transporter.sendMail({
       from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
       to: 'voidstonestone@gmail.com',
-      subject: `🛍️ New Order Received - ${orderId}`,
+      subject: ` New Order Received - ${orderId}`,
       html: getStoreEmailTemplate({ items, shippingInfo, cartTotal, orderId })
     });
 
@@ -78,7 +78,7 @@ const getStoreEmailTemplate = (data: any) => {
   `).join('');
 
   return `
-    <h1>🛍️ NEW ORDER!</h1>
+    <h1> NEW ORDER!</h1>
     <p>Order ID: ${orderId}</p>
     <h2>Items:</h2>
     <table border="1" cellpadding="10">

@@ -4,26 +4,32 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // true for 465, false for other ports
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER, // Your Gmail address
-    pass: process.env.EMAIL_PASS, // Your Gmail app password (see Step 3)
+    user: process.env.EMAIL_USER, // voidstonestudio@gmail.com
+    pass: process.env.EMAIL_PASS, // Your Gmail app password
   },
 });
 
 // Verify connection configuration
 transporter.verify((error, success) => {
   if (error) {
-    console.error('Email service configuration error:', error);
+    console.error(' Email service configuration error:', error);
   } else {
-    console.log('Email server is ready to send messages');
+    console.log(' Email server is ready to send messages');
   }
 });
 
 // Send verification email
 export const sendVerificationEmail = async (email: string, code: string, firstName: string) => {
+  // Validate environment variables
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
+    throw new Error('Email configuration missing');
+  }
+
   const mailOptions = {
-    from: '"Voidstone Studio" <noreply@voidstone.studio>',
+    from: `"Voidstone Studio" <${process.env.EMAIL_USER}>`, //  Uses voidstonestudio@gmail.com
     to: email,
     subject: 'Verify Your Voidstone Studio Account',
     html: `
@@ -57,13 +63,12 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
           </div>
           <div class="footer">
             <p>If you didn't request this, please ignore this email.</p>
-            <p>&copy; 2026 Voidstone Studio. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} Voidstone Studio. All rights reserved.</p>
           </div>
         </div>
       </body>
       </html>
     `,
-    // Plain text version for email clients that don't support HTML
     text: `
       Welcome to Voidstone Studio, ${firstName}!
       
@@ -76,11 +81,34 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
   };
 
   try {
+    console.log(`📧 Attempting to send verification email to ${email}...`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Verification email sent to ${email}: ${info.messageId}`);
+    console.log(`✅ Verification email sent to ${email}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    console.error('❌ Error sending verification email:', error);
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+    }
+    
     throw error;
+  }
+};
+
+// Optional: Add a test function to verify email configuration
+export const testEmailConnection = async () => {
+  try {
+    await transporter.verify();
+    console.log('✅ Email transporter verified successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Email transporter verification failed:', error);
+    return false;
   }
 };

@@ -1,0 +1,353 @@
+/* ========== PROFILE PAGE STYLES ========== */
+
+.profile-preview-image {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.profile-preview-iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+}
+
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .profile-container {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+  }
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background-color: var(--color-background-paper);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--color-shadow);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[dir="rtl"] .profile-header {
+  flex-direction: row-reverse;
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+  
+  [dir="rtl"] .profile-header {
+    flex-direction: column;
+  }
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 600;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px var(--color-shadow);
+}
+
+@media (max-width: 768px) {
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 2.5rem;
+  }
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 768px) {
+  .profile-name {
+    font-size: 1.25rem;
+  }
+}
+
+.profile-email {
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.profile-role {
+  display: inline-block;
+  padding: 0.25rem 1rem;
+  background-color: var(--color-background-paper);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.profile-edit-btn {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.profile-edit-btn:hover {
+  background-color: var(--color-background-paper);
+}
+
+/* Tabs */
+.profile-tabs {
+  background-color: var(--color-background-paper);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--color-shadow);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-tab-panel {
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .profile-tab-panel {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-tab-panel {
+    padding: 1rem;
+  }
+}
+
+/* Skills */
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.skill-tag {
+  background-color: var(--color-background-paper);
+  border: 1px solid var(--color-border);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+[dir="rtl"] .skill-tag {
+  flex-direction: row-reverse;
+}
+
+.skill-tag-remove {
+  cursor: pointer;
+  color: var(--color-text-disabled);
+  transition: color 0.2s;
+}
+
+.skill-tag-remove:hover {
+  color: var(--color-error);
+}
+
+/* Experience & Education Lists */
+.experience-item,
+.education-item {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-background-paper);
+}
+
+[dir="rtl"] .experience-item,
+[dir="rtl"] .education-item {
+  flex-direction: row-reverse;
+}
+
+.experience-content,
+.education-content {
+  flex: 1;
+}
+
+.experience-title,
+.education-degree {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-primary);
+}
+
+.experience-company,
+.education-institution {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.experience-years,
+.education-year {
+  color: var(--color-text-disabled);
+  font-size: 0.875rem;
+}
+
+.experience-actions,
+.education-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Files Grid – fully responsive */
+.files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .files-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .files-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .files-grid {
+    grid-template-columns: 1fr; /* stack on very small screens */
+  }
+}
+
+.file-card {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: var(--color-background-paper);
+}
+
+.file-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--color-shadow);
+}
+
+.file-preview {
+  height: 140px;
+  background-color: var(--color-background-paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.file-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.file-preview-icon {
+  font-size: 3rem;
+  color: var(--color-text-disabled);
+}
+
+.file-info {
+  padding: 0.75rem;
+}
+
+.file-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+
+.file-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-disabled);
+}
+
+[dir="rtl"] .file-meta {
+  flex-direction: row-reverse;
+}
+
+.file-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+[dir="rtl"] .file-actions {
+  justify-content: flex-start;
+}
+
+/* Preview Dialog */
+.preview-dialog {
+  max-width: 800px;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.preview-dialog img,
+.preview-dialog iframe {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}

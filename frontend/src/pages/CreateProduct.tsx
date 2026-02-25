@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Paper, Typography, TextField, Button, Grid, Chip, Box, Alert, IconButton
 } from '@mui/material';
@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useDropzone } from 'react-dropzone';
 import { productApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -73,18 +74,23 @@ const CreateProduct: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImages(prev => [...prev, reader.result as string]);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
+  // Drag & Drop setup
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    acceptedFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImages(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
+    multiple: true,
+    maxSize: 5 * 1024 * 1024 // 5MB
+  });
 
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
@@ -109,22 +115,20 @@ const CreateProduct: React.FC = () => {
     setLoading(true);
     setError('');
     
-    // Debug: Check authentication state
     console.log('🔍 Authentication Debug:');
     console.log('Token from useAuth:', token);
     console.log('User from useAuth:', user);
+    console.log('LocalStorage token:', localStorage.getItem('token'));
     console.log('Is admin?', user?.role === 'admin');
     console.log('Is edit mode?', isEditMode);
     console.log('Product ID:', productId);
     
-    // Validate inputs
     if (!formData.name || !formData.description || !formData.price || !formData.category) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
     }
     
-    // Prepare product data
     const productData = {
       name: formData.name,
       description: formData.description,
@@ -142,7 +146,6 @@ const CreateProduct: React.FC = () => {
       let response;
       
       if (isEditMode) {
-        // UPDATE existing product
         response = await productApi.put(`/products/${productId}`, productData, {
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -152,7 +155,6 @@ const CreateProduct: React.FC = () => {
         toast.success('Product updated successfully!');
         console.log('✅ Product updated:', response.data);
       } else {
-        // CREATE new product
         response = await productApi.post('/products', productData, {
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -171,18 +173,21 @@ const CreateProduct: React.FC = () => {
       if (err.response) {
         console.error('Error response data:', err.response.data);
         console.error('Error response status:', err.response.status);
+        console.error('Error response headers:', err.response.headers);
         
         if (err.response.status === 403) {
-          setError('You do not have permission. Admin role required.');
+          setError('You do not have permission to create products. Please check your role.');
         } else if (err.response.status === 401) {
           setError('Your session has expired. Please login again.');
         } else {
-          setError(err.response.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} product`);
+          setError(err.response.data?.error || t('createProduct.error'));
         }
       } else if (err.request) {
+        console.error('Error request:', err.request);
         setError('No response from server. Please check if product-service is running.');
       } else {
-        setError(`Failed to ${isEditMode ? 'update' : 'create'} product: ${err.message}`);
+        console.error('Error message:', err.message);
+        setError('Failed to create product: ' + err.message);
       }
     } finally {
       setLoading(false);
@@ -217,6 +222,7 @@ const CreateProduct: React.FC = () => {
                 onChange={handleChange} 
                 required 
                 disabled={loading}
+                error={!formData.name && error.includes('fill')}
               />
             </Grid>
             
@@ -230,6 +236,7 @@ const CreateProduct: React.FC = () => {
                 onChange={handleChange} 
                 required 
                 disabled={loading}
+                error={!formData.description && error.includes('fill')}
               />
             </Grid>
             
@@ -242,8 +249,9 @@ const CreateProduct: React.FC = () => {
                 value={formData.price} 
                 onChange={handleChange} 
                 required 
-                inputProps={{ step: '0.01', min: '0' }} 
                 disabled={loading}
+                inputProps={{ step: '0.01', min: '0' }} 
+                error={!formData.price && error.includes('fill')}
               />
             </Grid>
             
@@ -256,8 +264,8 @@ const CreateProduct: React.FC = () => {
                 value={formData.stock_quantity} 
                 onChange={handleChange} 
                 required 
-                inputProps={{ min: '0' }} 
                 disabled={loading}
+                inputProps={{ min: '0' }} 
               />
             </Grid>
             
@@ -270,6 +278,7 @@ const CreateProduct: React.FC = () => {
                 onChange={handleChange} 
                 required 
                 disabled={loading}
+                error={!formData.category && error.includes('fill')}
               />
             </Grid>
             
@@ -286,10 +295,30 @@ const CreateProduct: React.FC = () => {
             
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>{t('createProduct.images')}</Typography>
-              <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />} sx={{ mb: 2 }} disabled={loading}>
-                {t('createProduct.upload')}
-                <input type="file" hidden multiple accept="image/*" onChange={handleImageUpload} disabled={loading} />
-              </Button>
+              
+              <Box
+                {...getRootProps()}
+                sx={{
+                  border: '2px dashed',
+                  borderColor: isDragActive ? 'primary.main' : '#ccc',
+                  borderRadius: 2,
+                  p: 3,
+                  mb: 2,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  bgcolor: isDragActive ? 'action.hover' : 'transparent',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <input {...getInputProps()} disabled={loading} />
+                <CloudUploadIcon sx={{ fontSize: 48, color: '#ccc', mb: 1 }} />
+                <Typography>
+                  {isDragActive ? 'Drop images here...' : t('createProduct.upload')}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  (JPG, PNG, WebP up to 5MB each)
+                </Typography>
+              </Box>
               
               <Grid container spacing={2}>
                 {images.map((img, idx) => (

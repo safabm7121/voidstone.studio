@@ -1,14 +1,11 @@
 import axios from 'axios';
 
-// Set this to false to use real backend with MongoDB
 const USE_JSON_SERVER = false;
 
-// JSON Server URL (not used when false)
 const JSON_SERVER_URL = 'http://localhost:3004';
 
-// Real backend URLs
 const AUTH_API_URL = 'http://localhost:3001/api';
-const PRODUCT_API_URL = 'http://localhost:3002/api';
+const PRODUCT_API_URL = 'http://localhost:3002/api';  
 
 export const authApi = axios.create({
   baseURL: USE_JSON_SERVER ? JSON_SERVER_URL : AUTH_API_URL,
@@ -18,9 +15,7 @@ export const productApi = axios.create({
   baseURL: USE_JSON_SERVER ? JSON_SERVER_URL : PRODUCT_API_URL,
 });
 
-// Add token interceptor only for real API (JSON Server doesn't need authentication)
 if (!USE_JSON_SERVER) {
-  // Debug interceptor for productApi
   productApi.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     console.log('🔑 Token from localStorage:', token ? 'Present' : 'Missing');
@@ -29,24 +24,24 @@ if (!USE_JSON_SERVER) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('✅ Token added to request headers');
     } else {
-      console.error('❌ No token found in localStorage!');
+      console.warn('⚠️ No token found in localStorage');
     }
     
-    // Log the full request for debugging
-    console.log('📤 Request:', {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-      headers: config.headers
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📤 ${config.method?.toUpperCase()} ${config.url}`, {
+        hasToken: !!token,
+        data: config.data
+      });
+    }
     
     return config;
   });
   
-  // Response interceptor for debugging
   productApi.interceptors.response.use(
     (response) => {
-      console.log('✅ Response success:', response.status);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ ${response.status} ${response.config.url}`);
+      }
       return response;
     },
     (error) => {
@@ -54,13 +49,24 @@ if (!USE_JSON_SERVER) {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        message: error.message
+        message: error.message,
+        url: error.config?.url
       });
+      
+      if (error.response?.status === 401) {
+        console.error('🔒 Authentication error - token may be expired');
+      } else if (error.response?.status === 403) {
+        console.error('🔒 Authorization error - insufficient permissions');
+      } else if (error.response?.status === 404) {
+        console.error('🔍 Resource not found - check URL:', error.config?.url);
+      } else if (error.code === 'ECONNREFUSED') {
+        console.error('🔌 Connection refused - is the service running on port', error.config?.url);
+      }
+      
       return Promise.reject(error);
     }
   );
   
-  // Auth API interceptor (optional)
   authApi.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -68,4 +74,16 @@ if (!USE_JSON_SERVER) {
     }
     return config;
   });
+  
+  authApi.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      console.error('❌ Auth API Error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      return Promise.reject(error);
+    }
+  );
 }

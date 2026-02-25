@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import '../../styles/parallax.css';
 
 interface ParallaxSectionProps {
@@ -20,11 +20,10 @@ const ParallaxSection: React.FC<ParallaxSectionProps> = ({
 }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
-  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!sectionRef.current) return;
+      if (!sectionRef.current || !bgRef.current) return;
       
       const rect = sectionRef.current.getBoundingClientRect();
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -37,25 +36,23 @@ const ParallaxSection: React.FC<ParallaxSectionProps> = ({
       // Clamp between 0 and 1
       const clampedProgress = Math.max(0, Math.min(1, scrollProgress));
       
-      // Calculate parallax offset
-      setOffset(clampedProgress * 100 * speed);
+      // Calculate parallax offset and apply transform
+      const offset = clampedProgress * 100 * speed;
+      bgRef.current.style.transform = `translateY(calc(-1 * ${offset}px))`;
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, [speed]);
 
-  // Update CSS variables when offset or bgImage changes
+  // Update background image when it changes
   useEffect(() => {
-    if (bgRef.current) {
-      if (bgImage) {
-        bgRef.current.style.setProperty('--bg-image', `url(${bgImage})`);
-      }
-      bgRef.current.style.setProperty('--parallax-offset', `${offset}px`);
+    if (bgRef.current && bgImage) {
+      bgRef.current.style.backgroundImage = `url(${bgImage})`;
     }
-  }, [offset, bgImage]);
+  }, [bgImage]);
 
   // Generate height class
   const heightClass = `height-${height}`;
@@ -63,7 +60,7 @@ const ParallaxSection: React.FC<ParallaxSectionProps> = ({
   return (
     <div
       ref={sectionRef}
-      className={`parallax-scroll ${heightClass} relative overflow-hidden ${className}`}
+      className={`parallax-scroll ${heightClass} ${!bgImage ? 'no-image' : ''} ${className}`}
     >
       {bgImage && (
         <div

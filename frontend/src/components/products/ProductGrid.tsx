@@ -8,18 +8,26 @@ interface ProductGridProps {
   isAdmin?: boolean;
   onDelete?: (product: Product) => void;
   onEdit?: (product: Product) => void;
+  onViewHistory?: (product: Product) => void;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ products, isAdmin, onDelete, onEdit }) => {
+const ProductGrid: React.FC<ProductGridProps> = ({ 
+  products, 
+  isAdmin, 
+  onDelete, 
+  onEdit,
+  onViewHistory 
+}) => {
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={4}>
       {products.map((product) => (
         <Grid item key={product._id} xs={12} sm={6} md={4}>
-          <ProductCard
-            product={product}
-            isAdmin={isAdmin}
+          <ProductCard 
+            product={product} 
+            isAdmin={isAdmin} 
             onDelete={onDelete}
             onEdit={onEdit}
+            onViewHistory={onViewHistory}
           />
         </Grid>
       ))}

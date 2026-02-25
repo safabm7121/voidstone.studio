@@ -1,280 +1,114 @@
-/* ========== PARALLAX EFFECTS ========== */
+/* ========== PARALLAX SECTION STYLES ========== */
 
-/* Base Parallax Container */
-.parallax-container {
+.parallax-scroll {
   position: relative;
   overflow: hidden;
-  transform-style: preserve-3d;
-  will-change: transform;
   width: 100%;
-  height: 100%;
 }
 
-/* ===== SECTION PARALLAX ===== */
-.parallax-section {
-  position: relative;
-  overflow: hidden;
-  transform-style: preserve-3d;
+/* Height classes */
+.parallax-scroll.height-vh-90 {
+  height: 90vh;
+  min-height: 600px;
 }
 
-.parallax-section-bg {
+.parallax-scroll.height-vh-100 {
+  height: 100vh;
+  min-height: 600px;
+}
+
+.parallax-scroll.height-400 {
+  height: 400px;
+}
+
+.parallax-scroll.height-500 {
+  height: 500px;
+}
+
+.parallax-scroll.height-600 {
+  height: 600px;
+}
+
+.parallax-scroll.height-auto {
+  height: auto;
+  min-height: 400px;
+}
+
+/* Background image */
+.parallax-scroll-bg {
   position: absolute;
-  top: -5%;
-  left: -5%;
-  width: 110%;
-  height: 110%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 120%;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   will-change: transform;
   z-index: 0;
-  /* CSS variables for dynamic values */
-  --bg-image: none;
-  --parallax-offset: 0px;
-  background-image: var(--bg-image);
-  transform: translateY(var(--parallax-offset));
 }
 
-.parallax-section-content {
-  position: relative;
-  z-index: 1;
-  transform: translateZ(0);
-  height: 100%;
-  width: 100%;
-}
-
-/* Section height variants */
-.parallax-section.height-vh-90 { height: 90vh; }
-.parallax-section.height-vh-100 { height: 100vh; }
-.parallax-section.height-auto { height: auto; min-height: 100vh; }
-.parallax-section.height-400 { height: 400px; }
-.parallax-section.height-500 { height: 500px; }
-.parallax-section.height-600 { height: 600px; }
-
-/* Background overlay */
-.parallax-section-bg.with-overlay::after {
+/* Overlay */
+.parallax-scroll-bg.with-overlay::after {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
   z-index: 1;
 }
 
-/* ===== HERO PARALLAX ===== */
-.hero-parallax {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 120%;
-  z-index: 0;
-}
-
-.hero-parallax-bg {
-  position: absolute;
-  top: -10%;
-  left: -10%;
-  width: 120%;
-  height: 120%;
-  background-size: cover;
-  background-position: center;
-  will-change: transform;
-  z-index: 0;
-}
-
-.hero-parallax-gradient {
-  position: absolute;
-  top: -5%;
-  left: -5%;
-  width: 110%;
-  height: 110%;
-  background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.15) 0%, transparent 60%);
-  will-change: transform;
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* ===== PRODUCT CARD PARALLAX ===== */
-.card-parallax {
+/* Content */
+.parallax-scroll-content {
   position: relative;
-  overflow: hidden;
-  transform-style: preserve-3d;
-  width: 100%;
-  height: 100%;
-}
-
-.card-parallax-image {
-  position: absolute;
-  top: -10%;
-  left: -10%;
-  width: 120%;
-  height: 120%;
-  object-fit: cover;
-  will-change: transform;
-  transition: transform 0.3s ease-out;
-  pointer-events: none;
-}
-
-.card-parallax:hover .card-parallax-image {
-  transform: scale(1.05);
-}
-
-/* ===== PRODUCT DETAIL PARALLAX ===== */
-.product-detail-parallax {
-  position: relative;
-  width: 100%;
-  height: 400px;
-  overflow: hidden;
-  border-radius: 8px;
-  background-color: #f5f5f5;
-}
-
-.product-detail-parallax-image {
-  position: absolute;
-  top: -15%;
-  left: -15%;
-  width: 130%;
-  height: 130%;
-  object-fit: cover;
-  will-change: transform;
-  transition: transform 0.1s ease-out;
-  pointer-events: none;
-}
-
-/* Product image container with aspect ratio */
-.product-image-container {
-  position: relative;
-  width: 100%;
-  padding-top: 75%; /* 4:3 Aspect Ratio */
-  overflow: hidden;
-  border-radius: 8px;
-  background-color: #f5f5f5;
-}
-
-.product-image-wrapper {
-  position: absolute;
-  top: -10%;
-  left: -10%;
-  width: 120%;
-  height: 120%;
-  overflow: hidden;
-}
-
-.product-parallax-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  will-change: transform;
-  transition: transform 0.3s ease;
-}
-
-.product-card:hover .product-parallax-image {
-  transform: scale(1.05);
-}
-
-/* No image placeholder */
-.no-image-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
+  z-index: 2;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
-  color: #666;
 }
 
-/* ===== THUMBNAIL PARALLAX ===== */
-.product-thumbnail {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  overflow: hidden;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 1px solid #ddd;
-  transition: border-color 0.2s;
+/* No image fallback */
+.parallax-scroll.no-image {
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
 }
 
-.product-thumbnail.active {
-  border: 2px solid black;
+/* Dark theme support */
+[data-theme="dark"] .parallax-scroll.no-image {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
-.thumbnail-parallax-image {
-  position: absolute;
-  top: -5%;
-  left: -5%;
-  width: 110%;
-  height: 110%;
-  object-fit: cover;
-  will-change: transform;
-  transition: transform 0.1s ease-out;
-}
-
-/* ===== SPEED VARIANTS ===== */
-.parallax-slow {
-  --parallax-speed: 0.1;
-}
-
-.parallax-medium {
-  --parallax-speed: 0.2;
-}
-
-.parallax-fast {
-  --parallax-speed: 0.3;
-}
-
-/* ===== RESPONSIVE ===== */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .parallax-section.height-vh-90,
-  .parallax-section.height-vh-100 {
-    height: 70vh;
-  }
-  
-  .product-detail-parallax {
-    height: 300px;
+  .parallax-scroll.height-vh-90,
+  .parallax-scroll.height-vh-100 {
+    min-height: 500px;
   }
 }
 
-@media (max-width: 600px) {
-  .product-detail-parallax {
-    height: 250px;
-  }
-  
-  .product-thumbnail {
-    width: 60px;
-    height: 60px;
+@media (max-width: 480px) {
+  .parallax-scroll.height-vh-90,
+  .parallax-scroll.height-vh-100 {
+    min-height: 400px;
   }
 }
-/* ===== PRODUCT GRID ===== */
-.product-grid-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
 
-/* Ensure all cards in the grid have equal height */
-.MuiGrid-item {
-  display: flex;
-}
-
-.MuiGrid-item > * {
-  width: 100%;
-  height: 100%;
-}
-
-/* Responsive grid */
-@media (max-width: 600px) {
-  .MuiGrid-container {
-    margin: -8px !important;
-    width: calc(100% + 16px) !important;
+/* Landscape mode */
+@media (orientation: landscape) and (max-height: 600px) {
+  .parallax-scroll.height-vh-90,
+  .parallax-scroll.height-vh-100 {
+    height: auto;
+    min-height: 100vh;
+    padding: 2rem 0;
   }
-  
-  .MuiGrid-item {
-    padding: 8px !important;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .parallax-scroll-bg {
+    transition: none;
   }
 }

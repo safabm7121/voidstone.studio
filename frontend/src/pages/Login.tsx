@@ -16,7 +16,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       await login(email, password);
-      navigate('/products');
+      navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.error || t('auth.loginFailed'));
     }
