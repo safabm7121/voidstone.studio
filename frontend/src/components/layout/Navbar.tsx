@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   AppBar, Toolbar, Typography, Button, Box,
   IconButton, Menu, MenuItem, Avatar, Drawer, List,
-  ListItem, ListItemText, ListItemIcon, Badge, Divider, useTheme
+  ListItem, ListItemText, ListItemIcon, Badge, Divider, Container
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,13 +21,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 
 const languages = [
-  { code: 'en', name: 'English', flag: '🇬🇧', dir: 'ltr' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷', dir: 'ltr' },
-  { code: 'ar', name: 'العربية', flag: '🇸🇦', dir: 'rtl' },
+  { code: 'en', name: 'English', flag: 'en', dir: 'ltr' },
+  { code: 'fr', name: 'Français', flag: 'fr', dir: 'ltr' },
+  { code: 'ar', name: 'العربية', flag: 'ar', dir: 'rtl' },
 ];
 
 const Navbar: React.FC = () => {
-  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { cartCount } = useCart();
@@ -75,15 +74,35 @@ const Navbar: React.FC = () => {
     { text: t('nav.contact'), icon: <ContactMailIcon />, path: '/contact', public: true },
   ];
 
-  const appointmentItems = [
-    { text: 'Book Appointment', icon: <BookOnlineIcon />, path: '/book-appointment', roles: ['client', 'designer', 'admin'] },
-    { text: 'My Appointments', icon: <CalendarTodayIcon />, path: '/appointments', roles: ['client', 'designer', 'admin'] },
-  ];
-
-  const adminItems = [
-    { text: 'Admin Dashboard', icon: <AdminPanelSettingsIcon />, path: '/admin/appointments', roles: ['admin'] },
-    { text: t('nav.createProduct'), icon: <AddIcon />, path: '/create-product', roles: ['admin', 'manager', 'designer'] },
-  ];
+  // Enhanced responsive text helper with more granular breakpoints
+  const getResponsiveText = (fullText: string, shortText: string, mediumText?: string) => {
+    if (mediumText) {
+      return (
+        <>
+          <Box component="span" sx={{ display: { xs: 'none', lg: 'inline' } }}>
+            {fullText}
+          </Box>
+          <Box component="span" sx={{ display: { xs: 'none', md: 'inline', lg: 'none' } }}>
+            {mediumText}
+          </Box>
+          <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
+            {shortText}
+          </Box>
+        </>
+      );
+    }
+    
+    return (
+      <>
+        <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
+          {fullText}
+        </Box>
+        <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
+          {shortText}
+        </Box>
+      </>
+    );
+  };
 
   const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
   const isRtl = i18n.language === 'ar';
@@ -125,22 +144,32 @@ const Navbar: React.FC = () => {
             <Typography variant="caption" sx={{ px: 2, color: 'text.secondary', display: 'block' }}>
               Appointments
             </Typography>
-            {appointmentItems.map(item => (
-              <ListItem 
-                key={item.text} 
-                component={Link} 
-                to={item.path} 
-                sx={{ 
-                  color: 'text.primary',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  }
-                }}
-              >
-                <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} sx={{ color: 'text.primary' }} />
-              </ListItem>
-            ))}
+            <ListItem 
+              component={Link} 
+              to="/book-appointment" 
+              sx={{ 
+                color: 'text.primary',
+                '&:hover': { bgcolor: 'action.hover' }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
+                <BookOnlineIcon />
+              </ListItemIcon>
+              <ListItemText primary="Book Appointment" sx={{ color: 'text.primary' }} />
+            </ListItem>
+            <ListItem 
+              component={Link} 
+              to="/appointments" 
+              sx={{ 
+                color: 'text.primary',
+                '&:hover': { bgcolor: 'action.hover' }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
+                <CalendarTodayIcon />
+              </ListItemIcon>
+              <ListItemText primary="My Appointments" sx={{ color: 'text.primary' }} />
+            </ListItem>
           </>
         )}
         {isAuthenticated && user?.role === 'admin' && (
@@ -149,22 +178,32 @@ const Navbar: React.FC = () => {
             <Typography variant="caption" sx={{ px: 2, color: 'text.secondary', display: 'block' }}>
               Admin
             </Typography>
-            {adminItems.map(item => (
-              <ListItem 
-                key={item.text} 
-                component={Link} 
-                to={item.path} 
-                sx={{ 
-                  color: 'text.primary',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  }
-                }}
-              >
-                <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} sx={{ color: 'text.primary' }} />
-              </ListItem>
-            ))}
+            <ListItem 
+              component={Link} 
+              to="/admin/appointments" 
+              sx={{ 
+                color: 'text.primary',
+                '&:hover': { bgcolor: 'action.hover' }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
+                <AdminPanelSettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Admin Dashboard" sx={{ color: 'text.primary' }} />
+            </ListItem>
+            <ListItem 
+              component={Link} 
+              to="/create-product" 
+              sx={{ 
+                color: 'text.primary',
+                '&:hover': { bgcolor: 'action.hover' }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
+                <AddIcon />
+              </ListItemIcon>
+              <ListItemText primary={t('nav.createProduct')} sx={{ color: 'text.primary' }} />
+            </ListItem>
           </>
         )}
       </List>
@@ -180,341 +219,387 @@ const Navbar: React.FC = () => {
           bgcolor: 'background.paper',
           color: 'text.primary',
           width: '100%',
-          left: 0,
-          right: 0,
         }}
       >
-        <Toolbar sx={{ 
-          justifyContent: 'space-between',
-          width: '100%',
-          maxWidth: '100%',
-          px: { xs: 1, sm: 2, md: 3 }
-        }}>
-          {/* Left section - Mobile menu and logo */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            flex: isRtl ? '0 1 auto' : '1 1 auto',
+        <Container maxWidth={false} sx={{ px: { xs: 1, sm: 2, md: 2, lg: 3 } }}>
+          <Toolbar disableGutters sx={{ 
+            minHeight: { xs: 56, sm: 60, md: 64, lg: 70 },
+            display: 'flex',
+            justifyContent: 'space-between',
+            width: '100%',
           }}>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              sx={{ 
-                display: { sm: 'none' }, 
-                mr: isRtl ? 0 : 2,
-                ml: isRtl ? 2 : 0,
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-
-            <Typography
-              variant="h6"
-              component={Link}
-              to="/"
-              sx={{
-                textDecoration: 'none',
-                color: 'inherit',
-                fontWeight: 'bold',
-                letterSpacing: 2,
-                fontSize: { xs: '0.9rem', sm: '1.25rem' },
-                whiteSpace: 'nowrap',
-              }}
-            >
-              VOIDSTONE STUDIO
-            </Typography>
-          </Box>
-
-          {/* Center section - Desktop menu */}
-          <Box sx={{ 
-            display: { xs: 'none', sm: 'flex' }, 
-            alignItems: 'center', 
-            gap: 1,
-            flex: '0 1 auto',
-          }}>
-            {menuItems.map(item => (
-              <Button 
-                key={item.text} 
-                component={Link} 
-                to={item.path} 
+            {/* Left section - Mobile menu and logo */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              flex: '0 1 auto',
+              minWidth: { xs: 'auto', sm: 140, md: 160 },
+            }}>
+              <IconButton
                 color="inherit"
+                onClick={() => setMobileOpen(!mobileOpen)}
                 sx={{ 
-                  whiteSpace: 'nowrap',
-                  fontSize: '0.9rem',
+                  display: { lg: 'none' }, 
+                  mr: 0.5,
+                  p: { xs: 0.5, sm: 0.75 },
                 }}
               >
-                {item.text}
-              </Button>
-            ))}
-            {isAuthenticated && (
-              <>
-                <Button 
-                  component={Link} 
-                  to="/book-appointment" 
-                  color="inherit" 
-                  startIcon={<BookOnlineIcon />}
-                  sx={{ fontSize: '0.9rem' }}
-                >
-                  Book
-                </Button>
-                <Button 
-                  component={Link} 
-                  to="/appointments" 
-                  color="inherit" 
-                  startIcon={<CalendarTodayIcon />}
-                  sx={{ fontSize: '0.9rem' }}
-                >
-                  My Appointments
-                </Button>
-              </>
-            )}
-            {isAuthenticated && user?.role === 'admin' && (
-              <>
-                <Button 
-                  component={Link} 
-                  to="/create-product" 
-                  color="inherit" 
-                  startIcon={<AddIcon />}
-                  sx={{ fontSize: '0.9rem' }}
-                >
-                  Create Product
-                </Button>
-                <Button 
-                  component={Link} 
-                  to="/admin/appointments" 
-                  color="inherit" 
-                  startIcon={<AdminPanelSettingsIcon />}
-                  sx={{ fontSize: '0.9rem' }}
-                >
-                  Admin
-                </Button>
-              </>
-            )}
-          </Box>
+                <MenuIcon fontSize="small" />
+              </IconButton>
 
-          {/* Right section - Actions */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: { xs: 0.5, sm: 1 },
-            flex: isRtl ? '1 1 auto' : '0 1 auto',
-            justifyContent: 'flex-end',
-          }}>
-            {/* Language Button with Ref */}
-            <IconButton 
-              ref={langMenuAnchorRef}
-              onClick={handleLangMenuOpen} 
-              color="inherit"
-              size="small"
-              sx={{ 
-                p: { xs: 0.5, sm: 1 },
-              }}
-            >
-              <LanguageIcon fontSize="small" />
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  ml: 0.5, 
-                  display: { xs: 'none', sm: 'block' },
-                  fontSize: '0.875rem',
-                }}
-              >
-                {currentLang.flag}
-              </Typography>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  display: { xs: 'block', sm: 'none' },
-                  fontSize: '0.875rem',
-                }}
-              >
-                {currentLang.flag}
-              </Typography>
-            </IconButton>
-            
-            {/* Language Menu - Anchored directly to the button */}
-            <Menu
-              anchorEl={langMenuAnchorRef.current}
-              open={langMenuOpen}
-              onClose={handleLangMenuClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: isRtl ? 'right' : 'left',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: isRtl ? 'right' : 'left',
-              }}
-              PaperProps={{
-                sx: {
-                  bgcolor: 'background.paper',
-                  color: 'text.primary',
-                  boxShadow: theme.shadows[3],
-                  '& .MuiMenuItem-root': {
-                    color: 'text.primary',
-                    '&:hover': {
-                      bgcolor: 'action.hover',
-                    },
-                    '&.Mui-selected': {
-                      bgcolor: 'action.selected',
-                      '&:hover': {
-                        bgcolor: 'action.selected',
-                      },
-                    },
+              <Typography
+                variant="h6"
+                component={Link}
+                to="/"
+                sx={{
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  fontWeight: 'bold',
+                  letterSpacing: { xs: 1, sm: 1.5, md: 2 },
+                  fontSize: { 
+                    xs: '0.85rem', 
+                    sm: '1rem', 
+                    md: '1.1rem', 
+                    lg: '1.25rem' 
                   },
-                },
-              }}
-            >
-              {languages.map(lang => (
-                <MenuItem
-                  key={lang.code}
-                  onClick={() => changeLanguage(lang.code)}
-                  selected={i18n.language === lang.code}
-                  sx={{ 
-                    direction: lang.dir, 
-                    textAlign: lang.code === 'ar' ? 'right' : 'left',
-                    minWidth: 120,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <span>{lang.flag}</span>
-                    <span>{lang.name}</span>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Menu>
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: { xs: 100, sm: 150, md: 180, lg: 'none' },
+                }}
+              >
+                VOIDSTONE STUDIO
+              </Typography>
+            </Box>
 
-            {isAuthenticated ? (
-              <Box ref={userMenuAnchorRef} sx={{ display: 'flex', alignItems: 'center' }}>
-                <IconButton 
+            {/* Center section - Desktop menu with multiple breakpoints */}
+            <Box sx={{ 
+              display: { xs: 'none', lg: 'flex' }, 
+              alignItems: 'center', 
+              gap: { lg: 0.5, xl: 1 },
+              flex: '0 1 auto',
+              mx: 1,
+            }}>
+              {menuItems.map(item => (
+                <Button 
+                  key={item.text} 
                   component={Link} 
-                  to="/cart" 
+                  to={item.path} 
                   color="inherit"
-                  size="small"
-                  sx={{ mr: { xs: 0.5, sm: 1 } }}
-                >
-                  <Badge 
-                    badgeContent={cartCount} 
-                    color="primary"
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                      }
-                    }}
-                  >
-                    <ShoppingCartIcon fontSize="small" />
-                  </Badge>
-                </IconButton>
-                <IconButton 
-                  onClick={handleUserMenuOpen} 
-                  color="inherit"
-                  sx={{
-                    p: 0.5,
-                    border: '2px solid transparent',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                    }
+                  sx={{ 
+                    whiteSpace: 'nowrap',
+                    fontSize: { lg: '0.85rem', xl: '0.9rem' },
+                    px: { lg: 0.75, xl: 1 },
+                    minWidth: 'auto',
                   }}
                 >
-                  <Avatar 
+                  {item.text}
+                </Button>
+              ))}
+              
+              {isAuthenticated && (
+                <>
+                  <Button 
+                    component={Link} 
+                    to="/book-appointment" 
+                    color="inherit"
                     sx={{ 
-                      bgcolor: 'primary.main', 
-                      color: 'primary.contrastText',
-                      width: { xs: 32, sm: 36 },
-                      height: { xs: 32, sm: 36 },
-                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                      fontSize: { lg: '0.85rem', xl: '0.9rem' },
+                      px: { lg: 0.75, xl: 1 },
+                      minWidth: 'auto',
                     }}
                   >
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                  </Avatar>
-                </IconButton>
-                
-                {/* User Menu - Anchored to the container div */}
-                <Menu
-                  anchorEl={userMenuAnchorRef.current}
-                  open={userMenuOpen}
-                  onClose={handleUserMenuClose}
-                  anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: isRtl ? 'left' : 'right',
-                  }}
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: isRtl ? 'left' : 'right',
-                  }}
-                  PaperProps={{
-                    sx: {
-                      bgcolor: 'background.paper',
-                      color: 'text.primary',
-                      boxShadow: theme.shadows[3],
-                      '& .MuiMenuItem-root': {
-                        color: 'text.primary',
-                        '&:hover': {
-                          bgcolor: 'action.hover',
-                        },
-                      },
-                    },
+                    {getResponsiveText('Book Appointment', 'Book', 'Book')}
+                  </Button>
+                  <Button 
+                    component={Link} 
+                    to="/appointments" 
+                    color="inherit"
+                    sx={{ 
+                      fontSize: { lg: '0.85rem', xl: '0.9rem' },
+                      px: { lg: 0.75, xl: 1 },
+                      minWidth: 'auto',
+                    }}
+                  >
+                    {getResponsiveText('My Appointments', 'Appts', 'My Appts')}
+                  </Button>
+                </>
+              )}
+              
+              {isAuthenticated && user?.role === 'admin' && (
+                <>
+                  <Button 
+                    component={Link} 
+                    to="/create-product" 
+                    color="inherit"
+                    sx={{ 
+                      fontSize: { lg: '0.85rem', xl: '0.9rem' },
+                      px: { lg: 0.75, xl: 1 },
+                      minWidth: 'auto',
+                    }}
+                  >
+                    {getResponsiveText('Create Product', 'Create', 'Create')}
+                  </Button>
+                  <Button 
+                    component={Link} 
+                    to="/admin/appointments" 
+                    color="inherit"
+                    sx={{ 
+                      fontSize: { lg: '0.85rem', xl: '0.9rem' },
+                      px: { lg: 0.75, xl: 1 },
+                      minWidth: 'auto',
+                    }}
+                  >
+                    {getResponsiveText('Admin Dashboard', 'Admin', 'Admin')}
+                  </Button>
+                </>
+              )}
+            </Box>
+
+            {/* Tablet/Mobile Menu - Shown on medium screens */}
+            <Box sx={{ 
+              display: { xs: 'none', md: 'flex', lg: 'none' }, 
+              alignItems: 'center', 
+              gap: 0.5,
+              flex: '0 1 auto',
+              mx: 1,
+            }}>
+              {menuItems.map(item => (
+                <Button 
+                  key={item.text} 
+                  component={Link} 
+                  to={item.path} 
+                  color="inherit"
+                  sx={{ 
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.8rem',
+                    px: 0.5,
+                    minWidth: 'auto',
                   }}
                 >
-                  <MenuItem disabled sx={{ opacity: 0.7 }}>
-                    <Typography variant="body2" color="text.primary">
-                      {t('nav.hello')}, {user?.firstName}
-                    </Typography>
+                  {item.text}
+                </Button>
+              ))}
+              
+              {isAuthenticated && (
+                <>
+                  <Button 
+                    component={Link} 
+                    to="/book-appointment" 
+                    color="inherit"
+                    sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
+                  >
+                    Book
+                  </Button>
+                  <Button 
+                    component={Link} 
+                    to="/appointments" 
+                    color="inherit"
+                    sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
+                  >
+                    Appts
+                  </Button>
+                </>
+              )}
+              
+              {isAuthenticated && user?.role === 'admin' && (
+                <>
+                  <Button 
+                    component={Link} 
+                    to="/create-product" 
+                    color="inherit"
+                    sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
+                  >
+                    Create
+                  </Button>
+                  <Button 
+                    component={Link} 
+                    to="/admin/appointments" 
+                    color="inherit"
+                    sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
+                  >
+                    Admin
+                  </Button>
+                </>
+              )}
+            </Box>
+
+            {/* Right section - Actions */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: { xs: 0.25, sm: 0.5, md: 0.75, lg: 1 },
+              flex: '0 1 auto',
+              justifyContent: 'flex-end',
+              minWidth: { xs: 'auto', sm: 100, md: 120 },
+            }}>
+              {/* Language Button */}
+              <IconButton 
+                ref={langMenuAnchorRef}
+                onClick={handleLangMenuOpen} 
+                color="inherit"
+                size="small"
+                sx={{ p: { xs: 0.5, sm: 0.75 } }}
+              >
+                <LanguageIcon fontSize="small" />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    ml: 0.25, 
+                    display: { xs: 'none', sm: 'inline' },
+                    fontSize: { sm: '0.75rem', md: '0.8rem' },
+                  }}
+                >
+                  {currentLang.flag}
+                </Typography>
+              </IconButton>
+              
+              {/* Language Menu */}
+              <Menu
+                anchorEl={langMenuAnchorRef.current}
+                open={langMenuOpen}
+                onClose={handleLangMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: isRtl ? 'right' : 'left',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: isRtl ? 'right' : 'left',
+                }}
+              >
+                {languages.map(lang => (
+                  <MenuItem
+                    key={lang.code}
+                    onClick={() => changeLanguage(lang.code)}
+                    selected={i18n.language === lang.code}
+                    sx={{ minWidth: 100 }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>{lang.flag}</span>
+                      <span>{lang.name}</span>
+                    </Box>
                   </MenuItem>
-                  <Divider />
-                  <MenuItem component={Link} to="/profile" onClick={handleUserMenuClose}>Profile</MenuItem>
-                  <MenuItem onClick={handleLogout}>{t('nav.logout')}</MenuItem>
-                </Menu>
-              </Box>
-            ) : (
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Button 
-                  component={Link} 
-                  to="/login" 
-                  color="inherit" 
-                  size="small"
-                  sx={{ 
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    px: { xs: 1, sm: 1.5 },
-                  }}
-                >
-                  {t('nav.login')}
-                </Button>
-                <Button 
-                  component={Link} 
-                  to="/register" 
-                  color="inherit" 
-                  variant="outlined" 
-                  size="small"
-                  sx={{ 
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    px: { xs: 1, sm: 1.5 },
-                    borderColor: 'text.primary',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: 'action.hover',
-                    }
-                  }}
-                >
-                  {t('nav.register')}
-                </Button>
-              </Box>
-            )}
-          </Box>
-        </Toolbar>
+                ))}
+              </Menu>
+
+              {isAuthenticated ? (
+                <Box ref={userMenuAnchorRef} sx={{ display: 'flex', alignItems: 'center' }}>
+                  <IconButton 
+                    component={Link} 
+                    to="/cart" 
+                    color="inherit"
+                    size="small"
+                    sx={{ p: { xs: 0.5, sm: 0.75 }, mr: 0.25 }}
+                  >
+                    <Badge 
+                      badgeContent={cartCount} 
+                      color="primary"
+                      sx={{
+                        '& .MuiBadge-badge': {
+                          fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                          height: { xs: 16, sm: 18 },
+                          minWidth: { xs: 16, sm: 18 },
+                        }
+                      }}
+                    >
+                      <ShoppingCartIcon fontSize="small" />
+                    </Badge>
+                  </IconButton>
+                  
+                  <IconButton 
+                    onClick={handleUserMenuOpen} 
+                    color="inherit"
+                    sx={{ p: 0.25 }}
+                  >
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: 'primary.main', 
+                        width: { xs: 28, sm: 32, md: 34 },
+                        height: { xs: 28, sm: 32, md: 34 },
+                        fontSize: { xs: '0.8rem', sm: '0.9rem', md: '0.95rem' },
+                      }}
+                    >
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </Avatar>
+                  </IconButton>
+                  
+                  {/* User Menu */}
+                  <Menu
+                    anchorEl={userMenuAnchorRef.current}
+                    open={userMenuOpen}
+                    onClose={handleUserMenuClose}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: isRtl ? 'left' : 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: isRtl ? 'left' : 'right',
+                    }}
+                  >
+                    <MenuItem disabled>
+                      <Typography variant="body2">
+                        {t('nav.hello')}, {user?.firstName}
+                      </Typography>
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem component={Link} to="/profile" onClick={handleUserMenuClose}>
+                      Profile
+                    </MenuItem>
+                    <MenuItem onClick={handleLogout}>
+                      {t('nav.logout')}
+                    </MenuItem>
+                  </Menu>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 0.25 }}>
+                  <Button 
+                    component={Link} 
+                    to="/login" 
+                    color="inherit" 
+                    size="small"
+                    sx={{ 
+                      fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+                      px: { xs: 0.5, sm: 0.75, md: 1 },
+                      py: { xs: 0.25, sm: 0.35 },
+                      minWidth: 'auto',
+                    }}
+                  >
+                    {t('nav.login')}
+                  </Button>
+                  <Button 
+                    component={Link} 
+                    to="/register" 
+                    color="inherit" 
+                    variant="outlined" 
+                    size="small"
+                    sx={{ 
+                      fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+                      px: { xs: 0.5, sm: 0.75, md: 1 },
+                      py: { xs: 0.25, sm: 0.35 },
+                      minWidth: 'auto',
+                      borderColor: 'text.primary',
+                    }}
+                  >
+                    {t('nav.register')}
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          </Toolbar>
+        </Container>
       </AppBar>
 
+      {/* Mobile Drawer */}
       <Drawer
         anchor={isRtl ? 'right' : 'left'}
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         sx={{
-          display: { xs: 'block', sm: 'none' },
+          display: { xs: 'block', lg: 'none' },
           '& .MuiDrawer-paper': {
-            width: { xs: '85vw', sm: 280 },
-            maxWidth: 280,
+            width: 280,
             boxSizing: 'border-box',
             bgcolor: 'background.paper',
           },

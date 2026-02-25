@@ -93,13 +93,15 @@ const Cart: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
-        <ShoppingBagIcon sx={{ fontSize: 80, color: '#ccc', mb: 2 }} />
-        <Typography variant="h4" gutterBottom>{t('auth.login')}</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+      <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6, md: 8 }, textAlign: 'center' }}>
+        <ShoppingBagIcon sx={{ fontSize: { xs: 60, sm: 70, md: 80 }, color: '#ccc', mb: 2 }} />
+        <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+          {t('auth.login')}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, px: { xs: 2, sm: 4 } }}>
           {t('cart.loginRequired')}
         </Typography>
-        <Button component={Link} to="/login" variant="contained" size="large">
+        <Button component={Link} to="/login" variant="contained" size="large" sx={{ px: { xs: 3, sm: 4 } }}>
           {t('auth.login')}
         </Button>
       </Container>
@@ -108,13 +110,15 @@ const Cart: React.FC = () => {
 
   if (cart.length === 0) {
     return (
-      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
-        <ShoppingBagIcon sx={{ fontSize: 80, color: '#ccc', mb: 2 }} />
-        <Typography variant="h4" gutterBottom>{t('cart.empty')}</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+      <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6, md: 8 }, textAlign: 'center' }}>
+        <ShoppingBagIcon sx={{ fontSize: { xs: 60, sm: 70, md: 80 }, color: '#ccc', mb: 2 }} />
+        <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
+          {t('cart.empty')}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, px: { xs: 2, sm: 4 } }}>
           {t('cart.emptyMessage')}
         </Typography>
-        <Button component={Link} to="/products" variant="contained" size="large">
+        <Button component={Link} to="/products" variant="contained" size="large" sx={{ px: { xs: 3, sm: 4 } }}>
           {t('cart.continueShopping')}
         </Button>
       </Container>
@@ -125,20 +129,29 @@ const Cart: React.FC = () => {
   const displayItems = cartItemsWithImages.length > 0 ? cartItemsWithImages : cart;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <IconButton component={Link} to="/products" sx={{ mr: 2 }}>
-          <ArrowBackIcon />
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
+      {/* Header with back button */}
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        mb: { xs: 2, sm: 3, md: 4 },
+        flexWrap: 'wrap',
+      }}>
+        <IconButton component={Link} to="/products" sx={{ mr: { xs: 1, sm: 2 } }}>
+          <ArrowBackIcon fontSize={window.innerWidth < 600 ? 'medium' : 'large'} />
         </IconButton>
-        <Typography variant="h3" sx={{ fontWeight: 600 }}>
+        <Typography variant="h3" sx={{ 
+          fontWeight: 600,
+          fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' }
+        }}>
           {t('cart.title')}
         </Typography>
       </Box>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
         {/* Cart Items */}
-        <Grid item xs={12} md={8}>
-          <Paper elevation={2} sx={{ p: 3 }}>
+        <Grid item xs={12} lg={8}>
+          <Paper elevation={2} sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
             {loadingImages && (
               <Box display="flex" justifyContent="center" py={2}>
                 <CircularProgress size={24} />
@@ -152,13 +165,19 @@ const Cart: React.FC = () => {
               
               return (
                 <Box key={item._id}>
-                  <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={3} sm={2}>
-                      <Card sx={{ borderRadius: 2, overflow: 'hidden', height: 80, width: '100%' }}>
+                  <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
+                    {/* Product Image - Responsive sizing */}
+                    <Grid item xs={3} sm={2} md={2}>
+                      <Card sx={{ 
+                        borderRadius: 2, 
+                        overflow: 'hidden', 
+                        height: { xs: 60, sm: 70, md: 80 }, 
+                        width: '100%' 
+                      }}>
                         {imageUrl ? (
                           <CardMedia
                             component="img"
-                            height="80"
+                            height={window.innerWidth < 600 ? 60 : window.innerWidth < 900 ? 70 : 80}
                             image={imageUrl}
                             alt={item.name}
                             sx={{ objectFit: 'cover' }}
@@ -172,7 +191,7 @@ const Cart: React.FC = () => {
                               justifyContent: 'center',
                               bgcolor: '#f5f5f5',
                               color: '#999',
-                              fontSize: '0.75rem'
+                              fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' }
                             }}
                           >
                             {hasImage ? 'Loading...' : 'No image'}
@@ -180,68 +199,114 @@ const Cart: React.FC = () => {
                         )}
                       </Card>
                     </Grid>
-                    <Grid item xs={9} sm={4}>
-                      <Typography variant="subtitle1" fontWeight={600}>
+
+                    {/* Product Details - Responsive text */}
+                    <Grid item xs={9} sm={5} md={4}>
+                      <Typography variant="subtitle1" fontWeight={600} sx={{ 
+                        fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: { xs: 180, sm: 250, md: 300 }
+                      }}>
                         {item.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' } }}>
                         {formatPrice(item.price)} {t('cart.each')}
                       </Typography>
                       {item.category && (
-                        <Typography variant="caption" color="text.secondary" display="block">
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' } }}>
                           {item.category}
                         </Typography>
                       )}
                     </Grid>
-                    <Grid item xs={5} sm={3}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+
+                    {/* Quantity Controls - Responsive layout */}
+                    <Grid item xs={5} sm={3} md={3}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: { xs: 0.5, sm: 0.75, md: 1 },
+                        justifyContent: { xs: 'flex-start', sm: 'center' }
+                      }}>
                         <IconButton
                           size="small"
                           onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                          sx={{ border: '1px solid #ddd', borderRadius: 1 }}
+                          sx={{ 
+                            border: '1px solid #ddd', 
+                            borderRadius: 1,
+                            p: { xs: 0.25, sm: 0.5 }
+                          }}
                         >
-                          <RemoveIcon fontSize="small" />
+                          <RemoveIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
                         </IconButton>
-                        <Typography sx={{ minWidth: 30, textAlign: 'center', fontWeight: 500 }}>
+                        <Typography sx={{ 
+                          minWidth: { xs: 24, sm: 28, md: 30 }, 
+                          textAlign: 'center', 
+                          fontWeight: 500,
+                          fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' }
+                        }}>
                           {item.quantity}
                         </Typography>
                         <IconButton
                           size="small"
                           onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                          sx={{ border: '1px solid #ddd', borderRadius: 1 }}
+                          sx={{ 
+                            border: '1px solid #ddd', 
+                            borderRadius: 1,
+                            p: { xs: 0.25, sm: 0.5 }
+                          }}
                         >
-                          <AddIcon fontSize="small" />
+                          <AddIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
                         </IconButton>
                       </Box>
                     </Grid>
-                    <Grid item xs={4} sm={2}>
-                      <Typography variant="subtitle1" fontWeight={700} align="right">
+
+                    {/* Price and Delete - Responsive layout */}
+                    <Grid item xs={4} sm={1} md={2}>
+                      <Typography variant="subtitle1" fontWeight={700} align="right" sx={{ 
+                        fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' }
+                      }}>
                         {formatPrice(item.price * item.quantity)}
                       </Typography>
                     </Grid>
-                    <Grid item xs={3} sm={1}>
+                    <Grid item xs={3} sm={1} md={1}>
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <IconButton
                           color="error"
                           onClick={() => removeFromCart(item._id)}
                           size="small"
+                          sx={{ p: { xs: 0.25, sm: 0.5 } }}
                         >
-                          <DeleteIcon />
+                          <DeleteIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
                         </IconButton>
                       </Box>
                     </Grid>
                   </Grid>
-                  {index < cart.length - 1 && <Divider sx={{ my: 3 }} />}
+                  {index < cart.length - 1 && <Divider sx={{ my: { xs: 2, sm: 2.5, md: 3 } }} />}
                 </Box>
               );
             })}
 
-            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Cart Actions - Responsive buttons */}
+            <Box sx={{ 
+              mt: { xs: 3, sm: 3.5, md: 4 }, 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              gap: { xs: 2, sm: 0 }
+            }}>
               <Button 
                 variant="outlined" 
                 color="error" 
                 onClick={clearCart}
                 startIcon={<DeleteIcon />}
+                fullWidth={window.innerWidth < 600}
+                sx={{ 
+                  order: { xs: 2, sm: 1 },
+                  width: { xs: '100%', sm: 'auto' }
+                }}
               >
                 {t('cart.clearCart')}
               </Button>
@@ -250,6 +315,11 @@ const Cart: React.FC = () => {
                 to="/products" 
                 variant="text"
                 startIcon={<ArrowBackIcon />}
+                fullWidth={window.innerWidth < 600}
+                sx={{ 
+                  order: { xs: 1, sm: 2 },
+                  width: { xs: '100%', sm: 'auto' }
+                }}
               >
                 {t('cart.continueShopping')}
               </Button>
@@ -257,33 +327,56 @@ const Cart: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Order Summary */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={2} sx={{ p: 3, position: 'sticky', top: 100 }}>
-            <Typography variant="h5" gutterBottom fontWeight={600}>
+        {/* Order Summary - Responsive sticky positioning */}
+        <Grid item xs={12} lg={4}>
+          <Paper elevation={2} sx={{ 
+            p: { xs: 2, sm: 2.5, md: 3 }, 
+            position: { xs: 'relative', lg: 'sticky' }, 
+            top: { lg: 100 },
+            mb: { xs: 2, lg: 0 }
+          }}>
+            <Typography variant="h5" gutterBottom fontWeight={600} sx={{ 
+              fontSize: { xs: '1.25rem', sm: '1.35rem', md: '1.5rem' }
+            }}>
               {t('cart.orderSummary')}
             </Typography>
             
-            <Box sx={{ my: 3 }}>
+            <Box sx={{ my: { xs: 2, sm: 2.5, md: 3 } }}>
               <Box display="flex" justifyContent="space-between" mb={2}>
-                <Typography color="text.secondary">{t('cart.subtotal')} ({cart.length} {t('cart.items')})</Typography>
-                <Typography fontWeight={500}>{formatPrice(cartTotal)}</Typography>
+                <Typography color="text.secondary" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                  {t('cart.subtotal')} ({cart.length} {t('cart.items')})
+                </Typography>
+                <Typography fontWeight={500} sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                  {formatPrice(cartTotal)}
+                </Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" mb={2}>
-                <Typography color="text.secondary">{t('cart.shipping')}</Typography>
-                <Typography fontWeight={500}>{formatPrice(DELIVERY_FEE)}</Typography>
+                <Typography color="text.secondary" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                  {t('cart.shipping')}
+                </Typography>
+                <Typography fontWeight={500} sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                  {formatPrice(DELIVERY_FEE)}
+                </Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" mb={2}>
-                <Typography color="text.secondary">{t('cart.tax')}</Typography>
-                <Typography fontWeight={500}>{t('cart.calculated')}</Typography>
+                <Typography color="text.secondary" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                  {t('cart.tax')}
+                </Typography>
+                <Typography fontWeight={500} sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                  {t('cart.calculated')}
+                </Typography>
               </Box>
             </Box>
             
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: { xs: 1.5, sm: 2 } }} />
             
             <Box display="flex" justifyContent="space-between" mb={3}>
-              <Typography variant="h6">{t('cart.total')}</Typography>
-              <Typography variant="h6" color="primary.main" fontWeight={700}>
+              <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.25rem' } }}>
+                {t('cart.total')}
+              </Typography>
+              <Typography variant="h6" color="primary.main" fontWeight={700} sx={{ 
+                fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.25rem' }
+              }}>
                 {formatPrice(totalWithDelivery)}
               </Typography>
             </Box>
@@ -296,15 +389,18 @@ const Cart: React.FC = () => {
               size="large"
               sx={{ 
                 mb: 2, 
-                py: 1.5,
+                py: { xs: 1.2, sm: 1.3, md: 1.5 },
                 bgcolor: 'black',
-                '&:hover': { bgcolor: '#333' }
+                '&:hover': { bgcolor: '#333' },
+                fontSize: { xs: '0.9rem', sm: '1rem' }
               }}
             >
               {t('cart.checkout')} ({formatPrice(totalWithDelivery)})
             </Button>
             
-            <Typography variant="caption" color="text.secondary" align="center" display="block">
+            <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ 
+              fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' }
+            }}>
               {t('cart.secureCheckout')}
             </Typography>
           </Paper>
