@@ -147,7 +147,7 @@ services:
       - GATEWAY_PORT=3000
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
-      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend
     volumes:
       - ./api-gateway:/app
       - /app/node_modules
@@ -162,6 +162,25 @@ services:
         condition: service_started
       appointment-service:
         condition: service_started
+
+  frontend:
+    build: ./frontend
+    container_name: voidstone-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_API_URL=http://api-gateway:3000
+      - VITE_AUTH_URL=http://auth-service:3001
+      - VITE_PRODUCT_URL=http://product-service:3002
+      - VITE_APPOINTMENT_URL=http://appointment-service:3003
+    networks:
+      - voidstone-network
+    depends_on:
+      - api-gateway
+      - auth-service
+      - product-service
+      - appointment-service
 
   prometheus:
     image: prom/prometheus:v2.45.0
@@ -210,7 +229,6 @@ services:
     networks:
       - voidstone-network
 
-  # ============= NEW: LOGGING STACK (LOKI + PROMTAIL) =============
   loki:
     image: grafana/loki:2.9.0
     container_name: voidstone-loki
@@ -236,3 +254,4 @@ services:
       - voidstone-network
     depends_on:
       - loki
+      

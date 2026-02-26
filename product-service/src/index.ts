@@ -62,7 +62,13 @@ app.use((req, res, next) => {
 // Middleware
 app.use(helmet());
 app.use(cors({ 
-    origin: ['http://localhost:5173', 'http://localhost:3000'], 
+    origin: [
+        'http://localhost:5173', 
+        'http://localhost:3000',
+        'http://frontend',           // Add this for Docker
+        'http://api-gateway',         // Add this for Docker
+        'http://localhost:5174'       // Add this if you changed the port
+    ], 
     credentials: true 
 }));
 app.use(express.json({ limit: '50mb' }));
