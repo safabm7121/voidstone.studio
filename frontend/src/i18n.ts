@@ -6,17 +6,13 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enTranslations from './locales/en/translation.json';
 import frTranslations from './locales/fr/translation.json';
 import arTranslations from './locales/ar/translation.json';
+import koTranslations from './locales/ko/translation.json'; // ✅ Add Korean
 
 const resources = {
-  en: {
-    translation: enTranslations
-  },
-  fr: {
-    translation: frTranslations
-  },
-  ar: {
-    translation: arTranslations
-  }
+  en: { translation: enTranslations },
+  fr: { translation: frTranslations },
+  ar: { translation: arTranslations },
+  ko: { translation: koTranslations }, // ✅ Register Korean
 };
 
 i18n
@@ -25,7 +21,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    debug: true, // Set to true for debugging
+    debug: true,
     interpolation: {
       escapeValue: false,
     },
@@ -42,16 +38,13 @@ i18n
 i18n.on('languageChanged', (lng) => {
   const direction = i18n.dir(lng);
   console.log('🔤 Language changed to:', lng, 'Direction:', direction);
-  
-  // Set dir attribute on html element
+
   document.documentElement.setAttribute('dir', direction);
   document.documentElement.setAttribute('lang', lng);
-  
-  // Update localStorage
+
   localStorage.setItem('language', lng);
   localStorage.setItem('direction', direction);
 
-  // Add/remove RTL class for any additional CSS
   if (direction === 'rtl') {
     document.documentElement.classList.add('rtl');
     document.documentElement.classList.remove('ltr');
@@ -66,12 +59,12 @@ const initializeDirection = () => {
   const savedLang = localStorage.getItem('language');
   const initialLng = savedLang || 'en';
   const initialDir = initialLng === 'ar' ? 'rtl' : 'ltr';
-  
+
   console.log('🚀 Initializing with:', { initialLng, initialDir });
-  
+
   document.documentElement.setAttribute('dir', initialDir);
   document.documentElement.setAttribute('lang', initialLng);
-  
+
   if (initialDir === 'rtl') {
     document.documentElement.classList.add('rtl');
     document.documentElement.classList.remove('ltr');
@@ -79,7 +72,7 @@ const initializeDirection = () => {
     document.documentElement.classList.add('ltr');
     document.documentElement.classList.remove('rtl');
   }
-  
+
   return initialLng;
 };
 

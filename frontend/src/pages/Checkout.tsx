@@ -1,532 +1,437 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Paper,
-  Grid,
-  Button,
-  Box,
-  CircularProgress,
-  Alert,
-  Stepper,
-  Step,
-  StepLabel,
-  FormControl,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField
+  Container, Typography, Box, Paper, Stepper, Step, StepLabel,
+  Grid, TextField, Button, Divider, Card, CardMedia, RadioGroup,
+  FormControlLabel, Radio, CircularProgress, InputLabel, FormControl, Select, MenuItem
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { format, isSameDay, startOfMonth, endOfMonth } from 'date-fns';
-import { useAuth } from '../context/AuthContext';
-import { appointmentService } from '../services/appointmentService';
-import { Availability, TimeSlot } from '../types/appointment';
+import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { sendOrderEmails, generateOrderId } from '../services/orderService';
+import { productApi } from '../services/api';
 
-const steps = ['Choose Date & Time', 'Confirm Details'];
+// Format price in Tunisian Dinar
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat('tn-TN', {
+    style: 'currency',
+    currency: 'TND',
+    currencyDisplay: 'code',
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3
+  }).format(price).replace('TND', 'DT').trim();
+};
 
-const consultationTypes = [
-  { value: 'consultation', label: 'General Consultation' },
-  { value: 'design', label: 'Design Session' },
-  { value: 'fitting', label: 'Fitting Appointment' },
-  { value: 'custom', label: 'Custom Request' }
-];
+// Delivery fee constant (must match Cart.tsx)
+const DELIVERY_FEE = 8;
 
-const BookAppointment: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+const steps = ['shippingInfo', 'paymentMethod', 'reviewOrder'];
+
+interface CartItemWithImage {
+  _id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  category?: string;
+  imageUrl?: string;
+}
+
+const Checkout: React.FC = () => {
+  const { t } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [availability, setAvailability] = useState<Availability[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [loading, setLoading] = useState(false);
-  const [bookingDialog, setBookingDialog] = useState(false);
-  const [consultationType, setConsultationType] = useState('consultation');
-  const [notes, setNotes] = useState('');
-  const [phone, setPhone] = useState('');
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [loadingImages, setLoadingImages] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [cartItemsWithImages, setCartItemsWithImages] = useState<CartItemWithImage[]>([]);
+  const { cart, cartTotal, clearCart } = useCart();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
 
+  // Calculate total with delivery
+  const totalWithDelivery = cartTotal + DELIVERY_FEE;
+
+  const [shippingInfo, setShippingInfo] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    address: '',
+    city: '',
+    zipCode: '',
+    country: 'TN'
+  });
+
+  const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery'); // Default to cash on delivery
+
+  // Fetch product images for cart items
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
+    const fetchProductImages = async () => {
+      if (cart.length === 0) return;
+
+      setLoadingImages(true);
+      try {
+        const productPromises = cart.map(async (item) => {
+          try {
+            const response = await productApi.get(`/products/${item._id}`);
+            const product = response.data.product;
+            return {
+              ...item,
+              imageUrl: product.images?.[0] || null
+            };
+          } catch (error) {
+            console.error(`Error fetching product ${item._id}:`, error);
+            return {
+              ...item,
+              imageUrl: null
+            };
+          }
+        });
+
+        const itemsWithImages = await Promise.all(productPromises);
+        setCartItemsWithImages(itemsWithImages);
+      } catch (error) {
+        console.error('Error fetching product images:', error);
+      } finally {
+        setLoadingImages(false);
+      }
+    };
+
+    if (activeStep === 2) { // Only fetch images when reaching review step
+      fetchProductImages();
     }
-  }, [isAuthenticated, navigate]);
+  }, [activeStep, cart]);
 
-  // Fetch availability when month changes
-  useEffect(() => {
-    fetchAvailabilityForMonth();
-  }, [currentMonth]);
+  const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setShippingInfo({
+      ...shippingInfo,
+      [e.target.name]: e.target.value
+    });
+  };
 
-  // Update current month when selected date changes
-  useEffect(() => {
-    if (
-      selectedDate.getMonth() !== currentMonth.getMonth() ||
-      selectedDate.getFullYear() !== currentMonth.getFullYear()
-    ) {
-      setCurrentMonth(selectedDate);
-    }
-  }, [selectedDate]);
-
-  const fetchAvailabilityForMonth = async () => {
-    setLoading(true);
-    try {
-      const firstDay = startOfMonth(currentMonth);
-      const lastDay = endOfMonth(currentMonth);
-
-      const startDate = format(firstDay, 'yyyy-MM-dd');
-      const endDate = format(lastDay, 'yyyy-MM-dd');
-
-      console.log(' Fetching availability for month:', {
-        month: format(currentMonth, 'MMMM yyyy'),
-        startDate,
-        endDate
-      });
-
-      const data = await appointmentService.getAvailability(startDate, endDate);
-      console.log(' Availability data received:', data);
-      setAvailability(data);
-    } catch (error) {
-      console.error(' Error fetching availability:', error);
-      toast.error('Failed to load availability');
-    } finally {
-      setLoading(false);
-    }
+  const handleCountryChange = (e: any) => {
+    setShippingInfo({
+      ...shippingInfo,
+      country: e.target.value
+    });
   };
 
   const handleNext = () => {
+    // Validate shipping info on step 0
     if (activeStep === 0) {
-      if (!selectedSlot) {
-        toast.error('Please select a time slot');
+      if (!shippingInfo.firstName || !shippingInfo.lastName || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.zipCode) {
+        toast.error(t('checkout.fillShippingInfo'));
         return;
       }
-      setActiveStep(1);
     }
+    setActiveStep((prev) => prev + 1);
   };
 
   const handleBack = () => {
-    setActiveStep(0);
+    setActiveStep((prev) => prev - 1);
   };
 
-  const handleSlotSelect = (slot: TimeSlot) => {
-    console.log(' Selected slot:', slot);
-    setSelectedSlot(slot);
-  };
-
-  const handleBookAppointment = async () => {
-    if (!user) {
-      toast.error('You must be logged in');
-      navigate('/login');
-      return;
-    }
-
-    if (!selectedSlot) {
-      toast.error('No time slot selected');
-      setBookingDialog(false);
-      return;
-    }
-
-    console.log(' Starting booking process...');
-
+  const handlePlaceOrder = async () => {
     setLoading(true);
+    
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        toast.error('Session expired. Please login again.');
-        navigate('/login');
-        return;
-      }
-
-      const bookingData = {
-        date: format(selectedDate, 'yyyy-MM-dd'),
-        timeSlot: selectedSlot.time,
-        consultationType,
-        notes,
-        customerPhone: phone,
-        customerName: `${user.firstName} ${user.lastName}`
+      const orderId = generateOrderId();
+      const orderData = {
+        items: cartItemsWithImages.length > 0 ? cartItemsWithImages : cart,
+        shippingInfo: {
+          ...shippingInfo,
+          paymentMethod
+        },
+        cartTotal: totalWithDelivery, // Send total with delivery
+        subtotal: cartTotal, // Also send subtotal separately
+        deliveryFee: DELIVERY_FEE,
+        orderId,
+        orderDate: new Date().toISOString()
       };
 
-      console.log(' Sending booking data:', bookingData);
-
-      const response = await appointmentService.bookAppointment(bookingData);
-
-      console.log(' Booking successful:', response);
-      toast.success('Appointment booked successfully! Check your email for confirmation.');
-
-      // Reset everything
-      setBookingDialog(false);
-      setActiveStep(0);
-      setSelectedSlot(null);
-      setConsultationType('consultation');
-      setNotes('');
-      setPhone('');
-
-      // Navigate to appointments page
-      navigate('/appointments');
-    } catch (error: any) {
-      console.error(' Booking error:', error);
-
-      if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
-        navigate('/login');
-      } else if (error.response?.status === 400) {
-        toast.error(error.response.data.error || 'Invalid booking data');
-      } else {
-        toast.error(error.response?.data?.error || 'Failed to book appointment');
-      }
+      await sendOrderEmails(orderData);
+      toast.success(t('checkout.orderSuccess'));
+      clearCart();
+      setOrderPlaced(true);
+    } catch (error) {
+      console.error('Order placement error:', error);
+      toast.error(t('checkout.orderError'));
     } finally {
       setLoading(false);
     }
   };
 
-  const getSlotsForDate = (date: Date): TimeSlot[] => {
-    const dayAvailability = availability.find((a) =>
-      isSameDay(new Date(a.date), date)
-    );
-    return dayAvailability?.slots || [];
-  };
-
-  const openBookingDialog = () => {
-    if (!selectedSlot) {
-      toast.error('Please select a time slot first');
-      return;
-    }
-    setBookingDialog(true);
-  };
-
-  const handleMonthChange = (newDate: Date | null) => {
-    if (newDate) {
-      setCurrentMonth(newDate);
-    }
-  };
-
-  const slotsForSelectedDate = getSlotsForDate(selectedDate);
-
   if (!isAuthenticated) {
-    return null;
+    return (
+      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+        <Typography variant="h4" gutterBottom>{t('checkout.loginRequired')}</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          {t('checkout.loginToContinue')}
+        </Typography>
+        <Button component={Link} to="/login" variant="contained" size="large">
+          {t('auth.login')}
+        </Button>
+      </Container>
+    );
   }
 
+  if (cart.length === 0 && !orderPlaced) {
+    return (
+      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+        <Typography variant="h4" gutterBottom>{t('cart.empty')}</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          {t('checkout.emptyCartMessage')}
+        </Typography>
+        <Button component={Link} to="/products" variant="contained" size="large">
+          {t('cart.continueShopping')}
+        </Button>
+      </Container>
+    );
+  }
+
+  if (orderPlaced) {
+    return (
+      <Container maxWidth="md" sx={{ py: 8, textAlign: 'center' }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h3" gutterBottom sx={{ color: 'success.main' }}>
+            ✓ {t('checkout.orderPlaced')}
+          </Typography>
+          <Typography variant="h5" gutterBottom>
+            {t('checkout.thankYou')}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+            {t('checkout.confirmationEmail')}
+          </Typography>
+        </Box>
+        <Button component={Link} to="/products" variant="contained" size="large" sx={{ mr: 2 }}>
+          {t('cart.continueShopping')}
+        </Button>
+        <Button component={Link} to="/" variant="outlined" size="large">
+          {t('nav.home')}
+        </Button>
+      </Container>
+    );
+  }
+
+  const getStepContent = (step: number) => {
+    switch (step) {
+      case 0:
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField 
+                required 
+                fullWidth 
+                name="firstName" 
+                label={t('checkout.firstName')} 
+                value={shippingInfo.firstName} 
+                onChange={handleShippingChange} 
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField 
+                required 
+                fullWidth 
+                name="lastName" 
+                label={t('checkout.lastName')} 
+                value={shippingInfo.lastName} 
+                onChange={handleShippingChange} 
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField 
+                required 
+                fullWidth 
+                name="email" 
+                label={t('checkout.email')} 
+                type="email" 
+                value={shippingInfo.email} 
+                onChange={handleShippingChange} 
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField 
+                required 
+                fullWidth 
+                name="address" 
+                label={t('checkout.address')} 
+                value={shippingInfo.address} 
+                onChange={handleShippingChange} 
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField 
+                required 
+                fullWidth 
+                name="city" 
+                label={t('checkout.city')} 
+                value={shippingInfo.city} 
+                onChange={handleShippingChange} 
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField 
+                required 
+                fullWidth 
+                name="zipCode" 
+                label={t('checkout.postalCode')} 
+                value={shippingInfo.zipCode} 
+                onChange={handleShippingChange} 
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth required>
+                <InputLabel id="country-label">{t('checkout.country')}</InputLabel>
+                <Select 
+                  labelId="country-label" 
+                  value={shippingInfo.country} 
+                  label={t('checkout.country')} 
+                  onChange={handleCountryChange}
+                >
+                  <MenuItem value="TN">{t('countries.tunisia')}</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        );
+
+      case 1:
+        return (
+          <Box>
+            <Typography variant="h6" gutterBottom>{t('checkout.paymentMethod')}</Typography>
+            <RadioGroup value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              <FormControlLabel 
+                value="cash_on_delivery" 
+                control={<Radio />} 
+                label={t('checkout.cashOnDelivery')} 
+              />
+            </RadioGroup>
+          </Box>
+        );
+
+      case 2:
+        return (
+          <Box>
+            <Typography variant="h6" gutterBottom>{t('checkout.reviewOrder')}</Typography>
+            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+              {loadingImages ? (
+                <Box display="flex" justifyContent="center" py={2}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                (cartItemsWithImages.length > 0 ? cartItemsWithImages : cart).map((item, index) => {
+                  const imageUrl = 'imageUrl' in item ? (item as CartItemWithImage).imageUrl : null;
+                  
+                  return (
+                    <Box key={item._id}>
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={2}>
+                          <Card sx={{ height: 50, width: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {imageUrl ? (
+                              <CardMedia
+                                component="img"
+                                height="50"
+                                width="50"
+                                image={imageUrl}
+                                alt={item.name}
+                                sx={{ objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                {t('product.noImage')}
+                              </Typography>
+                            )}
+                          </Card>
+                        </Grid>
+                        <Grid item xs={5}>
+                          <Typography variant="body2">{item.name}</Typography>
+                        </Grid>
+                        <Grid item xs={2}>
+                          <Typography variant="body2">{t('cart.quantity')} {item.quantity}</Typography>
+                        </Grid>
+                        <Grid item xs={3}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {formatPrice(item.price * item.quantity)}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                      {index < cart.length - 1 && <Divider sx={{ my: 2 }} />}
+                    </Box>
+                  );
+                })
+              )}
+            </Paper>
+            
+            {/* Subtotal and Delivery */}
+            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+              <Box display="flex" justifyContent="space-between" mb={1}>
+                <Typography variant="body2">{t('cart.subtotal')}</Typography>
+                <Typography variant="body2" fontWeight={500}>{formatPrice(cartTotal)}</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between" mb={1}>
+                <Typography variant="body2">{t('cart.shipping')}</Typography>
+                <Typography variant="body2" fontWeight={500}>{formatPrice(DELIVERY_FEE)}</Typography>
+              </Box>
+              <Divider sx={{ my: 1 }} />
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="subtitle1" fontWeight={600}>{t('cart.total')}</Typography>
+                <Typography variant="subtitle1" fontWeight={700} color="primary.main">
+                  {formatPrice(totalWithDelivery)}
+                </Typography>
+              </Box>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom fontWeight={600}>
+                {t('checkout.shippingInfo')}
+              </Typography>
+              <Typography variant="body2">{shippingInfo.firstName} {shippingInfo.lastName}</Typography>
+              <Typography variant="body2">{shippingInfo.address}</Typography>
+              <Typography variant="body2">{shippingInfo.city}, {shippingInfo.zipCode}</Typography>
+              <Typography variant="body2">
+                {shippingInfo.country === 'TN' ? t('countries.tunisia') : shippingInfo.country}
+              </Typography>
+            </Paper>
+          </Box>
+        );
+      default: return '';
+    }
+  };
+
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/cart')} sx={{ mb: 3 }}>
+        {t('checkout.backToCart')}
+      </Button>
+      <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom align="center">
-          Book an Appointment with Voidstone Studio
+          {t('checkout.title')}
         </Typography>
-
-        <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 4 }}>
-          Schedule a consultation with our design team (Weekdays 10AM – 4PM)
-        </Typography>
-
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+        <Stepper activeStep={activeStep} sx={{ my: 4 }}>
           {steps.map((label) => (
             <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+              <StepLabel>{t(`checkout.${label}`)}</StepLabel>
             </Step>
           ))}
         </Stepper>
-
-        {/* Step 1: Choose Date & Time */}
-        {activeStep === 0 && (
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Select Date
-                </Typography>
-                <DatePicker
-                  label="Date"
-                  value={selectedDate}
-                  onChange={(newDate) => newDate && setSelectedDate(newDate)}
-                  onMonthChange={handleMonthChange}
-                  slotProps={{ textField: { fullWidth: true } }}
-                  minDate={new Date()}
-                />
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Showing availability for {format(currentMonth, 'MMMM yyyy')}
-                  </Typography>
-                </Box>
-              </Paper>
-            </Grid>
-
-            <Grid item xs={12} md={8}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Available Time Slots for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-                </Typography>
-
-                {loading ? (
-                  <Box display="flex" justifyContent="center" py={4}>
-                    <CircularProgress />
-                  </Box>
-                ) : (
-                  <>
-                    {slotsForSelectedDate.length > 0 ? (
-                      <Grid container spacing={1}>
-                        {slotsForSelectedDate.map((slot, index) => (
-                          <Grid item xs={6} sm={4} md={3} key={index}>
-                            <Button
-                              variant={
-                                selectedSlot?.time === slot.time ? 'contained' : 'outlined'
-                              }
-                              color={slot.isAvailable ? 'primary' : 'error'}
-                              disabled={!slot.isAvailable}
-                              fullWidth
-                              onClick={() => slot.isAvailable && handleSlotSelect(slot)}
-                              sx={{ py: 1 }}
-                            >
-                              {slot.time}
-                            </Button>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    ) : (
-                      <Alert severity="info" sx={{ mt: 2 }}>
-                        {availability.length === 0
-                          ? `No availability found for ${format(
-                              currentMonth,
-                              'MMMM yyyy'
-                            )}. Please try another month.`
-                          : `No available slots for ${format(
-                              selectedDate,
-                              'MMMM d, yyyy'
-                            )}. Please select another date.`}
-                      </Alert>
-                    )}
-
-                    {availability.length > 0 && (
-                      <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                        <Typography variant="body2" color="text.secondary">
-                           Available this month: {availability.length} days with appointments
-                        </Typography>
-                      </Box>
-                    )}
-                  </>
-                )}
-              </Paper>
-            </Grid>
-          </Grid>
-        )}
-
-        {/* Step 2: Confirm Details */}
-        {activeStep === 1 && selectedSlot && (
-          <Paper sx={{ p: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Confirm Your Appointment
-            </Typography>
-
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Designer
-                </Typography>
-                <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                  Voidstone Studio Design Team
-                </Typography>
-
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
-                  Date & Time
-                </Typography>
-                <Typography variant="body1">
-                  {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-                </Typography>
-                <Typography variant="body1" color="primary" sx={{ fontWeight: 600 }}>
-                  {selectedSlot.time}
-                </Typography>
-
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
-                  Consultation Type
-                </Typography>
-                <FormControl fullWidth sx={{ mt: 1 }}>
-                  <Select
-                    value={consultationType}
-                    onChange={(e) => setConsultationType(e.target.value)}
-                  >
-                    {consultationTypes.map((type) => (
-                      <MenuItem key={type.value} value={type.value}>
-                        {type.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Your Information
-                </Typography>
-                <Typography variant="body1">
-                  {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {user?.email}
-                </Typography>
-
-                <TextField
-                  fullWidth
-                  label="Phone Number (Optional)"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  margin="normal"
-                  placeholder="+216 XX XXX XXX"
-                />
-
-                <TextField
-                  fullWidth
-                  label="Notes (Optional)"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  margin="normal"
-                  multiline
-                  rows={3}
-                  placeholder="Any special requests or information for the design team"
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        )}
-
-        {/* Navigation Buttons - Using the same pattern as Cart */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between', 
-          gap: 2,
-          mt: 4 
-        }}>
-          <Button 
-            onClick={handleBack} 
-            disabled={activeStep === 0}
-            variant="outlined"
-            sx={{ width: { xs: '100%', sm: 'auto' } }}
-          >
-            Back
+        <Box sx={{ mt: 4, mb: 2 }}>{getStepContent(activeStep)}</Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+          <Button onClick={handleBack} disabled={activeStep === 0}>
+            {t('checkout.back')}
           </Button>
-
           {activeStep === steps.length - 1 ? (
-            <Button
-              variant="contained"
-              onClick={openBookingDialog}
-              disabled={loading || !selectedSlot}
-              sx={{ 
-                width: { xs: '100%', sm: 'auto' },
-                // This will be black in light mode, white in dark mode
-                bgcolor: 'text.primary',
-                color: 'background.paper',
-                '&:hover': { 
-                  bgcolor: 'text.secondary'
-                }
-              }}
-            >
-              Book Appointment
+            <Button variant="contained" onClick={handlePlaceOrder} disabled={loading}>
+              {loading ? <CircularProgress size={24} /> : `${t('checkout.placeOrder')} (${formatPrice(totalWithDelivery)})`}
             </Button>
           ) : (
-            <Button
-              variant="contained"
-              onClick={handleNext}
-              disabled={!selectedSlot}
-              sx={{ 
-                width: { xs: '100%', sm: 'auto' },
-                // This will be black in light mode, white in dark mode
-                bgcolor: 'text.primary',
-                color: 'background.paper',
-                '&:hover': { 
-                  bgcolor: 'text.secondary'
-                }
-              }}
-            >
-              Next
+            <Button variant="contained" onClick={handleNext}>
+              {t('checkout.continue')}
             </Button>
           )}
         </Box>
-
-        {/* Confirmation Dialog - Using the same pattern as Cart */}
-        <Dialog
-          open={bookingDialog}
-          onClose={() => setBookingDialog(false)}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              bgcolor: 'background.paper',
-            }
-          }}
-        >
-          <DialogTitle>Confirm Booking</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1" gutterBottom>
-              Are you sure you want to book this appointment?
-            </Typography>
-            <Box sx={{ 
-              mt: 2, 
-              p: 2, 
-              bgcolor: 'background.default', 
-              borderRadius: 1,
-              border: 1,
-              borderColor: 'divider'
-            }}>
-              <Typography>
-                <strong>Designer:</strong> Voidstone Studio Design Team
-              </Typography>
-              <Typography>
-                <strong>Date:</strong> {selectedDate && format(selectedDate, 'MMMM d, yyyy')}
-              </Typography>
-              <Typography>
-                <strong>Time:</strong> {selectedSlot?.time}
-              </Typography>
-              <Typography>
-                <strong>Type:</strong>{' '}
-                {consultationTypes.find((t) => t.value === consultationType)?.label}
-              </Typography>
-              {notes && (
-                <Typography>
-                  <strong>Notes:</strong> {notes}
-                </Typography>
-              )}
-              {phone && (
-                <Typography>
-                  <strong>Phone:</strong> {phone}
-                </Typography>
-              )}
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ p: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
-            <Button 
-              onClick={() => setBookingDialog(false)} 
-              disabled={loading}
-              variant="outlined"
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleBookAppointment}
-              variant="contained"
-              disabled={loading}
-              sx={{ 
-                width: { xs: '100%', sm: 'auto' },
-                // This will be black in light mode, white in dark mode
-                bgcolor: 'text.primary',
-                color: 'background.paper',
-                '&:hover': { 
-                  bgcolor: 'text.secondary'
-                }
-              }}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Confirm Booking'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
-    </LocalizationProvider>
+      </Paper>
+    </Container>
   );
 };
 
-export default BookAppointment;
+export default Checkout;

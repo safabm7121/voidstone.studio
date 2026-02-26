@@ -49,11 +49,11 @@ const ForgotPassword: React.FC = () => {
     <Container maxWidth="sm" className="auth-page" sx={{ mt: 8 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" align="center" gutterBottom>
-          {t('auth.forgotPassword')}
+          {t('forgot Password')}
         </Typography>
         
         <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-          {t('auth.forgotPasswordInstructions')}
+          {t('forgot Password Instructions')}
         </Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

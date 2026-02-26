@@ -29,18 +29,20 @@ import { appointmentService } from '../services/appointmentService';
 import { Availability, TimeSlot } from '../types/appointment';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
-const steps = ['Choose Date & Time', 'Confirm Details'];
+const steps = ['step1', 'step2'];
 
 const consultationTypes = [
-  { value: 'consultation', label: 'General Consultation' },
-  { value: 'design', label: 'Design Session' },
-  { value: 'fitting', label: 'Fitting Appointment' },
-  { value: 'custom', label: 'Custom Request' }
+  { value: 'consultation', label: 'consultation' },
+  { value: 'design', label: 'design' },
+  { value: 'fitting', label: 'fitting' },
+  { value: 'custom', label: 'custom' }
 ];
 
 const BookAppointment: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -95,7 +97,7 @@ const BookAppointment: React.FC = () => {
       setAvailability(data);
     } catch (error) {
       console.error(' Error fetching availability:', error);
-      toast.error('Failed to load availability');
+      toast.error(t('appointments.loadError') || 'Failed to load availability');
     } finally {
       setLoading(false);
     }
@@ -104,7 +106,7 @@ const BookAppointment: React.FC = () => {
   const handleNext = () => {
     if (activeStep === 0) {
       if (!selectedSlot) {
-        toast.error('Please select a time slot');
+        toast.error(t('appointments.selectSlotError') || 'Please select a time slot');
         return;
       }
       setActiveStep(1);
@@ -122,13 +124,13 @@ const BookAppointment: React.FC = () => {
 
   const handleBookAppointment = async () => {
     if (!user) {
-      toast.error('You must be logged in');
+      toast.error(t('appointments.loginRequired') || 'You must be logged in');
       navigate('/login');
       return;
     }
 
     if (!selectedSlot) {
-      toast.error('No time slot selected');
+      toast.error(t('appointments.noSlotSelected') || 'No time slot selected');
       setBookingDialog(false);
       return;
     }
@@ -139,7 +141,7 @@ const BookAppointment: React.FC = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        toast.error('Session expired. Please login again.');
+        toast.error(t('appointments.sessionExpired') || 'Session expired. Please login again.');
         navigate('/login');
         return;
       }
@@ -158,7 +160,7 @@ const BookAppointment: React.FC = () => {
       const response = await appointmentService.bookAppointment(bookingData);
 
       console.log(' Booking successful:', response);
-      toast.success('Appointment booked successfully! Check your email for confirmation.');
+      toast.success(t('appointments.bookingSuccess') || 'Appointment booked successfully! Check your email for confirmation.');
 
       // Reset everything
       setBookingDialog(false);
@@ -174,12 +176,12 @@ const BookAppointment: React.FC = () => {
       console.error(' Booking error:', error);
 
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        toast.error(t('appointments.sessionExpired') || 'Session expired. Please login again.');
         navigate('/login');
       } else if (error.response?.status === 400) {
-        toast.error(error.response.data.error || 'Invalid booking data');
+        toast.error(error.response.data.error || t('appointments.invalidData') || 'Invalid booking data');
       } else {
-        toast.error(error.response?.data?.error || 'Failed to book appointment');
+        toast.error(error.response?.data?.error || t('appointments.bookingError') || 'Failed to book appointment');
       }
     } finally {
       setLoading(false);
@@ -195,7 +197,7 @@ const BookAppointment: React.FC = () => {
 
   const openBookingDialog = () => {
     if (!selectedSlot) {
-      toast.error('Please select a time slot first');
+      toast.error(t('appointments.selectSlotFirst') || 'Please select a time slot first');
       return;
     }
     setBookingDialog(true);
@@ -217,17 +219,17 @@ const BookAppointment: React.FC = () => {
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h4" gutterBottom align="center">
-          Book an Appointment with Voidstone Studio
+          {t('appointments.title')}
         </Typography>
 
         <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 4 }}>
-          Schedule a consultation with our design team (Weekdays 10AM – 4PM)
+          {t('appointments.subtitle')}
         </Typography>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+          {steps.map((step) => (
+            <Step key={step}>
+              <StepLabel>{t(`appointments.${step}`)}</StepLabel>
             </Step>
           ))}
         </Stepper>
@@ -238,10 +240,10 @@ const BookAppointment: React.FC = () => {
             <Grid item xs={12} md={4}>
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Select Date
+                  {t('appointments.selectDate')}
                 </Typography>
                 <DatePicker
-                  label="Date"
+                  label={t('appointments.date')}
                   value={selectedDate}
                   onChange={(newDate) => newDate && setSelectedDate(newDate)}
                   onMonthChange={handleMonthChange}
@@ -250,7 +252,7 @@ const BookAppointment: React.FC = () => {
                 />
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Showing availability for {format(currentMonth, 'MMMM yyyy')}
+                    {t('appointments.showingAvailability', { month: format(currentMonth, 'MMMM yyyy') })}
                   </Typography>
                 </Box>
               </Paper>
@@ -259,7 +261,7 @@ const BookAppointment: React.FC = () => {
             <Grid item xs={12} md={8}>
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Available Time Slots for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                  {t('appointments.availableSlots', { date: format(selectedDate, 'EEEE, MMMM d, yyyy') })}
                 </Typography>
 
                 {loading ? (
@@ -290,21 +292,15 @@ const BookAppointment: React.FC = () => {
                     ) : (
                       <Alert severity="info" sx={{ mt: 2 }}>
                         {availability.length === 0
-                          ? `No availability found for ${format(
-                              currentMonth,
-                              'MMMM yyyy'
-                            )}. Please try another month.`
-                          : `No available slots for ${format(
-                              selectedDate,
-                              'MMMM d, yyyy'
-                            )}. Please select another date.`}
+                          ? t('appointments.noAvailabilityMonth', { month: format(currentMonth, 'MMMM yyyy') })
+                          : t('appointments.noSlotsDate', { date: format(selectedDate, 'MMMM d, yyyy') })}
                       </Alert>
                     )}
 
                     {availability.length > 0 && (
                       <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
                         <Typography variant="body2" color="text.secondary">
-                           Available this month: {availability.length} days with appointments
+                          {t('appointments.availableDays', { count: availability.length })}
                         </Typography>
                       </Box>
                     )}
@@ -319,20 +315,20 @@ const BookAppointment: React.FC = () => {
         {activeStep === 1 && selectedSlot && (
           <Paper sx={{ p: 4 }}>
             <Typography variant="h6" gutterBottom>
-              Confirm Your Appointment
+              {t('appointments.confirmDetails')}
             </Typography>
 
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Designer
+                  {t('appointments.designer')}
                 </Typography>
                 <Typography variant="body1" gutterBottom sx={{ fontWeight: 600 }}>
-                  Voidstone Studio Design Team
+                  {t('appointments.designTeam')}
                 </Typography>
 
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
-                  Date & Time
+                  {t('appointments.dateTime')}
                 </Typography>
                 <Typography variant="body1">
                   {format(selectedDate, 'EEEE, MMMM d, yyyy')}
@@ -342,7 +338,7 @@ const BookAppointment: React.FC = () => {
                 </Typography>
 
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
-                  Consultation Type
+                  {t('appointments.consultationType')}
                 </Typography>
                 <FormControl fullWidth sx={{ mt: 1 }}>
                   <Select
@@ -351,7 +347,7 @@ const BookAppointment: React.FC = () => {
                   >
                     {consultationTypes.map((type) => (
                       <MenuItem key={type.value} value={type.value}>
-                        {type.label}
+                        {t(`appointments.${type.label}`)}
                       </MenuItem>
                     ))}
                   </Select>
@@ -360,7 +356,7 @@ const BookAppointment: React.FC = () => {
 
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Your Information
+                  {t('appointments.yourInformation')}
                 </Typography>
                 <Typography variant="body1">
                   {user?.firstName} {user?.lastName}
@@ -371,7 +367,7 @@ const BookAppointment: React.FC = () => {
 
                 <TextField
                   fullWidth
-                  label="Phone Number (Optional)"
+                  label={t('appointments.phoneOptional')}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   margin="normal"
@@ -380,13 +376,13 @@ const BookAppointment: React.FC = () => {
 
                 <TextField
                   fullWidth
-                  label="Notes (Optional)"
+                  label={t('appointments.notesOptional')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   margin="normal"
                   multiline
                   rows={3}
-                  placeholder="Any special requests or information for the design team"
+                  placeholder={t('appointments.notesPlaceholder')}
                 />
               </Grid>
             </Grid>
@@ -407,7 +403,7 @@ const BookAppointment: React.FC = () => {
             variant="outlined"
             sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
-            Back
+            {t('common.back')}
           </Button>
 
           {activeStep === steps.length - 1 ? (
@@ -422,7 +418,7 @@ const BookAppointment: React.FC = () => {
                 width: { xs: '100%', sm: 'auto' }
               }}
             >
-              Book Appointment
+              {t('appointments.book')}
             </Button>
           ) : (
             <Button
@@ -436,7 +432,7 @@ const BookAppointment: React.FC = () => {
                 width: { xs: '100%', sm: 'auto' }
               }}
             >
-              Next
+              {t('common.next')}
             </Button>
           )}
         </Box>
@@ -453,10 +449,10 @@ const BookAppointment: React.FC = () => {
             }
           }}
         >
-          <DialogTitle>Confirm Booking</DialogTitle>
+          <DialogTitle>{t('appointments.confirmBooking')}</DialogTitle>
           <DialogContent>
             <Typography variant="body1" gutterBottom>
-              Are you sure you want to book this appointment?
+              {t('appointments.confirmMessage')}
             </Typography>
             <Box sx={{ 
               mt: 2, 
@@ -467,26 +463,26 @@ const BookAppointment: React.FC = () => {
               borderColor: 'divider'
             }}>
               <Typography>
-                <strong>Designer:</strong> Voidstone Studio Design Team
+                <strong>{t('appointments.designer')}:</strong> {t('appointments.designTeam')}
               </Typography>
               <Typography>
-                <strong>Date:</strong> {selectedDate && format(selectedDate, 'MMMM d, yyyy')}
+                <strong>{t('appointments.date')}:</strong> {selectedDate && format(selectedDate, 'MMMM d, yyyy')}
               </Typography>
               <Typography>
-                <strong>Time:</strong> {selectedSlot?.time}
+                <strong>{t('appointments.time')}:</strong> {selectedSlot?.time}
               </Typography>
               <Typography>
-                <strong>Type:</strong>{' '}
-                {consultationTypes.find((t) => t.value === consultationType)?.label}
+                <strong>{t('appointments.type')}:</strong>{' '}
+                {t(`appointments.${consultationTypes.find((t) => t.value === consultationType)?.label}`)}
               </Typography>
               {notes && (
                 <Typography>
-                  <strong>Notes:</strong> {notes}
+                  <strong>{t('appointments.notes')}:</strong> {notes}
                 </Typography>
               )}
               {phone && (
                 <Typography>
-                  <strong>Phone:</strong> {phone}
+                  <strong>{t('appointments.phone')}:</strong> {phone}
                 </Typography>
               )}
             </Box>
@@ -498,7 +494,7 @@ const BookAppointment: React.FC = () => {
               variant="outlined"
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleBookAppointment}
@@ -511,7 +507,7 @@ const BookAppointment: React.FC = () => {
                 width: { xs: '100%', sm: 'auto' }
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Confirm Booking'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t('appointments.confirmBooking')}
             </Button>
           </DialogActions>
         </Dialog>

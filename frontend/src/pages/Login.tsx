@@ -63,7 +63,7 @@ const Login: React.FC = () => {
                 }
               }}
             >
-              {t('auth.forgotPassword')}
+              {t('forgot Password')}
             </Link>
           </Box>
 

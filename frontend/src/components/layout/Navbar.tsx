@@ -21,9 +21,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 
 const languages = [
-  { code: 'en', name: 'English', flag: 'en', dir: 'ltr' },
-  { code: 'fr', name: 'Français', flag: 'fr', dir: 'ltr' },
-  { code: 'ar', name: 'العربية', flag: 'ar', dir: 'rtl' },
+  { code: 'en', name: 'English', flag: '🇬🇧', dir: 'ltr' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷', dir: 'ltr' },
+  { code: 'ar', name: 'العربية', flag: '🇹🇳', dir: 'rtl' },
+  { code: 'ko', name: '한국어', flag: '🇰🇷', dir: 'ltr' },
 ];
 
 const Navbar: React.FC = () => {
@@ -142,7 +143,7 @@ const Navbar: React.FC = () => {
           <>
             <Divider sx={{ my: 1 }} />
             <Typography variant="caption" sx={{ px: 2, color: 'text.secondary', display: 'block' }}>
-              Appointments
+              {t('nav.appointments')}
             </Typography>
             <ListItem 
               component={Link} 
@@ -155,7 +156,7 @@ const Navbar: React.FC = () => {
               <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
                 <BookOnlineIcon />
               </ListItemIcon>
-              <ListItemText primary="Book Appointment" sx={{ color: 'text.primary' }} />
+              <ListItemText primary={t('nav.bookAppointment')} sx={{ color: 'text.primary' }} />
             </ListItem>
             <ListItem 
               component={Link} 
@@ -168,7 +169,7 @@ const Navbar: React.FC = () => {
               <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
                 <CalendarTodayIcon />
               </ListItemIcon>
-              <ListItemText primary="My Appointments" sx={{ color: 'text.primary' }} />
+              <ListItemText primary={t('nav.myAppointments')} sx={{ color: 'text.primary' }} />
             </ListItem>
           </>
         )}
@@ -176,7 +177,7 @@ const Navbar: React.FC = () => {
           <>
             <Divider sx={{ my: 1 }} />
             <Typography variant="caption" sx={{ px: 2, color: 'text.secondary', display: 'block' }}>
-              Admin
+              {t('nav.admin')}
             </Typography>
             <ListItem 
               component={Link} 
@@ -189,7 +190,7 @@ const Navbar: React.FC = () => {
               <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
                 <AdminPanelSettingsIcon />
               </ListItemIcon>
-              <ListItemText primary="Admin Dashboard" sx={{ color: 'text.primary' }} />
+              <ListItemText primary={t('nav.adminDashboard')} sx={{ color: 'text.primary' }} />
             </ListItem>
             <ListItem 
               component={Link} 
@@ -268,7 +269,7 @@ const Navbar: React.FC = () => {
                   maxWidth: { xs: 100, sm: 150, md: 180, lg: 'none' },
                 }}
               >
-                VOIDSTONE STUDIO
+                {t('nav.brand')}
               </Typography>
             </Box>
 
@@ -309,7 +310,7 @@ const Navbar: React.FC = () => {
                       minWidth: 'auto',
                     }}
                   >
-                    {getResponsiveText('Book Appointment', 'Book', 'Book')}
+                    {getResponsiveText(t('nav.bookAppointment'), t('nav.book'), t('nav.book'))}
                   </Button>
                   <Button 
                     component={Link} 
@@ -321,7 +322,7 @@ const Navbar: React.FC = () => {
                       minWidth: 'auto',
                     }}
                   >
-                    {getResponsiveText('My Appointments', 'Appts', 'My Appts')}
+                    {getResponsiveText(t('nav.myAppointments'), t('nav.appts'), t('nav.myAppts'))}
                   </Button>
                 </>
               )}
@@ -338,7 +339,7 @@ const Navbar: React.FC = () => {
                       minWidth: 'auto',
                     }}
                   >
-                    {getResponsiveText('Create Product', 'Create', 'Create')}
+                    {getResponsiveText(t('nav.createProduct'), t('nav.create'), t('nav.create'))}
                   </Button>
                   <Button 
                     component={Link} 
@@ -350,7 +351,7 @@ const Navbar: React.FC = () => {
                       minWidth: 'auto',
                     }}
                   >
-                    {getResponsiveText('Admin Dashboard', 'Admin', 'Admin')}
+                    {getResponsiveText(t('nav.adminDashboard'), t('nav.admin'), t('nav.admin'))}
                   </Button>
                 </>
               )}
@@ -389,7 +390,7 @@ const Navbar: React.FC = () => {
                     color="inherit"
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
-                    Book
+                    {t('nav.book')}
                   </Button>
                   <Button 
                     component={Link} 
@@ -397,7 +398,7 @@ const Navbar: React.FC = () => {
                     color="inherit"
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
-                    Appts
+                    {t('nav.appts')}
                   </Button>
                 </>
               )}
@@ -410,7 +411,7 @@ const Navbar: React.FC = () => {
                     color="inherit"
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
-                    Create
+                    {t('nav.create')}
                   </Button>
                   <Button 
                     component={Link} 
@@ -418,7 +419,7 @@ const Navbar: React.FC = () => {
                     color="inherit"
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
-                    Admin
+                    {t('nav.admin')}
                   </Button>
                 </>
               )}
@@ -545,7 +546,7 @@ const Navbar: React.FC = () => {
                     </MenuItem>
                     <Divider />
                     <MenuItem component={Link} to="/profile" onClick={handleUserMenuClose}>
-                      Profile
+                      {t('nav.profile')}
                     </MenuItem>
                     <MenuItem onClick={handleLogout}>
                       {t('nav.logout')}

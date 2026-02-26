@@ -26,7 +26,7 @@ import {
   Divider,
   Avatar
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles'; // ADD THIS IMPORT
+import { useTheme } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ImageIcon from '@mui/icons-material/Image';
@@ -39,6 +39,7 @@ import { useAuth } from '../context/AuthContext';
 import { profileService, ProfileData } from '../services/profileService';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import '../styles/profile.css';
 
 interface TabPanelProps {
@@ -64,9 +65,10 @@ const formatFileSize = (bytes: number): string => {
 };
 
 const Profile: React.FC = () => {
-  const theme = useTheme(); // ADD THIS LINE
-  const mode = theme.palette.mode; // ADD THIS LINE
+  const theme = useTheme();
+  const mode = theme.palette.mode;
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [tabValue, setTabValue] = useState(0);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -129,7 +131,7 @@ const Profile: React.FC = () => {
       setEducation(data.profile.education || []);
     } catch (error: any) {
       console.error('Error fetching profile:', error);
-      toast.error('Failed to load profile');
+      toast.error(t('profile.loadError') || 'Failed to load profile');
     } finally {
       setLoading(false);
     }
@@ -146,10 +148,10 @@ const Profile: React.FC = () => {
       });
       setProfile(updated.profile);
       setEditMode(false);
-      toast.success('Profile updated');
+      toast.success(t('profile.updateSuccess') || 'Profile updated');
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error(error.response?.data?.error || 'Failed to update profile');
+      toast.error(error.response?.data?.error || t('profile.updateError') || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -174,17 +176,17 @@ const Profile: React.FC = () => {
             url: base64,
             size: file.size
           });
-          toast.success(`${file.name} uploaded`);
+          toast.success(`${file.name} ${t('profile.uploaded')}`);
           fetchProfile(); // refresh
         } catch (error: any) {
           console.error('❌ Upload error details:', error.response?.data || error.message);
-          const errorMsg = error.response?.data?.error || error.message || 'Failed to upload';
-          toast.error(`Failed to upload ${file.name}: ${errorMsg}`);
+          const errorMsg = error.response?.data?.error || error.message || t('profile.uploadError');
+          toast.error(`${t('profile.uploadFailed')} ${file.name}: ${errorMsg}`);
         }
       };
       reader.readAsDataURL(file);
     });
-  }, []);
+  }, [t]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -198,13 +200,13 @@ const Profile: React.FC = () => {
   });
 
   const handleDeleteFile = async (fileId: string) => {
-    if (!window.confirm('Are you sure you want to delete this file?')) return;
+    if (!window.confirm(t('profile.confirmDelete'))) return;
     try {
       await profileService.deleteFile(fileId);
-      toast.success('File deleted');
+      toast.success(t('profile.deleteSuccess'));
       fetchProfile();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete file');
+      toast.error(error.response?.data?.error || t('profile.deleteError'));
     }
   };
 
@@ -250,12 +252,12 @@ const Profile: React.FC = () => {
           </Box>
           {!editMode ? (
             <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditMode(true)}>
-              Edit Profile
+              {t('profile.editProfile')}
             </Button>
           ) : (
             <Box>
               <Button variant="contained" onClick={handleSaveProfile} disabled={loading} sx={{ mr: 1 }}>
-                Save
+                {t('common.save')}
               </Button>
               <Button variant="outlined" onClick={() => {
                 setEditMode(false);
@@ -267,15 +269,15 @@ const Profile: React.FC = () => {
                   setEducation(profile.education || []);
                 }
               }}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </Box>
           )}
         </Box>
 
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ mb: 2 }}>
-          <Tab label="Profile Info" />
-          <Tab label="CV & Portfolio" />
+          <Tab label={t('profile.tabs.info')} />
+          <Tab label={t('profile.tabs.files')} />
         </Tabs>
 
         {/* Tab 1: Profile Info */}
@@ -284,19 +286,19 @@ const Profile: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Bio"
+                label={t('profile.bio')}
                 multiline
                 rows={4}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 disabled={!editMode}
-                placeholder="Tell us about yourself, your experience, and your design philosophy..."
+                placeholder={t('profile.bioPlaceholder')}
               />
             </Grid>
 
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>
-                Skills
+                {t('profile.skills')}
               </Typography>
               {editMode ? (
                 <>
@@ -305,7 +307,7 @@ const Profile: React.FC = () => {
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyDown={handleAddSkill}
-                    placeholder="Type a skill and press Enter (e.g., Fashion Design, Sketching)"
+                    placeholder={t('profile.skillsPlaceholder')}
                   />
                   <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {skills.map(skill => (
@@ -321,14 +323,14 @@ const Profile: React.FC = () => {
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {skills.length > 0 ? skills.map(skill => (
                     <Chip key={skill} label={skill} />
-                  )) : <Typography color="text.secondary">No skills added</Typography>}
+                  )) : <Typography color="text.secondary">{t('profile.noSkills')}</Typography>}
                 </Box>
               )}
             </Grid>
 
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>
-                Experience
+                {t('profile.experience')}
               </Typography>
               {editMode && (
                 <Button
@@ -336,7 +338,7 @@ const Profile: React.FC = () => {
                   onClick={() => setExpDialog({ open: true, editIndex: -1, data: { title: '', company: '', years: '', description: '' } })}
                   sx={{ mb: 2 }}
                 >
-                  Add Experience
+                  {t('profile.addExperience')}
                 </Button>
               )}
               <List>
@@ -350,20 +352,20 @@ const Profile: React.FC = () => {
                       )}
                     >
                       <ListItemText
-                        primary={`${exp.title} at ${exp.company}`}
+                        primary={`${exp.title} ${t('profile.at')} ${exp.company}`}
                         secondary={`${exp.years} · ${exp.description || ''}`}
                       />
                     </ListItem>
                     {index < experience.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
-                {experience.length === 0 && <Typography color="text.secondary">No experience added</Typography>}
+                {experience.length === 0 && <Typography color="text.secondary">{t('profile.noExperience')}</Typography>}
               </List>
             </Grid>
 
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>
-                Education
+                {t('profile.education')}
               </Typography>
               {editMode && (
                 <Button
@@ -371,7 +373,7 @@ const Profile: React.FC = () => {
                   onClick={() => setEduDialog({ open: true, editIndex: -1, data: { degree: '', institution: '', year: '' } })}
                   sx={{ mb: 2 }}
                 >
-                  Add Education
+                  {t('profile.addEducation')}
                 </Button>
               )}
               <List>
@@ -385,14 +387,14 @@ const Profile: React.FC = () => {
                       )}
                     >
                       <ListItemText
-                        primary={`${edu.degree} at ${edu.institution}`}
+                        primary={`${edu.degree} ${t('profile.at')} ${edu.institution}`}
                         secondary={edu.year}
                       />
                     </ListItem>
                     {index < education.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
-                {education.length === 0 && <Typography color="text.secondary">No education added</Typography>}
+                {education.length === 0 && <Typography color="text.secondary">{t('profile.noEducation')}</Typography>}
               </List>
             </Grid>
           </Grid>
@@ -418,16 +420,16 @@ const Profile: React.FC = () => {
                 <input {...getInputProps()} />
                 <CloudUploadIcon sx={{ fontSize: 48, color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : '#ccc', mb: 2 }} />
                 <Typography>
-                  {isDragActive ? 'Drop files here...' : 'Drag & drop files or click to upload'}
+                  {isDragActive ? t('profile.dropFiles') : t('profile.dragDrop')}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Supports: Images, PDF, DOC, DOCX (Max 10MB each)
+                  {t('profile.fileSupport')}
                 </Typography>
               </Box>
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>Uploaded Files</Typography>
+              <Typography variant="h6" gutterBottom>{t('profile.uploadedFiles')}</Typography>
               {profile?.files && profile.files.length > 0 ? (
                 <Grid container spacing={2}>
                   {profile.files.map((file) => (
@@ -476,7 +478,7 @@ const Profile: React.FC = () => {
                   ))}
                 </Grid>
               ) : (
-                <Alert severity="info">No files uploaded yet.</Alert>
+                <Alert severity="info">{t('profile.noFiles')}</Alert>
               )}
             </Grid>
           </Grid>
@@ -485,7 +487,7 @@ const Profile: React.FC = () => {
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>File Preview</DialogTitle>
+        <DialogTitle>{t('profile.preview')}</DialogTitle>
         <DialogContent>
           {previewFile && (
             previewFile.url.startsWith('data:image') ? (
@@ -504,39 +506,39 @@ const Profile: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+          <Button onClick={() => setPreviewOpen(false)}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
 
       {/* Experience Dialog */}
       <Dialog open={expDialog.open} onClose={() => setExpDialog({ ...expDialog, open: false })} maxWidth="sm" fullWidth>
-        <DialogTitle>{expDialog.editIndex === -1 ? 'Add Experience' : 'Edit Experience'}</DialogTitle>
+        <DialogTitle>{expDialog.editIndex === -1 ? t('profile.addExperience') : t('profile.editExperience')}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Title"
+            label={t('profile.title')}
             value={expDialog.data.title}
             onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, title: e.target.value } })}
             margin="normal"
           />
           <TextField
             fullWidth
-            label="Company"
+            label={t('profile.company')}
             value={expDialog.data.company}
             onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, company: e.target.value } })}
             margin="normal"
           />
           <TextField
             fullWidth
-            label="Years"
+            label={t('profile.years')}
             value={expDialog.data.years}
             onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, years: e.target.value } })}
             margin="normal"
-            placeholder="e.g., 2020-2023 or 3 years"
+            placeholder={t('profile.yearsPlaceholder')}
           />
           <TextField
             fullWidth
-            label="Description"
+            label={t('profile.description')}
             multiline
             rows={3}
             value={expDialog.data.description || ''}
@@ -545,7 +547,7 @@ const Profile: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setExpDialog({ ...expDialog, open: false })}>Cancel</Button>
+          <Button onClick={() => setExpDialog({ ...expDialog, open: false })}>{t('common.cancel')}</Button>
           <Button onClick={() => {
             if (expDialog.editIndex === -1) {
               setExperience([...experience, expDialog.data]);
@@ -556,39 +558,39 @@ const Profile: React.FC = () => {
             }
             setExpDialog({ open: false, editIndex: -1, data: { title: '', company: '', years: '', description: '' } });
           }} variant="contained">
-            Save
+            {t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Education Dialog */}
       <Dialog open={eduDialog.open} onClose={() => setEduDialog({ ...eduDialog, open: false })} maxWidth="sm" fullWidth>
-        <DialogTitle>{eduDialog.editIndex === -1 ? 'Add Education' : 'Edit Education'}</DialogTitle>
+        <DialogTitle>{eduDialog.editIndex === -1 ? t('profile.addEducation') : t('profile.editEducation')}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Degree"
+            label={t('profile.degree')}
             value={eduDialog.data.degree}
             onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, degree: e.target.value } })}
             margin="normal"
           />
           <TextField
             fullWidth
-            label="Institution"
+            label={t('profile.institution')}
             value={eduDialog.data.institution}
             onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, institution: e.target.value } })}
             margin="normal"
           />
           <TextField
             fullWidth
-            label="Year"
+            label={t('profile.year')}
             value={eduDialog.data.year}
             onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, year: e.target.value } })}
             margin="normal"
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEduDialog({ ...eduDialog, open: false })}>Cancel</Button>
+          <Button onClick={() => setEduDialog({ ...eduDialog, open: false })}>{t('common.cancel')}</Button>
           <Button onClick={() => {
             if (eduDialog.editIndex === -1) {
               setEducation([...education, eduDialog.data]);
@@ -599,7 +601,7 @@ const Profile: React.FC = () => {
             }
             setEduDialog({ open: false, editIndex: -1, data: { degree: '', institution: '', year: '' } });
           }} variant="contained">
-            Save
+            {t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

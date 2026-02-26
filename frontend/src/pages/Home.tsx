@@ -85,7 +85,7 @@ const Home: React.FC = () => {
           
           {/* Admin Edit Button - Only visible to admin */}
           {isAdmin && (
-            <Tooltip title="Edit Hero Image">
+            <Tooltip title={t('home.editHero')}>
               <IconButton
                 className="hero-edit-button"
                 onClick={() => setUploadDialogOpen(true)}
@@ -108,13 +108,13 @@ const Home: React.FC = () => {
                   variant="h1"
                   className="hero-title"
                 >
-                  Voidstone Studio
+                  {t('home.title')}
                 </Typography>
                 <Typography
                   variant="h2"
                   className="hero-subtitle"
                 >
-                  Luxury fashion with a dark aesthetic. Handcrafted pieces for the modern individual.
+                  {t('home.subtitle')}
                 </Typography>
                 <Button
                   component={Link}
@@ -123,7 +123,7 @@ const Home: React.FC = () => {
                   size="large"
                   className="hero-button"
                 >
-                  Explore Collection
+                  {t('home.explore')}
                 </Button>
               </motion.div>
             </div>
