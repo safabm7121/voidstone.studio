@@ -952,3 +952,98 @@ div[class*="container"] {
 body.mouse-moved::after {
   opacity: 0.8 !important;
 }
+/* ========== AUTH PAGES SPACING FIXES ========== */
+.auth-page .MuiTypography-h4 {
+  margin-bottom: 32px !important;
+}
+
+.auth-page .MuiTextField-root {
+  margin-bottom: 24px !important;
+  position: relative !important;
+}
+
+.auth-page .MuiInputLabel-root {
+  position: relative !important;
+  transform: none !important;
+  margin-bottom: 8px !important;
+  font-size: 1rem !important;
+}
+
+.auth-page .MuiInputBase-root {
+  margin-top: 0 !important;
+}
+
+.auth-page .MuiOutlinedInput-root {
+  margin-top: 8px !important;
+}
+
+.auth-page .MuiFormControl-root {
+  margin-bottom: 24px !important;
+}
+
+.auth-page .MuiPaper-root {
+  padding: 40px 32px !important;
+}
+
+.auth-page .MuiAlert-root {
+  margin-bottom: 24px !important;
+}
+
+.auth-page .MuiButton-root {
+  margin-top: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+.auth-page .MuiBox-root:last-child {
+  margin-top: 16px !important;
+}
+
+.auth-page .MuiFormHelperText-root {
+  margin-top: 4px !important;
+}
+
+/* Fix for the overlapping label issue */
+.auth-page .MuiFormControl-root {
+  position: relative !important;
+  padding-top: 20px !important;
+}
+
+.auth-page .MuiInputLabel-root {
+  position: static !important;
+  transform: none !important;
+  display: block !important;
+  margin-bottom: 8px !important;
+  color: rgba(0, 0, 0, 0.6) !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="dark"] .auth-page .MuiInputLabel-root {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.auth-page .MuiInputLabel-root.Mui-focused {
+  color: #000 !important;
+}
+
+[data-theme="dark"] .auth-page .MuiInputLabel-root.Mui-focused {
+  color: #fff !important;
+}
+
+.auth-page .MuiInputLabel-root.Mui-error {
+  color: #d32f2f !important;
+}
+
+.auth-page .MuiOutlinedInput-root {
+  margin-top: 0 !important;
+  width: 100% !important;
+}
+
+/* Remove the default Material-UI label animation/positioning */
+.auth-page .MuiInputLabel-outlined {
+  position: static !important;
+  transform: none !important;
+}
+
+.auth-page .MuiInputLabel-outlined.MuiInputLabel-shrink {
+  transform: none !important;
+}

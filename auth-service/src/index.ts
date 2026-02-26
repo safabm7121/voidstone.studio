@@ -19,7 +19,7 @@ import {
     hashPassword, comparePasswords, generateToken,
     generateRefreshToken, generateVerificationCode, verifyToken
 } from './utils/helpers';
-import { sendVerificationEmail } from './utils/emailService';
+import { sendVerificationEmail, sendPasswordResetEmail } from './utils/emailService';
 
 dotenv.config();
 
@@ -298,26 +298,27 @@ app.post('/api/auth/forgot-password', async (req: Request, res: Response) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            // Return success even if user doesn't exist (security best practice)
+            return res.json({ message: 'If an account exists with this email, a password reset code has been sent' });
         }
 
         const resetCode = generateVerificationCode();
         user.resetPasswordCode = resetCode;
-        user.resetPasswordExpires = new Date(Date.now() + 3600000);
+        user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
         await user.save();
 
         console.log(`🔑 Password reset code for ${email}: ${resetCode}`);
 
         // Send reset code via email
         try {
-            // You'll need to create a sendPasswordResetEmail function
-            // await sendPasswordResetEmail(email, resetCode, user.firstName);
-            console.log(`✅ Password reset email would be sent to ${email}`);
+            await sendPasswordResetEmail(email, resetCode, user.firstName);
+            console.log(`✅ Password reset email sent to ${email}`);
         } catch (emailError) {
             console.error(`❌ Failed to send password reset email:`, emailError);
+            // Still return success to prevent email enumeration
         }
 
-        res.json({ message: 'Password reset code sent to email' });
+        res.json({ message: 'If an account exists with this email, a password reset code has been sent' });
     } catch (error) {
         console.error('❌ Forgot password error:', error);
         res.status(500).json({ error: 'Internal server error' });

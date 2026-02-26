@@ -23,16 +23,63 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h4" align="center" gutterBottom>{t('auth.login')}</Typography>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+    <Container maxWidth="sm" className="auth-page" >
+      <Paper elevation={3}>
+        <Typography variant="h4" align="center" gutterBottom>
+          {t('auth.login')}
+        </Typography>
+        
+        {error && <Alert severity="error">{error}</Alert>}
+        
         <Box component="form" onSubmit={handleSubmit}>
-          <TextField fullWidth label={t('auth.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" required />
-          <TextField fullWidth label={t('auth.password')} type="password" value={password} onChange={(e) => setPassword(e.target.value)} margin="normal" required />
-          <Button type="submit" fullWidth variant="contained" size="large" sx={{ mt: 3, mb: 2 }}>{t('auth.login')}</Button>
+          <TextField 
+            fullWidth 
+            label={t('auth.email')} 
+            type="email" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+          />
+          
+          <TextField 
+            fullWidth 
+            label={t('auth.password')} 
+            type="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
+
+          <Box textAlign="right">
+            <Link 
+              component={RouterLink} 
+              to="/forgot-password" 
+              variant="body2"
+              sx={{ 
+                color: 'primary.main',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline'
+                }
+              }}
+            >
+              {t('auth.forgotPassword')}
+            </Link>
+          </Box>
+
+          <Button 
+            type="submit" 
+            fullWidth 
+            variant="contained" 
+            size="large"
+          >
+            {t('auth.login')}
+          </Button>
+          
           <Box textAlign="center">
-            <Link component={RouterLink} to="/register" variant="body2">{t('auth.noAccount')}</Link>
+            <Link component={RouterLink} to="/register" variant="body2">
+              {t('auth.noAccount')}
+            </Link>
           </Box>
         </Box>
       </Paper>

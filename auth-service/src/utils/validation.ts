@@ -6,12 +6,12 @@ export const registerSchema = Joi.object({
         'any.required': 'Email is required'
     }),
     password: Joi.string().min(8).required().pattern(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
-).messages({
-    'string.min': 'Password must be at least 8 characters long',
-    'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-    'any.required': 'Password is required'
-}),
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/
+    ).messages({
+        'string.min': 'Password must be at least 8 characters long',
+        'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+        'any.required': 'Password is required'
+    }),
     firstName: Joi.string().required().min(2).max(50).messages({
         'string.min': 'First name must be at least 2 characters long',
         'string.max': 'First name cannot exceed 50 characters',
@@ -47,7 +47,7 @@ export const resetPasswordSchema = Joi.object({
     email: Joi.string().email().required(),
     code: Joi.string().length(8).required(),
     newPassword: Joi.string().min(8).required().pattern(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/
     ).messages({
         'string.min': 'Password must be at least 8 characters long',
         'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number'

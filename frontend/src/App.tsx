@@ -12,7 +12,8 @@ import { CartProvider } from './context/CartContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Layout from './components/layout/Layout';
 import { MouseTracker } from './components/common/MouseTracker';
-
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 // Lazy load pages
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
@@ -31,14 +32,15 @@ const AdminAppointments = React.lazy(() => import('./pages/AdminAppointments'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 
 // Styles
+// Styles
 import './i18n';
 import './styles/theme.css';
-import './styles/global.css';
 import './styles/animation.css';
 import './styles/parallax.css';
 import './styles/home.css';
 import './styles/profile.css';
 import 'react-toastify/dist/ReactToastify.css';
+import './styles/global.css';  
 
 function App() {
   const { i18n } = useTranslation();
@@ -167,6 +169,8 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password" element={<ResetPassword />} />
 
                   {/* Protected routes with Layout */}
                   <Route path="/" element={<Layout />}>

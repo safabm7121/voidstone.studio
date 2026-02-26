@@ -24,7 +24,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
+    <Container maxWidth="sm" className="auth-page" sx={{ mt: 8 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" align="center" gutterBottom>{t('auth.register')}</Typography>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

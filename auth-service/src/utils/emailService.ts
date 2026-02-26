@@ -29,7 +29,7 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
   }
 
   const mailOptions = {
-    from: `"Voidstone Studio" <${process.env.EMAIL_USER}>`, //  Uses voidstonestudio@gmail.com
+    from: `"Voidstone Studio" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Verify Your Voidstone Studio Account',
     html: `
@@ -97,6 +97,79 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
       });
     }
     
+    throw error;
+  }
+};
+
+// NEW: Send password reset email
+export const sendPasswordResetEmail = async (email: string, code: string, firstName: string) => {
+  // Validate environment variables
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
+    throw new Error('Email configuration missing');
+  }
+
+  const mailOptions = {
+    from: `"Voidstone Studio" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: 'Reset Your Voidstone Studio Password',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Inter', Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .header { background: black; padding: 30px; text-align: center; }
+          .header h1 { color: white; margin: 0; font-weight: 600; letter-spacing: 2px; }
+          .content { padding: 40px 30px; text-align: center; }
+          .content h2 { color: #333; margin-bottom: 20px; }
+          .code { background: #f0f0f0; padding: 20px; border-radius: 8px; font-size: 36px; letter-spacing: 8px; font-weight: 600; margin: 30px 0; color: black; }
+          .footer { background: #f9f9f9; padding: 20px; text-align: center; color: #666; font-size: 14px; }
+          .button { background: black; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 20px; }
+          .warning { color: #dc3545; font-size: 14px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>VOIDSTONE STUDIO</h1>
+          </div>
+          <div class="content">
+            <h2>Password Reset Request</h2>
+            <p>Hello ${firstName},</p>
+            <p>We received a request to reset your password. Please use the verification code below:</p>
+            <div class="code">${code}</div>
+            <p>This code will expire in 1 hour.</p>
+            <p>Or click the button below to reset your password:</p>
+            <a href="http://localhost:5173/reset-password?email=${encodeURIComponent(email)}&code=${code}" class="button">Reset Password</a>
+            <p class="warning">If you didn't request this, please ignore this email and ensure your account is secure.</p>
+          </div>
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} Voidstone Studio. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `
+      Hello ${firstName},
+      
+      We received a request to reset your password. Your verification code is: ${code}
+      
+      This code will expire in 1 hour.
+      
+      If you didn't request this, please ignore this email and ensure your account is secure.
+    `,
+  };
+
+  try {
+    console.log(`📧 Attempting to send password reset email to ${email}...`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Password reset email sent to ${email}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error sending password reset email:', error);
     throw error;
   }
 };
