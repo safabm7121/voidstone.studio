@@ -1,3 +1,8 @@
+/* ========== FONT IMPORTS ========== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
+
 /* ========== RESET & BASE ========== */
 *,
 *::before,
@@ -9,9 +14,10 @@
 
 html {
   scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;   /* macOS Safari/Chrome */
-  -moz-osx-font-smoothing: grayscale;    /* macOS Firefox */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -22,11 +28,6 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* ========== FONT IMPORTS ========== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
-
 /* Arabic font override */
 [lang="ar"] body,
 [lang="ar"] button,
@@ -35,195 +36,253 @@ body {
   font-family: 'Cairo', 'Tajawal', 'Inter', sans-serif !important;
 }
 
-/* ========== ROOT FONT SIZES - PERFECT FOR ALL DEVICES ========== */
+/* ========== ROOT FONT SIZES ========== */
 :root {
-  /* Base font sizes for different device categories */
-  --font-size-xs: 0.75rem;   /* 12px at 16px base */
-  --font-size-sm: 0.875rem;  /* 14px */
-  --font-size-base: 1rem;     /* 16px */
-  --font-size-lg: 1.125rem;   /* 18px */
-  --font-size-xl: 1.25rem;    /* 20px */
-  --font-size-2xl: 1.5rem;    /* 24px */
-  --font-size-3xl: 2rem;      /* 32px */
-  --font-size-4xl: 2.5rem;    /* 40px */
-  --font-size-5xl: 3rem;      /* 48px */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+  --font-size-4xl: 2.5rem;
+  --font-size-5xl: 3rem;
+  
+  /* Mouse trail grid settings */
+  --grid-size: 50px;
+  --mouse-x: 0.5;
+  --mouse-y: 0.5;
+  --mouse-x-percent: 0;
+  --mouse-y-percent: 0;
+  --mouse-x-px: 50%;
+  --mouse-y-px: 50%;
 }
 
 html {
-  font-size: 14px; /* Base for smallest phones */
+  font-size: 14px;
 }
 
-/* iPhone SE / small phones (320px - 374px) */
-@media (min-width: 320px) {
-  html { font-size: 14px; }
+/* Responsive font sizes */
+@media (min-width: 320px) { html { font-size: 14px; } }
+@media (min-width: 375px) { html { font-size: 14.5px; } }
+@media (min-width: 425px) { html { font-size: 15px; } }
+@media (min-width: 576px) { html { font-size: 15.5px; } }
+@media (min-width: 768px) { html { font-size: 16px; } }
+@media (min-width: 835px) { html { font-size: 16.5px; } }
+@media (min-width: 1024px) { html { font-size: 16px; } }
+@media (min-width: 1200px) { html { font-size: 16px; } }
+@media (min-width: 1440px) { html { font-size: 17px; } }
+@media (min-width: 1920px) { html { font-size: 18px; } }
+@media (min-width: 2560px) { html { font-size: 20px; } }
+
+/* ========== MOUSE EFFECTS - BEHIND EVERYTHING ========== */
+
+/* Background darken effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle 400px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 60%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  mix-blend-mode: multiply;
 }
 
-/* iPhone 12/13/14 / medium phones (375px - 424px) */
-@media (min-width: 375px) {
-  html { font-size: 14.5px; }
+[data-theme="dark"] body::before {
+  background: radial-gradient(
+    circle 400px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: screen;
 }
 
-/* Large phones (425px - 575px) */
-@media (min-width: 425px) {
-  html { font-size: 15px; }
+body.mouse-moved::before {
+  opacity: 1;
 }
 
-/* Tablets (576px - 767px) */
-@media (min-width: 576px) {
-  html { font-size: 15.5px; }
+/* Grid trail effect */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  pointer-events: none;
+  z-index: -2;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  -webkit-mask-image: radial-gradient(
+    circle 250px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
+    black 40%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    circle 250px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
+    black 40%,
+    transparent 100%
+  );
 }
 
-/* Small tablets & iPad Mini (768px - 834px) */
-@media (min-width: 768px) {
-  html { font-size: 16px; }
+[data-theme="dark"] body::after {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
 }
 
-/* iPad Air & large tablets (835px - 1023px) */
-@media (min-width: 835px) {
-  html { font-size: 16.5px; }
+body.mouse-moved::after {
+  opacity: 1;
 }
 
-/* Small laptops & iPad Pro 11" (1024px - 1199px) */
-@media (min-width: 1024px) {
-  html { font-size: 16px; }
+/* Glow effect */
+.mouse-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle 250px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -3;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  mix-blend-mode: overlay;
 }
 
-/* Desktop & iPad Pro 12.9" (1200px - 1439px) */
-@media (min-width: 1200px) {
-  html { font-size: 16px; }
+[data-theme="dark"] .mouse-glow {
+  background: radial-gradient(
+    circle 300px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 80%
+  );
 }
 
-/* Large desktop (1440px - 1919px) */
-@media (min-width: 1440px) {
-  html { font-size: 17px; }
+.mouse-glow.visible {
+  opacity: 1;
 }
 
-/* Ultra-wide desktop (1920px+) */
-@media (min-width: 1920px) {
-  html { font-size: 18px; }
+/* Touch devices - disable effects */
+@media (hover: none) and (pointer: coarse) {
+  body::before,
+  body::after,
+  .mouse-glow {
+    display: none !important;
+  }
 }
 
-/* 4K and above (2560px+) */
-@media (min-width: 2560px) {
-  html { font-size: 20px; }
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after,
+  .mouse-glow {
+    transition: none !important;
+  }
 }
 
-/* ========== CONTAINER SYSTEM - PERFECT PADDING FOR ALL DEVICES ========== */
+/* ========== TOAST NOTIFICATIONS FIX ========== */
+.Toastify__toast-container {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 80px !important; /* Position below navbar */
+  pointer-events: none !important;
+}
+
+.Toastify__toast {
+  pointer-events: auto !important;
+  margin-top: 10px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  border-radius: 8px !important;
+}
+
+/* Dark mode toast adjustments */
+[data-theme="dark"] .Toastify__toast {
+  background-color: #1e1e1e !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .Toastify__toast-body {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .Toastify__progress-bar {
+  background-color: #1976d2 !important;
+}
+
+/* Position based on direction */
+[dir="rtl"] .Toastify__toast-container {
+  left: auto !important;
+  right: 16px !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .Toastify__toast-container {
+    top: 70px !important;
+    width: 90% !important;
+    left: 5% !important;
+    right: 5% !important;
+  }
+}
+
+/* ========== CONTAINER SYSTEM ========== */
 .container,
 .container-limited {
   width: 100%;
   margin: 0 auto;
-  padding-inline: 1rem; /* Base padding */
+  padding-inline: 1rem;
 }
 
 .container-limited {
   max-width: 1280px;
 }
 
-/* iPhone SE (320px) */
-@media (min-width: 320px) {
-  .container,
-  .container-limited {
-    padding-inline: 1rem; /* 16px */
-  }
+@media (min-width: 320px) { .container, .container-limited { padding-inline: 1rem; } }
+@media (min-width: 375px) { .container, .container-limited { padding-inline: 1.25rem; } }
+@media (min-width: 425px) { .container, .container-limited { padding-inline: 1.5rem; } }
+@media (min-width: 576px) { .container, .container-limited { padding-inline: 2rem; } }
+@media (min-width: 768px) { .container, .container-limited { padding-inline: 2.5rem; } }
+@media (min-width: 820px) { .container, .container-limited { padding-inline: 3rem; } }
+@media (min-width: 1024px) { .container, .container-limited { padding-inline: 3.5rem; } }
+@media (min-width: 1200px) { .container, .container-limited { padding-inline: 4rem; } }
+@media (min-width: 1440px) { 
+  .container, .container-limited { padding-inline: 5rem; }
+  .container-limited { max-width: 1440px; }
+}
+@media (min-width: 1920px) { 
+  .container, .container-limited { padding-inline: 6rem; }
+  .container-limited { max-width: 1600px; }
+}
+@media (min-width: 2560px) { 
+  .container, .container-limited { padding-inline: 8rem; }
+  .container-limited { max-width: 2000px; }
 }
 
-/* iPhone 12/13/14 (375px) */
-@media (min-width: 375px) {
-  .container,
-  .container-limited {
-    padding-inline: 1.25rem; /* 20px */
-  }
-}
-
-/* Large phones (425px) */
-@media (min-width: 425px) {
-  .container,
-  .container-limited {
-    padding-inline: 1.5rem; /* 24px */
-  }
-}
-
-/* Tablets (576px) */
-@media (min-width: 576px) {
-  .container,
-  .container-limited {
-    padding-inline: 2rem; /* 32px */
-  }
-}
-
-/* iPad Mini & small tablets (768px) */
-@media (min-width: 768px) {
-  .container,
-  .container-limited {
-    padding-inline: 2.5rem; /* 40px */
-  }
-}
-
-/* iPad Air (820px) */
-@media (min-width: 820px) {
-  .container,
-  .container-limited {
-    padding-inline: 3rem; /* 48px */
-  }
-}
-
-/* Small laptops & iPad Pro 11" (1024px) */
-@media (min-width: 1024px) {
-  .container,
-  .container-limited {
-    padding-inline: 3.5rem; /* 56px */
-  }
-}
-
-/* Desktop & iPad Pro 12.9" (1200px) */
-@media (min-width: 1200px) {
-  .container,
-  .container-limited {
-    padding-inline: 4rem; /* 64px */
-  }
-}
-
-/* Large desktop (1440px) */
-@media (min-width: 1440px) {
-  .container,
-  .container-limited {
-    padding-inline: 5rem; /* 80px */
-  }
-  .container-limited {
-    max-width: 1440px;
-  }
-}
-
-/* Ultra-wide (1920px) */
-@media (min-width: 1920px) {
-  .container,
-  .container-limited {
-    padding-inline: 6rem; /* 96px */
-  }
-  .container-limited {
-    max-width: 1600px;
-  }
-}
-
-/* 4K (2560px) */
-@media (min-width: 2560px) {
-  .container,
-  .container-limited {
-    padding-inline: 8rem; /* 128px */
-  }
-  .container-limited {
-    max-width: 2000px;
-  }
-}
-
-/* ========== GRID SYSTEM - RESPONSIVE FOR ALL DEVICES ========== */
+/* ========== GRID SYSTEM ========== */
 .grid {
   display: grid;
-  gap: 1rem; /* Base gap */
+  gap: 1rem;
 }
 
-/* Gap sizes - responsive */
 @media (min-width: 320px) { .grid { gap: 0.75rem; } }
 @media (min-width: 375px) { .grid { gap: 1rem; } }
 @media (min-width: 425px) { .grid { gap: 1.25rem; } }
@@ -233,7 +292,6 @@ html {
 @media (min-width: 1440px) { .grid { gap: 2.25rem; } }
 @media (min-width: 1920px) { .grid { gap: 2.5rem; } }
 
-/* Grid columns - fully responsive */
 .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
 .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -241,45 +299,27 @@ html {
 .grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
 .grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
 
-/* Ultra small phones (below 375px) */
+/* Responsive grid columns */
 @media (max-width: 374px) {
-  .grid-cols-2,
-  .grid-cols-3,
-  .grid-cols-4,
-  .grid-cols-5,
-  .grid-cols-6 {
+  .grid-cols-2, .grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6 {
     grid-template-columns: 1fr;
   }
 }
-
-/* Small phones (375px - 424px) */
 @media (min-width: 375px) and (max-width: 424px) {
   .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid-cols-3,
-  .grid-cols-4,
-  .grid-cols-5,
-  .grid-cols-6 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6 { grid-template-columns: repeat(2, 1fr); }
 }
-
-/* Medium phones (425px - 575px) */
 @media (min-width: 425px) and (max-width: 575px) {
   .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
   .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid-cols-4,
-  .grid-cols-5,
-  .grid-cols-6 { grid-template-columns: repeat(3, 1fr); }
+  .grid-cols-4, .grid-cols-5, .grid-cols-6 { grid-template-columns: repeat(3, 1fr); }
 }
-
-/* Tablets (576px - 767px) */
 @media (min-width: 576px) and (max-width: 767px) {
   .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
   .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
   .grid-cols-4 { grid-template-columns: repeat(3, 1fr); }
-  .grid-cols-5,
-  .grid-cols-6 { grid-template-columns: repeat(4, 1fr); }
+  .grid-cols-5, .grid-cols-6 { grid-template-columns: repeat(4, 1fr); }
 }
-
-/* iPad Mini & small tablets (768px - 834px) */
 @media (min-width: 768px) and (max-width: 834px) {
   .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
   .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -287,28 +327,20 @@ html {
   .grid-cols-5 { grid-template-columns: repeat(4, 1fr); }
   .grid-cols-6 { grid-template-columns: repeat(4, 1fr); }
 }
-
-/* iPad Air (835px - 1023px) */
 @media (min-width: 835px) and (max-width: 1023px) {
   .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
   .grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
   .grid-cols-6 { grid-template-columns: repeat(5, 1fr); }
 }
-
-/* Small laptops & iPad Pro (1024px - 1199px) */
 @media (min-width: 1024px) and (max-width: 1199px) {
   .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
   .grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
   .grid-cols-6 { grid-template-columns: repeat(5, 1fr); }
 }
-
-/* Desktop (1200px - 1439px) */
 @media (min-width: 1200px) and (max-width: 1439px) {
   .grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
   .grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
 }
-
-/* Large desktop (1440px+) */
 @media (min-width: 1440px) {
   .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
   .grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
@@ -341,7 +373,7 @@ html {
 .flex-nowrap { flex-wrap: nowrap; }
 .flex-wrap-reverse { flex-wrap: wrap-reverse; }
 
-/* Gap utilities - responsive */
+/* Gap utilities */
 .gap-xs { gap: 0.25rem; }
 .gap-sm { gap: 0.5rem; }
 .gap-md { gap: 1rem; }
@@ -364,24 +396,21 @@ html {
   .gap-xl { gap: 2.5rem; }
 }
 
-/* Auto margins – logical */
 .ms-auto { margin-inline-start: auto; }
 .me-auto { margin-inline-end: auto; }
 .mt-auto { margin-top: auto; }
 .mb-auto { margin-bottom: auto; }
 
-/* Responsive flex direction */
 @media (max-width: 767px) {
   .flex-col-mobile { flex-direction: column; }
   .flex-row-mobile { flex-direction: row; }
   [dir="rtl"] .flex-row-mobile { flex-direction: row-reverse; }
 }
 
-/* ========== SPACING UTILITIES - RESPONSIVE ========== */
+/* ========== SPACING UTILITIES ========== */
 .m-0 { margin: 0; }
 .p-0 { padding: 0; }
 
-/* Base spacing with REM units for scalability */
 .m-xs { margin: 0.25rem; }
 .m-sm { margin: 0.5rem; }
 .m-md { margin: 1rem; }
@@ -394,7 +423,6 @@ html {
 .p-lg { padding: 1.5rem; }
 .p-xl { padding: 2rem; }
 
-/* Margin & Padding individual sides */
 .mt-xs { margin-top: 0.25rem; }
 .mt-sm { margin-top: 0.5rem; }
 .mt-md { margin-top: 1rem; }
@@ -419,7 +447,6 @@ html {
 .me-lg { margin-inline-end: 1.5rem; }
 .me-xl { margin-inline-end: 2rem; }
 
-/* Padding individual sides */
 .pt-xs { padding-top: 0.25rem; }
 .pt-sm { padding-top: 0.5rem; }
 .pt-md { padding-top: 1rem; }
@@ -455,7 +482,6 @@ html {
 .text-4xl { font-size: var(--font-size-4xl); }
 .text-5xl { font-size: var(--font-size-5xl); }
 
-/* Responsive typography overrides */
 @media (max-width: 374px) {
   .text-3xl { font-size: 1.75rem; }
   .text-4xl { font-size: 2rem; }
@@ -480,7 +506,6 @@ html {
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
 
-/* Line heights */
 .leading-none { line-height: 1; }
 .leading-tight { line-height: 1.25; }
 .leading-normal { line-height: 1.5; }
@@ -498,14 +523,12 @@ html {
 [dir="rtl"] .text-left { text-align: right; }
 [dir="rtl"] .text-right { text-align: left; }
 
-/* Responsive text alignment */
 @media (max-width: 767px) {
   .text-left-mobile { text-align: left; }
   .text-center-mobile { text-align: center; }
   .text-right-mobile { text-align: right; }
   .text-start-mobile { text-align: start; }
   .text-end-mobile { text-align: end; }
-  
   [dir="rtl"] .text-left-mobile { text-align: right; }
   [dir="rtl"] .text-right-mobile { text-align: left; }
 }
@@ -524,14 +547,12 @@ html {
 .w-max { width: max-content; }
 .w-fit { width: fit-content; }
 
-/* Percentage widths */
 .w-25 { width: 25%; }
 .w-33 { width: 33.333%; }
 .w-50 { width: 50%; }
 .w-66 { width: 66.666%; }
 .w-75 { width: 75%; }
 
-/* Responsive widths */
 @media (max-width: 575px) {
   .w-25-mobile { width: 25%; }
   .w-33-mobile { width: 33.333%; }
@@ -548,7 +569,6 @@ html {
   .w-100-tablet-small { width: 100%; }
 }
 
-/* Max widths */
 .max-w-xs { max-width: 20rem; }
 .max-w-sm { max-width: 24rem; }
 .max-w-md { max-width: 28rem; }
@@ -570,7 +590,6 @@ html {
 .h-max { height: max-content; }
 .h-fit { height: fit-content; }
 
-/* Min heights */
 .min-h-0 { min-height: 0; }
 .min-h-screen { min-height: 100vh; }
 .min-h-50vh { min-height: 50vh; }
@@ -592,7 +611,6 @@ html {
 .bottom-0 { bottom: 0; }
 .left-0 { left: 0; }
 
-/* RTL aware positioning */
 [dir="rtl"] .left-0 { left: auto; right: 0; }
 [dir="rtl"] .right-0 { right: auto; left: 0; }
 
@@ -660,67 +678,46 @@ html {
 }
 
 /* ========== HIDE/SHOW UTILITIES ========== */
-/* Ultra small phones (below 375px) */
 @media (max-width: 374px) {
   .hide-xs { display: none !important; }
   .show-xs { display: block !important; }
 }
-
-/* Small phones (375px - 424px) */
 @media (min-width: 375px) and (max-width: 424px) {
   .hide-sm { display: none !important; }
   .show-sm { display: block !important; }
 }
-
-/* Medium phones (425px - 575px) */
 @media (min-width: 425px) and (max-width: 575px) {
   .hide-md { display: none !important; }
   .show-md { display: block !important; }
 }
-
-/* Tablets (576px - 767px) */
 @media (min-width: 576px) and (max-width: 767px) {
   .hide-tb { display: none !important; }
   .show-tb { display: block !important; }
 }
-
-/* iPad Mini & small tablets (768px - 834px) */
 @media (min-width: 768px) and (max-width: 834px) {
   .hide-ipad-mini { display: none !important; }
   .show-ipad-mini { display: block !important; }
 }
-
-/* iPad Air (835px - 1023px) */
 @media (min-width: 835px) and (max-width: 1023px) {
   .hide-ipad-air { display: none !important; }
   .show-ipad-air { display: block !important; }
 }
-
-/* Small laptops & iPad Pro (1024px - 1199px) */
 @media (min-width: 1024px) and (max-width: 1199px) {
   .hide-laptop { display: none !important; }
   .show-laptop { display: block !important; }
 }
-
-/* Desktop (1200px - 1439px) */
 @media (min-width: 1200px) and (max-width: 1439px) {
   .hide-desktop { display: none !important; }
   .show-desktop { display: block !important; }
 }
-
-/* Large desktop (1440px - 1919px) */
 @media (min-width: 1440px) and (max-width: 1919px) {
   .hide-desktop-large { display: none !important; }
   .show-desktop-large { display: block !important; }
 }
-
-/* Ultra-wide (1920px - 2559px) */
 @media (min-width: 1920px) and (max-width: 2559px) {
   .hide-ultrawide { display: none !important; }
   .show-ultrawide { display: block !important; }
 }
-
-/* 4K (2560px+) */
 @media (min-width: 2560px) {
   .hide-4k { display: none !important; }
   .show-4k { display: block !important; }
@@ -749,11 +746,15 @@ html {
   .no-print {
     display: none !important;
   }
-  
   a[href]::after {
     content: " (" attr(href) ")";
     font-size: 0.9em;
     font-weight: normal;
+  }
+  body::before,
+  body::after,
+  .mouse-glow {
+    display: none !important;
   }
 }
 
@@ -762,20 +763,16 @@ html {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: var(--color-background-paper);
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--color-secondary);
   border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
 }
-
 @media (max-width: 767px) {
   ::-webkit-scrollbar {
     width: 4px;
@@ -792,37 +789,165 @@ html {
   border-color: var(--color-border-dark, var(--color-border));
 }
 
+/* ========== DARK MODE BUTTON FIXES ========== */
+[data-theme="dark"] .MuiButton-containedPrimary {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-theme="dark"] .MuiButton-containedPrimary:hover {
+  background-color: #a8a8a8 !important;
+}
+
+[data-theme="dark"] .MuiButton-outlinedPrimary {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .MuiButton-outlinedPrimary:hover {
+  border-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .MuiButton-textPrimary {
+  color: #90caf9 !important;
+}
+
+[data-theme="dark"] .MuiButton-textPrimary:hover {
+  background-color: rgba(144, 202, 249, 0.08) !important;
+}
+
+[data-theme="dark"] .MuiButton-outlined {
+  border-color: rgba(255, 255, 255, 0.23) !important;
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+[data-theme="dark"] .MuiButton-outlined:hover {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .MuiButton-text {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+[data-theme="dark"] .MuiButton-text:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .MuiButton-root.Mui-disabled {
+  color: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
 /* ========== UTILITY COMPLEMENTS ========== */
-/* Overflow */
 .overflow-hidden { overflow: hidden; }
 .overflow-auto { overflow: auto; }
 .overflow-scroll { overflow: scroll; }
 .overflow-visible { overflow: visible; }
 
-/* Display */
 .block { display: block; }
 .inline-block { display: inline-block; }
 .inline { display: inline; }
 .hidden { display: none; }
 
-/* Object fit */
 .object-cover { object-fit: cover; }
 .object-contain { object-fit: contain; }
 .object-fill { object-fit: fill; }
 .object-scale-down { object-fit: scale-down; }
 .object-none { object-fit: none; }
 
-/* Opacity */
 .opacity-0 { opacity: 0; }
 .opacity-25 { opacity: 0.25; }
 .opacity-50 { opacity: 0.5; }
 .opacity-75 { opacity: 0.75; }
 .opacity-100 { opacity: 1; }
 
-/* Cursor */
 .cursor-pointer { cursor: pointer; }
 .cursor-default { cursor: default; }
 .cursor-not-allowed { cursor: not-allowed; }
 .cursor-wait { cursor: wait; }
 .cursor-text { cursor: text; }
 .cursor-move { cursor: move; }
+
+/* ========== ENSURE MOUSE EFFECTS VISIBLE ON ALL BACKGROUND AREAS ========== */
+
+/* Ensure parallax sections and carousel containers don't block the effects */
+.parallax-section,
+.parallax-scroll,
+.parallax-container,
+.carousel-container,
+.carousel-3d-stage,
+.carousel-orbit,
+.featured-section,
+.story-section,
+.hero-section,
+section,
+div[class*="section"],
+div[class*="container"] {
+  position: relative;
+  background-color: transparent !important;
+  z-index: 1;
+}
+
+/* Make sure the background shows through */
+.parallax-section::before,
+.parallax-scroll::before,
+.carousel-container::before,
+.featured-section::before,
+.story-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Ensure the mouse glow is visible through transparent backgrounds */
+.hero-section,
+.featured-section,
+.story-section {
+  background-color: transparent !important;
+}
+
+/* For dark mode sections that have background colors, make them semi-transparent */
+[data-theme="dark"] .story-section {
+  background-color: rgba(30, 30, 30, 0.95) !important;
+}
+
+/* Carousel specific fixes */
+.carousel-item,
+.carousel-card {
+  background-color: transparent !important;
+}
+
+.carousel-card {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Ensure the 3D carousel doesn't block the background */
+.carousel-3d-stage {
+  transform-style: preserve-3d;
+}
+
+/* Fix for any elements that might have opaque backgrounds */
+.MuiPaper-root,
+.MuiCard-root {
+  background-color: var(--color-background-paper) !important;
+  opacity: 0.98;
+}
+
+/* Make the mouse effects more prominent in these areas */
+.featured-section body.mouse-moved::before,
+.story-section body.mouse-moved::before {
+  opacity: 1 !important;
+}
+
+/* Ensure the grid effect is visible through content */
+body.mouse-moved::after {
+  opacity: 0.8 !important;
+}

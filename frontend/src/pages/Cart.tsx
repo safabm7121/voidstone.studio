@@ -381,22 +381,26 @@ const Cart: React.FC = () => {
               </Typography>
             </Box>
             
-            <Button
-              component={Link}
-              to="/checkout"
-              variant="contained"
-              fullWidth
-              size="large"
-              sx={{ 
-                mb: 2, 
-                py: { xs: 1.2, sm: 1.3, md: 1.5 },
-                bgcolor: 'black',
-                '&:hover': { bgcolor: '#333' },
-                fontSize: { xs: '0.9rem', sm: '1rem' }
-              }}
-            >
-              {t('cart.checkout')} ({formatPrice(totalWithDelivery)})
-            </Button>
+           <Button
+  component={Link}
+  to="/checkout"
+  variant="contained"
+  fullWidth
+  size="large"
+  sx={{ 
+    mb: 2, 
+    py: { xs: 1.2, sm: 1.3, md: 1.5 },
+    // This will be black in light mode, white in dark mode
+    bgcolor: 'text.primary',
+    color: 'background.paper', // This ensures text contrast
+    '&:hover': { 
+      bgcolor: 'text.secondary' // Adapts to dark mode automatically
+    },
+    fontSize: { xs: '0.9rem', sm: '1rem' }
+  }}
+>
+  {t('cart.checkout')} ({formatPrice(totalWithDelivery)})
+</Button>
             
             <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ 
               fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' }

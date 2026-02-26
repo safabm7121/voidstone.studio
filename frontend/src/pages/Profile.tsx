@@ -26,6 +26,7 @@ import {
   Divider,
   Avatar
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles'; // ADD THIS IMPORT
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ImageIcon from '@mui/icons-material/Image';
@@ -63,6 +64,8 @@ const formatFileSize = (bytes: number): string => {
 };
 
 const Profile: React.FC = () => {
+  const theme = useTheme(); // ADD THIS LINE
+  const mode = theme.palette.mode; // ADD THIS LINE
   const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -224,7 +227,16 @@ const Profile: React.FC = () => {
       <Paper elevation={3} sx={{ p: 4 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={4}>
           <Box display="flex" alignItems="center">
-            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', mr: 2, fontSize: '2rem' }}>
+            <Avatar 
+              sx={{ 
+                width: 64, 
+                height: 64, 
+                bgcolor: mode === 'dark' ? 'primary.dark' : 'primary.main',
+                color: mode === 'dark' ? '#000' : '#fff',
+                mr: 2, 
+                fontSize: '2rem' 
+              }}
+            >
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </Avatar>
             <Box>
@@ -394,7 +406,7 @@ const Profile: React.FC = () => {
                 {...getRootProps()}
                 sx={{
                   border: '2px dashed',
-                  borderColor: isDragActive ? 'primary.main' : '#ccc',
+                  borderColor: isDragActive ? 'primary.main' : mode === 'dark' ? 'rgba(255,255,255,0.3)' : '#ccc',
                   borderRadius: 2,
                   p: 4,
                   textAlign: 'center',
@@ -404,7 +416,7 @@ const Profile: React.FC = () => {
                 }}
               >
                 <input {...getInputProps()} />
-                <CloudUploadIcon sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
+                <CloudUploadIcon sx={{ fontSize: 48, color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : '#ccc', mb: 2 }} />
                 <Typography>
                   {isDragActive ? 'Drop files here...' : 'Drag & drop files or click to upload'}
                 </Typography>
@@ -435,13 +447,13 @@ const Profile: React.FC = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              bgcolor: '#f5f5f5'
+                              bgcolor: mode === 'dark' ? '#2d2d2d' : '#f5f5f5'
                             }}
                           >
                             {file.type === 'cv' ? (
                               <PictureAsPdfIcon sx={{ fontSize: 60, color: '#d32f2f' }} />
                             ) : (
-                              <ImageIcon sx={{ fontSize: 60, color: '#999' }} />
+                              <ImageIcon sx={{ fontSize: 60, color: mode === 'dark' ? '#aaa' : '#999' }} />
                             )}
                           </Box>
                         )}

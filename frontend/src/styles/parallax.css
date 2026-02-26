@@ -1,9 +1,10 @@
-/* ========== PARALLAX SECTION STYLES ========== */
+/* ========== PARALLAX SECTION STYLES WITH MOUSE RESPONSIVE MOTION ========== */
 
 .parallax-scroll {
   position: relative;
   overflow: hidden;
   width: 100%;
+  transform-style: preserve-3d;
 }
 
 /* Height classes */
@@ -34,21 +35,34 @@
   min-height: 400px;
 }
 
-/* Background image */
+/* Background image with mouse-responsive parallax */
 .parallax-scroll-bg {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  top: -10%;
+  left: -10%;
+  width: 120%;
   height: 120%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   will-change: transform;
   z-index: 0;
+  transition: transform 0.1s ease-out;
+  transform: translate(
+    calc(var(--mouse-x-percent, 0) * 20px),
+    calc(var(--mouse-y-percent, 0) * 20px)
+  );
 }
 
-/* Overlay */
+/* Mouse follow effect for background */
+.parallax-scroll:hover .parallax-scroll-bg {
+  transform: translate(
+    calc(var(--mouse-x-percent, 0) * 30px),
+    calc(var(--mouse-y-percent, 0) * 30px)
+  );
+}
+
+/* Overlay with mouse-responsive opacity */
 .parallax-scroll-bg.with-overlay::after {
   content: '';
   position: absolute;
@@ -58,9 +72,14 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.4);
   z-index: 1;
+  transition: background 0.3s ease;
 }
 
-/* Content */
+.parallax-scroll:hover .parallax-scroll-bg.with-overlay::after {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Content with 3D tilt effect */
 .parallax-scroll-content {
   position: relative;
   z-index: 2;
@@ -69,16 +88,79 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transform-style: preserve-3d;
+  transition: transform 0.2s ease-out;
+  transform: perspective(1000px) rotateX(calc(var(--mouse-y-percent, 0) * 5deg)) 
+                             rotateY(calc(var(--mouse-x-percent, 0) * -5deg));
 }
 
-/* No image fallback */
+/* Content children with depth */
+.parallax-scroll-content > * {
+  transform: translateZ(30px);
+  transition: transform 0.3s ease;
+}
+
+.parallax-scroll:hover .parallax-scroll-content > * {
+  transform: translateZ(50px);
+}
+
+/* No image fallback with animated gradient */
 .parallax-scroll.no-image {
   background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
 }
 
 /* Dark theme support */
 [data-theme="dark"] .parallax-scroll.no-image {
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
+}
+
+/* Mouse position variables */
+.parallax-scroll {
+  --mouse-x-percent: 0;
+  --mouse-y-percent: 0;
+}
+
+/* Floating elements inside parallax */
+.parallax-float-item {
+  animation: float 6s ease-in-out infinite;
+}
+
+.parallax-float-item:nth-child(2) {
+  animation-delay: -2s;
+}
+
+.parallax-float-item:nth-child(3) {
+  animation-delay: -4s;
+}
+
+/* Text reveal animation on hover */
+.parallax-scroll .reveal-text {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.parallax-scroll:hover .reveal-text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.parallax-scroll .reveal-text:nth-child(2) {
+  transition-delay: 0.1s;
+}
+
+.parallax-scroll .reveal-text:nth-child(3) {
+  transition-delay: 0.2s;
 }
 
 /* Responsive adjustments */
@@ -86,6 +168,15 @@
   .parallax-scroll.height-vh-90,
   .parallax-scroll.height-vh-100 {
     min-height: 500px;
+  }
+  
+  /* Disable intense 3D effects on mobile */
+  .parallax-scroll-content {
+    transform: none !important;
+  }
+  
+  .parallax-scroll-bg {
+    transform: none !important;
   }
 }
 
@@ -108,7 +199,54 @@
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  .parallax-scroll-bg {
+  .parallax-scroll-bg,
+  .parallax-scroll-content,
+  .parallax-scroll.no-image {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+  
+  .parallax-scroll .reveal-text {
     transition: none;
   }
+}
+
+/* Mouse trail effect for parallax */
+.parallax-scroll::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+              rgba(255, 255, 255, 0.1) 0%, 
+              transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: overlay;
+}
+
+.parallax-scroll:hover::before {
+  opacity: 1;
+}
+
+/* 3D card stack effect */
+.parallax-depth-1 { transform: translateZ(20px); }
+.parallax-depth-2 { transform: translateZ(40px); }
+.parallax-depth-3 { transform: translateZ(60px); }
+
+.parallax-scroll:hover .parallax-depth-1 {
+  transform: translateZ(30px);
+}
+
+.parallax-scroll:hover .parallax-depth-2 {
+  transform: translateZ(60px);
+}
+
+.parallax-scroll:hover .parallax-depth-3 {
+  transform: translateZ(90px);
 }

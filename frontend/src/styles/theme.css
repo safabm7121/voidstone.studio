@@ -44,9 +44,21 @@
   --z-index-modal: 1300;
   --z-index-snackbar: 1400;
   --z-index-tooltip: 1500;
+  
+  /* Animation durations */
+  --animation-duration-fast: 0.2s;
+  --animation-duration-normal: 0.3s;
+  --animation-duration-slow: 0.5s;
+  --animation-easing: cubic-bezier(0.2, 0.9, 0.3, 1.1);
+  
+  /* Mouse position tracking */
+  --mouse-x: 0.5;
+  --mouse-y: 0.5;
+  --mouse-x-percent: 0;
+  --mouse-y-percent: 0;
 }
 
-/* Dark theme */
+/* Dark theme with smooth transition */
 [data-theme="dark"] {
   --color-background: #121212;
   --color-background-paper: #1e1e1e;
@@ -70,4 +82,23 @@
   
   --color-background-rgb: 18, 18, 18;
   --color-text-primary-rgb: 255, 255, 255;
+  
+  /* Mouse position tracking - same as light theme */
+  --mouse-x: 0.5;
+  --mouse-y: 0.5;
+  --mouse-x-percent: 0;
+  --mouse-y-percent: 0;
+}
+
+/* Theme transition for all color properties */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: var(--animation-duration-normal);
+  transition-timing-function: var(--animation-easing);
+}
+
+/* Disable transition for certain elements */
+.no-theme-transition,
+.no-theme-transition * {
+  transition: none !important;
 }

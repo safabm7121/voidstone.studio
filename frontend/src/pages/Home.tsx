@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
+import { useParallax } from '../hooks/useParallax';
 import { productApi } from '../services/api';
 import { heroService } from '../services/heroService';
 import ThreeDCarousel from '../components/home/ThreeDCarousel';
@@ -32,6 +33,9 @@ const Home: React.FC = () => {
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const { elementRef: heroRef, isVisible: heroVisible } = useIntersectionObserver({ threshold: 0.1 });
+  
+  // Use parallax for the hero section content - cast the ref to HTMLDivElement
+  const heroContentParallaxRef = useParallax(0.2) as React.RefObject<HTMLDivElement>;
 
   // Check if user is admin
   const isAdmin = isAuthenticated && user?.role === 'admin';
@@ -45,7 +49,6 @@ const Home: React.FC = () => {
     try {
       const hero = await heroService.getHeroImage();
       if (hero && hero.imageData) {
-        // Use imageData directly (base64 string) - no URL fixing needed
         setHeroImage(hero.imageData);
       }
     } catch (error) {
@@ -66,7 +69,6 @@ const Home: React.FC = () => {
   };
 
   const handleUploadSuccess = (imageData: string) => {
-    // imageData is already base64 string, no URL fixing needed
     setHeroImage(imageData);
   };
 
@@ -94,34 +96,37 @@ const Home: React.FC = () => {
           )}
           
           <Container maxWidth="lg" className="hero-content">
-            <motion.div
-              ref={heroRef}
-              initial={{ opacity: 0, y: 30 }}
-              animate={heroVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8 }}
-            >
-              <Typography
-                variant="h1"
-                className="hero-title"
+            {/* Apply parallax effect to the content - now properly typed */}
+            <div ref={heroContentParallaxRef}>
+              <motion.div
+                ref={heroRef}
+                initial={{ opacity: 0, y: 30 }}
+                animate={heroVisible ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8 }}
               >
-                Voidstone Studio
-              </Typography>
-              <Typography
-                variant="h2"
-                className="hero-subtitle"
-              >
-                Luxury fashion with a dark aesthetic. Handcrafted pieces for the modern individual.
-              </Typography>
-              <Button
-                component={Link}
-                to="/products"
-                variant="contained"
-                size="large"
-                className="hero-button"
-              >
-                Explore Collection
-              </Button>
-            </motion.div>
+                <Typography
+                  variant="h1"
+                  className="hero-title"
+                >
+                  Voidstone Studio
+                </Typography>
+                <Typography
+                  variant="h2"
+                  className="hero-subtitle"
+                >
+                  Luxury fashion with a dark aesthetic. Handcrafted pieces for the modern individual.
+                </Typography>
+                <Button
+                  component={Link}
+                  to="/products"
+                  variant="contained"
+                  size="large"
+                  className="hero-button"
+                >
+                  Explore Collection
+                </Button>
+              </motion.div>
+            </div>
           </Container>
         </Box>
       </ParallaxSection>
