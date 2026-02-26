@@ -85,12 +85,13 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    circle 400px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
-    transparent 0%,
-    rgba(0, 0, 0, 0.08) 60%,
-    rgba(0, 0, 0, 0) 100%
-  );
+ background: radial-gradient(
+  circle 400px at var(--mouse-x-px, 50%) var(--mouse-y-px, 50%),
+  rgba(0, 0, 0, 0.342) 0%,      /* Dark at center */
+  rgba(0, 0, 0, 0.249) 30%,     /* Gradually fades */
+  rgba(0, 0, 0, 0.08) 60%,     
+  rgba(0, 0, 0, 0) 100%
+);
   pointer-events: none;
   z-index: -1;
   opacity: 0;
@@ -121,8 +122,8 @@ body::after {
   width: 100%;
   height: 100%;
   background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(0, 0, 0, 0.404) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.112) 1px, transparent 1px);
   background-size: var(--grid-size) var(--grid-size);
   pointer-events: none;
   z-index: -2;
