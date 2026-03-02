@@ -9,6 +9,12 @@ yarn.lock
 .env.development.local
 .env.test.local
 .env.production.local
+# Docker backups
+*.backup
+docker-compose.yml.backup
+# Sensitive configs
+**/secrets/
+**/config/jwt/
 
 # Build outputs
 dist/

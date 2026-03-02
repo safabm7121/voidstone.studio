@@ -29,8 +29,11 @@ export class ProductController {
                 }
             }
 
-            // Convert userId to ObjectId
-            const createdById = req.user?.userId ? new mongoose.Types.ObjectId(req.user.userId) : undefined;
+            // Get user info from auth middleware
+            const userId = req.user?.userId;
+            const userName = req.user?.name || 'Unknown User';
+            const userEmail = req.user?.email || '';
+            const userRole = req.user?.role || 'user';
 
             const product = new Product({
                 name,
@@ -41,18 +44,33 @@ export class ProductController {
                 stock_quantity: stock_quantity || 0,
                 images: images || [],
                 tags: tags || [],
-                created_by: createdById
+                created_by: userId ? new mongoose.Types.ObjectId(userId) : undefined
             });
 
             await product.save();
 
+            // Create history with full user info
             await ProductHistory.create({
                 productId: product._id,
                 action: 'created',
-                changes: [{ field: 'product', newValue: product }],
-                changedBy: req.user?.userId
+                changes: Object.keys(req.body).map(field => ({
+                    field,
+                    oldValue: null,
+                    newValue: req.body[field]
+                })),
+                changedBy: {
+                    userId: userId ? new mongoose.Types.ObjectId(userId) : null,
+                    name: userName,
+                    email: userEmail,
+                    role: userRole
+                },
+                metadata: {
+                    ip: req.ip,
+                    userAgent: req.headers['user-agent']
+                }
             });
 
+            // Optional email notification
             try {
                 await axios.post(`${AUTH_SERVICE_URL}/api/product-email`, {
                     to: 'admin@voidstone.com',
@@ -76,7 +94,6 @@ export class ProductController {
     async getAllProducts(req: Request, res: Response) {
         try {
             console.log('📦 Fetching all products...');
-            // Check database connection
             if (mongoose.connection.readyState !== 1) {
                 console.error('❌ MongoDB not connected');
                 return res.status(500).json({ error: 'Database connection error' });
@@ -121,6 +138,12 @@ export class ProductController {
                 return res.status(404).json({ error: 'Product not found' });
             }
 
+            // Get user info from auth middleware
+            const userId = req.user?.userId;
+            const userName = req.user?.name || 'Unknown User';
+            const userEmail = req.user?.email || '';
+            const userRole = req.user?.role || 'user';
+
             const updateFields = ['name', 'description', 'price', 'category', 'designer', 
                                  'stock_quantity', 'images', 'tags'] as const;
             const changes: { field: string; oldValue: any; newValue: any }[] = [];
@@ -129,24 +152,39 @@ export class ProductController {
                 if (req.body[field] !== undefined) {
                     const oldValue = (product as any)[field];
                     const newValue = req.body[field];
-                    if (oldValue !== newValue) {
+                    
+                    // Deep comparison for arrays/objects
+                    const hasChanged = JSON.stringify(oldValue) !== JSON.stringify(newValue);
+                    
+                    if (hasChanged) {
                         changes.push({ field, oldValue, newValue });
                         (product as any)[field] = newValue;
                     }
                 }
             });
 
-            product.updated_by = req.user?.userId ? new mongoose.Types.ObjectId(req.user.userId) : undefined;
-            await product.save();
-
             if (changes.length > 0) {
+                product.updated_by = userId ? new mongoose.Types.ObjectId(userId) : undefined;
+                await product.save();
+
+                // Create history with full user info
                 await ProductHistory.create({
                     productId: product._id,
                     action: 'updated',
                     changes,
-                    changedBy: req.user?.userId
+                    changedBy: {
+                        userId: userId ? new mongoose.Types.ObjectId(userId) : null,
+                        name: userName,
+                        email: userEmail,
+                        role: userRole
+                    },
+                    metadata: {
+                        ip: req.ip,
+                        userAgent: req.headers['user-agent']
+                    }
                 });
 
+                // Optional email notification
                 try {
                     await axios.post(`${AUTH_SERVICE_URL}/api/product-email`, {
                         to: 'admin@voidstone.com',
@@ -177,17 +215,34 @@ export class ProductController {
                 return res.status(404).json({ error: 'Product not found' });
             }
 
+            // Get user info from auth middleware
+            const userId = req.user?.userId;
+            const userName = req.user?.name || 'Unknown User';
+            const userEmail = req.user?.email || '';
+            const userRole = req.user?.role || 'user';
+
             product.is_active = false;
-            product.updated_by = req.user?.userId ? new mongoose.Types.ObjectId(req.user.userId) : undefined;
+            product.updated_by = userId ? new mongoose.Types.ObjectId(userId) : undefined;
             await product.save();
 
+            // Create history with full user info
             await ProductHistory.create({
                 productId: product._id,
                 action: 'deleted',
                 changes: [{ field: 'is_active', oldValue: true, newValue: false }],
-                changedBy: req.user?.userId
+                changedBy: {
+                    userId: userId ? new mongoose.Types.ObjectId(userId) : null,
+                    name: userName,
+                    email: userEmail,
+                    role: userRole
+                },
+                metadata: {
+                    ip: req.ip,
+                    userAgent: req.headers['user-agent']
+                }
             });
 
+            // Optional email notification
             try {
                 await axios.post(`${AUTH_SERVICE_URL}/api/product-email`, {
                     to: 'admin@voidstone.com',
@@ -205,13 +260,36 @@ export class ProductController {
         }
     }
 
-    async getProductHistory(req: Request, res: Response) {
+    async getProductHistory(req: AuthRequest, res: Response) {
         try {
             const { id } = req.params;
+            
+            // Check if product exists
+            const product = await Product.findById(id);
+            if (!product) {
+                return res.status(404).json({ error: 'Product not found' });
+            }
+
+            // Get history with populated user info
             const history = await ProductHistory.find({ productId: id })
                 .sort({ changedAt: -1 })
-                .limit(50);
-            res.json({ history });
+                .limit(100);
+
+            // Transform the data to match frontend expectations
+            const transformedHistory = history.map(entry => ({
+                _id: entry._id,
+                action: entry.action,
+                changes: entry.changes,
+                performedBy: entry.changedBy ? {
+                    _id: entry.changedBy.userId,
+                    name: entry.changedBy.name,
+                    email: entry.changedBy.email,
+                    role: entry.changedBy.role
+                } : null,
+                changedAt: entry.changedAt
+            }));
+
+            res.json({ history: transformedHistory });
         } catch (error) {
             console.error('❌ Get history error:', error);
             res.status(500).json({ error: 'Internal server error: ' + (error as Error).message });

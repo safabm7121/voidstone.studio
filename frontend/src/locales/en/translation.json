@@ -29,6 +29,7 @@
     "explore": "Explore Collection",
     "featured": "Featured Collection",
     "story": "Our Story",
+    "editHero": "Edit Hero",
     "storyText": "Founded in 2024, Voidstone Studio emerged from a vision to create fashion that transcends trends. Each piece is meticulously crafted, blending modern minimalism with gothic influences to create something truly unique."
   },
   "products": {
@@ -103,7 +104,9 @@
   "cancelled": "Cancelled",
   "appointmentId": "Appointment ID",
   "bookedOn": "Booked on",
-  "appointmentDetails": "Appointment Details"
+  "appointmentDetails": "Appointment Details",
+   "cancelReasonPlaceholder": "Please provide a reason for cancellation...",
+    "noAvailabilityMonth": "No availability for this month"
 },
   "cart": {
     "title": "Shopping Cart",
@@ -363,5 +366,37 @@
     "filter": "Filter",
     "search": "Search",
     "next": "Next"
+  },
+    "history": {
+    "title": "History: {{productName}}",
+    "errorLoading": "Failed to load history",
+    "noHistory": "No History Available",
+    "noHistoryDescription": "Changes to this product will appear here",
+    "unknownUser": "Unknown",
+    "noChanges": "No detailed changes recorded",
+    "units": "{{count}} unit",
+    "units_plural": "{{count}} units",
+    "actions": {
+      "create": "CREATE",
+      "update": "UPDATE",
+      "delete": "DELETE"
+    },
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "price": "Price",
+      "category": "Category",
+      "stock": "Stock",
+      "designer": "Designer",
+      "tags": "Tags",
+      "images": "Images"
+    },
+    "table": {
+      "dateTime": "Date & Time",
+      "action": "Action",
+      "user": "User",
+      "changes": "Changes"
+    }
   }
+  
 }

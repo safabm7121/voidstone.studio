@@ -21,6 +21,7 @@ const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail'));
 const Home = React.lazy(() => import('./pages/Home'));
 const Products = React.lazy(() => import('./pages/Products'));
 const ProductDetail = React.lazy(() => import('./pages/ProductDetail'));
+const ProductHistory = React.lazy(() => import('./pages/ProductHistory')); // ADDED
 const CreateProduct = React.lazy(() => import('./pages/CreateProduct'));
 const About = React.lazy(() => import('./pages/About'));
 const Contact = React.lazy(() => import('./pages/Contact'));
@@ -31,8 +32,6 @@ const MyAppointments = React.lazy(() => import('./pages/MyAppointments'));
 const AdminAppointments = React.lazy(() => import('./pages/AdminAppointments'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 
-// Styles
-// Styles
 import './i18n';
 import './styles/theme.css';
 import './styles/animation.css';
@@ -170,13 +169,18 @@ function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
-<Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
 
                   {/* Protected routes with Layout */}
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Home />} />
                     <Route path="products" element={<Products />} />
                     <Route path="products/:id" element={<ProductDetail />} />
+                    <Route path="products/history/:id" element={ // ADDED
+                      <PrivateRoute roles={['admin', 'manager', 'designer']}>
+                        <ProductHistory />
+                      </PrivateRoute>
+                    } />
                     <Route path="cart" element={<Cart />} />
                     <Route path="checkout" element={<Checkout />} />
                     <Route path="about" element={<About />} />

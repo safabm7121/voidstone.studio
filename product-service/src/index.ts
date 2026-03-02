@@ -62,13 +62,7 @@ app.use((req, res, next) => {
 // Middleware
 app.use(helmet());
 app.use(cors({ 
-    origin: [
-        'http://localhost:5173', 
-        'http://localhost:3000',
-        'http://frontend',           // Add this for Docker
-        'http://api-gateway',         // Add this for Docker
-        'http://localhost:5174'       // Add this if you changed the port
-    ], 
+    origin: ['http://localhost:5173', 'http://localhost:3000'], 
     credentials: true 
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -81,7 +75,7 @@ if (!isTestEnvironment) {
         max: 100, 
         message: { error: 'Too many requests' } 
     });
-    app.use('/api', limiter);
+    app.use('/', limiter);
 } else {
     // Test-friendly rate limiting
     const testLimiter = rateLimit({ 
@@ -89,11 +83,11 @@ if (!isTestEnvironment) {
         max: 1000, 
         message: { error: 'Too many requests' } 
     });
-    app.use('/api', testLimiter);
+    app.use('/', testLimiter);
 }
 
-// Routes
-app.use('/api', productRoutes);
+// Routes - MOUNTED AT ROOT LEVEL
+app.use('/', productRoutes);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
@@ -123,11 +117,12 @@ app.get('/', (req: Request, res: Response) => {
             health: '/health',
             metrics: '/metrics',
             products: {
-                getAll: 'GET /api/products',
-                getById: 'GET /api/products/:id',
-                create: 'POST /api/products (auth)',
-                update: 'PUT /api/products/:id (auth)',
-                delete: 'DELETE /api/products/:id (auth)'
+                getAll: 'GET /products',
+                getById: 'GET /products/:id',
+                create: 'POST /products (auth)',
+                update: 'PUT /products/:id (auth)',
+                delete: 'DELETE /products/:id (auth)',
+                history: 'GET /products/:id/history (auth)'
             }
         }
     });
@@ -149,10 +144,11 @@ if (!isTestEnvironment) {
         console.log(`📡 Port: ${PORT}`);
         console.log(`🔗 Health: http://localhost:${PORT}/health`);
         console.log(`📊 Metrics: http://localhost:${PORT}/metrics`);
-        console.log(`📝 GET /api/products - List all products`);
-        console.log(`➕ POST /api/products - Create product (auth)`);
-        console.log(`📋 PUT /api/products/:id - Update product (auth)`);
-        console.log(`🗑️ DELETE /api/products/:id - Delete product (auth)`);
+        console.log(`📝 GET /products - List all products`);
+        console.log(`➕ POST /products - Create product (auth)`);
+        console.log(`📋 PUT /products/:id - Update product (auth)`);
+        console.log(`🗑️ DELETE /products/:id - Delete product (auth)`);
+        console.log(`📜 GET /products/:id/history - View product history (auth)`);
         console.log('=================================\n');
 
         try {
@@ -191,9 +187,7 @@ if (!isTestEnvironment) {
     process.on('SIGTERM', shutdown);
     process.on('SIGINT', shutdown);
 } else {
-  
-    console.log(' Product Service configured for test mode');
-  
+    console.log('🧪 Product Service configured for test mode');
 }
 
 export default app;

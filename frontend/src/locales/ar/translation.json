@@ -29,6 +29,7 @@
     "explore": "استكشف المجموعة",
     "featured": "مجموعة مميزة",
     "story": "قصتنا",
+    "editHero": "تعديل الهيرو",
     "storyText": "تأسس فويستون ستوديو في عام 2024 من رؤية لخلق أزياء تتجاوز الموضة. كل قطعة مصنوعة بدقة، تمزج بين البساطة الحديثة والتأثيرات القوطية لخلق شيء فريد حقاً."
   },
   "products": {
@@ -103,7 +104,9 @@
   "cancelled": "ملغي",
   "appointmentId": "رقم الموعد",
   "bookedOn": "تم الحجز في",
-  "appointmentDetails": "تفاصيل الموعد"
+  "appointmentDetails": "تفاصيل الموعد",
+  "cancelReasonPlaceholder": "يرجى تقديم سبب للإلغاء...",
+  "noAvailabilityMonth": "لا توجد مواعيد متاحة لهذا الشهر"
 },
   "cart": {
     "title": "سلة التسوق",
@@ -363,5 +366,36 @@
     "filter": "تصفية",
     "search": "بحث",
     "next": "التالي"
+  },
+    "history": {
+    "title": "السجل: {{productName}}",
+    "errorLoading": "فشل تحميل السجل",
+    "noHistory": "لا يوجد سجل",
+    "noHistoryDescription": "ستظهر التغييرات على هذا المنتج هنا",
+    "unknownUser": "غير معروف",
+    "noChanges": "لا توجد تغييرات مفصلة",
+    "units": "{{count}} وحدة",
+    "units_plural": "{{count}} وحدة",
+    "actions": {
+      "create": "إنشاء",
+      "update": "تحديث",
+      "delete": "حذف"
+    },
+    "fields": {
+      "name": "الاسم",
+      "description": "الوصف",
+      "price": "السعر",
+      "category": "الفئة",
+      "stock": "المخزون",
+      "designer": "المصمم",
+      "tags": "العلامات",
+      "images": "الصور"
+    },
+    "table": {
+      "dateTime": "التاريخ والوقت",
+      "action": "الإجراء",
+      "user": "المستخدم",
+      "changes": "التغييرات"
+    }
   }
 }

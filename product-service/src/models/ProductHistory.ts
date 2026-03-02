@@ -8,8 +8,17 @@ export interface IProductHistory extends mongoose.Document {
     oldValue?: any;
     newValue?: any;
   }[];
-  changedBy?: string;
+  changedBy: {
+    userId: mongoose.Types.ObjectId;
+    name: string;
+    email: string;
+    role: string;
+  };
   changedAt: Date;
+  metadata?: {
+    ip?: string;
+    userAgent?: string;
+  };
 }
 
 const productHistorySchema = new mongoose.Schema({
@@ -25,17 +34,28 @@ const productHistorySchema = new mongoose.Schema({
     required: true 
   },
   changes: [{
-    field: String,
-    oldValue: mongoose.Schema.Types.Mixed,
-    newValue: mongoose.Schema.Types.Mixed
+    field: { type: String, required: true },
+    oldValue: { type: mongoose.Schema.Types.Mixed },
+    newValue: { type: mongoose.Schema.Types.Mixed }
   }],
-  changedBy: { type: String },
-  changedAt: { type: Date, default: Date.now }
+  changedBy: {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    role: { type: String, required: true }
+  },
+  changedAt: { type: Date, default: Date.now },
+  metadata: {
+    ip: String,
+    userAgent: String
+  }
 }, {
   timestamps: true
 });
 
-// Index for faster queries
+// Indexes for faster queries
 productHistorySchema.index({ productId: 1, changedAt: -1 });
+productHistorySchema.index({ 'changedBy.userId': 1 });
+productHistorySchema.index({ action: 1 });
 
 export const ProductHistory = mongoose.model<IProductHistory>('ProductHistory', productHistorySchema);

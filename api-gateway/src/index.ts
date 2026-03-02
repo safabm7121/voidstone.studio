@@ -101,13 +101,12 @@ app.use('/api/auth', createProxyMiddleware(
     })
 ));
 
-// Product Service Proxy (port 3004)
+// Product Service Proxy (port 3002)
 app.use('/api/products', createProxyMiddleware(
-    createProxyWithErrorHandling('product-service', 'http://product-service:3004', {
-        '^/api/products': '/api/products'
+    createProxyWithErrorHandling('product-service', 'http://product-service:3002', {
+        '^/api/products': '/products'  
     })
 ));
-
 // Appointment Service Proxy (port 3003)
 app.use('/api/appointments', createProxyMiddleware(
     createProxyWithErrorHandling('appointment-service', 'http://appointment-service:3003', {

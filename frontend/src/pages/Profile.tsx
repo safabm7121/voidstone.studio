@@ -24,7 +24,8 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  Avatar
+  Avatar,
+  useMediaQuery
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -51,8 +52,12 @@ interface TabPanelProps {
 const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
   return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      {...other}
+    >
+      {value === index && <Box sx={{ pt: { xs: 2, sm: 3 } }}>{children}</Box>}
     </div>
   );
 };
@@ -67,6 +72,7 @@ const formatFileSize = (bytes: number): string => {
 const Profile: React.FC = () => {
   const theme = useTheme();
   const mode = theme.palette.mode;
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user } = useAuth();
   const { t } = useTranslation();
   const [tabValue, setTabValue] = useState(0);
@@ -85,7 +91,7 @@ const Profile: React.FC = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<any>(null);
 
-  // Dialog for adding/editing experience – fixed type (description optional)
+  // Dialog for adding/editing experience
   const [expDialog, setExpDialog] = useState<{
     open: boolean;
     editIndex: number;
@@ -163,11 +169,9 @@ const Profile: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
-        // Determine file type for storage
         let fileType: 'cv' | 'portfolio' | 'certificate' = 'portfolio';
         if (file.name.endsWith('.pdf')) fileType = 'cv';
         else if (file.type.startsWith('image/')) fileType = 'portfolio';
-        // Additional logic for certificates could be added
 
         try {
           await profileService.uploadFile({
@@ -177,9 +181,9 @@ const Profile: React.FC = () => {
             size: file.size
           });
           toast.success(`${file.name} ${t('profile.uploaded')}`);
-          fetchProfile(); // refresh
+          fetchProfile();
         } catch (error: any) {
-          console.error('❌ Upload error details:', error.response?.data || error.message);
+          console.error('Upload error:', error.response?.data || error.message);
           const errorMsg = error.response?.data?.error || error.message || t('profile.uploadError');
           toast.error(`${t('profile.uploadFailed')} ${file.name}: ${errorMsg}`);
         }
@@ -225,79 +229,201 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={4}>
-          <Box display="flex" alignItems="center">
-            <Avatar 
-              sx={{ 
-                width: 64, 
-                height: 64, 
+    <Container
+      maxWidth="lg"
+      className="profile-container"
+      disableGutters={isMobile}
+      sx={{
+        py: { xs: 1, sm: 2, md: 4 },
+        px: { xs: 1, sm: 2, md: 3 }
+      }}
+    >
+      <Paper
+        elevation={3}
+        className="profile-paper"
+        sx={{
+          p: { xs: 1.5, sm: 2, md: 3, lg: 4 },
+          width: '100%',
+          borderRadius: { xs: 1, sm: 2 }
+        }}
+      >
+        {/* Header Section */}
+        <Box
+          className="profile-header"
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: { xs: 2, sm: 3 },
+            mb: { xs: 2, sm: 3, md: 4 }
+          }}
+        >
+          {/* User Info */}
+          <Box
+            className="profile-user-section"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: { xs: 1.5, sm: 2, md: 3 }
+            }}
+          >
+            <Avatar
+              className="profile-avatar"
+              sx={{
+                width: { xs: 48, sm: 56, md: 64, lg: 72 },
+                height: { xs: 48, sm: 56, md: 64, lg: 72 },
                 bgcolor: mode === 'dark' ? 'primary.dark' : 'primary.main',
                 color: mode === 'dark' ? '#000' : '#fff',
-                mr: 2, 
-                fontSize: '2rem' 
+                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem', lg: '2rem' },
+                flexShrink: 0
               }}
             >
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </Avatar>
-            <Box>
-              <Typography variant="h4">
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.5rem', lg: '2rem' },
+                  fontWeight: 600,
+                  lineHeight: 1.2,
+                  mb: 0.5,
+                  wordBreak: 'break-word',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: { xs: 2, sm: 1 },
+                  WebkitBoxOrient: 'vertical'
+                }}
+              >
                 {user?.firstName} {user?.lastName}
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{
+                  fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.9rem', lg: '1rem' },
+                  wordBreak: 'break-word',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: { xs: 'normal', sm: 'nowrap' }
+                }}
+              >
                 {user?.email} · {user?.role}
               </Typography>
             </Box>
           </Box>
-          {!editMode ? (
-            <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditMode(true)}>
-              {t('profile.editProfile')}
-            </Button>
-          ) : (
-            <Box>
-              <Button variant="contained" onClick={handleSaveProfile} disabled={loading} sx={{ mr: 1 }}>
-                {t('common.save')}
+
+          {/* Button Section - FIXED for mobile */}
+          <Box
+            className="profile-button-container"
+            sx={{
+              width: { xs: '100%', sm: 'auto' },
+              minWidth: { sm: 200 }
+            }}
+          >
+            {!editMode ? (
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
+                onClick={() => setEditMode(true)}
+                fullWidth={isMobile}
+                sx={{
+                  height: { xs: 40, sm: 36, md: 40 },
+                  fontSize: { xs: '0.85rem', sm: '0.8rem', md: '0.875rem' },
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {t('profile.editProfile')}
               </Button>
-              <Button variant="outlined" onClick={() => {
-                setEditMode(false);
-                // revert changes
-                if (profile) {
-                  setBio(profile.bio || '');
-                  setSkills(profile.skills || []);
-                  setExperience(profile.experience || []);
-                  setEducation(profile.education || []);
-                }
-              }}>
-                {t('common.cancel')}
-              </Button>
-            </Box>
-          )}
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  width: '100%',
+                  flexDirection: { xs: 'row', sm: 'row' }
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={handleSaveProfile}
+                  disabled={loading}
+                  fullWidth
+                  sx={{
+                    flex: 1,
+                    height: { xs: 40, sm: 36, md: 40 },
+                    fontSize: { xs: '0.85rem', sm: '0.8rem', md: '0.875rem' }
+                  }}
+                >
+                  {t('common.save')}
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setEditMode(false);
+                    if (profile) {
+                      setBio(profile.bio || '');
+                      setSkills(profile.skills || []);
+                      setExperience(profile.experience || []);
+                      setEducation(profile.education || []);
+                    }
+                  }}
+                  fullWidth
+                  sx={{
+                    flex: 1,
+                    height: { xs: 40, sm: 36, md: 40 },
+                    fontSize: { xs: '0.85rem', sm: '0.8rem', md: '0.875rem' }
+                  }}
+                >
+                  {t('common.cancel')}
+                </Button>
+              </Box>
+            )}
+          </Box>
         </Box>
 
-        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} sx={{ mb: 2 }}>
+        {/* Tabs */}
+        <Tabs
+          value={tabValue}
+          onChange={(_, v) => setTabValue(v)}
+          variant={isMobile ? 'fullWidth' : 'standard'}
+          sx={{
+            mb: { xs: 1, sm: 2 },
+            '& .MuiTab-root': {
+              fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+              minHeight: { xs: 40, sm: 48 },
+              py: { xs: 0.5, sm: 1 }
+            }
+          }}
+        >
           <Tab label={t('profile.tabs.info')} />
           <Tab label={t('profile.tabs.files')} />
         </Tabs>
 
         {/* Tab 1: Profile Info */}
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label={t('profile.bio')}
                 multiline
-                rows={4}
+                rows={isMobile ? 3 : 4}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 disabled={!editMode}
                 placeholder={t('profile.bioPlaceholder')}
+                size={isMobile ? 'small' : 'medium'}
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
                 {t('profile.skills')}
               </Typography>
               {editMode ? (
@@ -308,28 +434,34 @@ const Profile: React.FC = () => {
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyDown={handleAddSkill}
                     placeholder={t('profile.skillsPlaceholder')}
+                    size="small"
                   />
-                  <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {skills.map(skill => (
                       <Chip
                         key={skill}
                         label={skill}
                         onDelete={() => removeSkill(skill)}
+                        size="small"
                       />
                     ))}
                   </Box>
                 </>
               ) : (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {skills.length > 0 ? skills.map(skill => (
-                    <Chip key={skill} label={skill} />
-                  )) : <Typography color="text.secondary">{t('profile.noSkills')}</Typography>}
+                    <Chip key={skill} label={skill} size="small" />
+                  )) : (
+                    <Typography color="text.secondary" variant="body2">
+                      {t('profile.noSkills')}
+                    </Typography>
+                  )}
                 </Box>
               )}
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
                 {t('profile.experience')}
               </Typography>
               {editMode && (
@@ -337,34 +469,67 @@ const Profile: React.FC = () => {
                   startIcon={<AddIcon />}
                   onClick={() => setExpDialog({ open: true, editIndex: -1, data: { title: '', company: '', years: '', description: '' } })}
                   sx={{ mb: 2 }}
+                  size={isMobile ? 'small' : 'medium'}
+                  fullWidth={isMobile}
                 >
                   {t('profile.addExperience')}
                 </Button>
               )}
-              <List>
+              <List sx={{ width: '100%' }}>
                 {experience.map((exp, index) => (
                   <React.Fragment key={index}>
                     <ListItem
+                      sx={{
+                        px: { xs: 0, sm: 1 },
+                        py: { xs: 1, sm: 1.5 },
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: { xs: 1, sm: 0 }
+                      }}
                       secondaryAction={editMode && (
-                        <IconButton edge="end" onClick={() => setExpDialog({ open: true, editIndex: index, data: exp })}>
-                          <EditIcon />
+                        <IconButton
+                          edge="end"
+                          onClick={() => setExpDialog({ open: true, editIndex: index, data: exp })}
+                          size="small"
+                          sx={{ mt: { xs: 0, sm: 0 } }}
+                        >
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       )}
                     >
                       <ListItemText
-                        primary={`${exp.title} ${t('profile.at')} ${exp.company}`}
-                        secondary={`${exp.years} · ${exp.description || ''}`}
+                        primary={
+                          <Typography variant="body1" sx={{ fontWeight: 500, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                            {`${exp.title} ${t('profile.at')} ${exp.company}`}
+                          </Typography>
+                        }
+                        secondary={
+                          <>
+                            <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                              {exp.years}
+                            </Typography>
+                            {exp.description && (
+                              <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                                {exp.description}
+                              </Typography>
+                            )}
+                          </>
+                        }
                       />
                     </ListItem>
-                    {index < experience.length - 1 && <Divider />}
+                    {index < experience.length - 1 && <Divider sx={{ my: 1 }} />}
                   </React.Fragment>
                 ))}
-                {experience.length === 0 && <Typography color="text.secondary">{t('profile.noExperience')}</Typography>}
+                {experience.length === 0 && (
+                  <Typography color="text.secondary" variant="body2">
+                    {t('profile.noExperience')}
+                  </Typography>
+                )}
               </List>
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
                 {t('profile.education')}
               </Typography>
               {editMode && (
@@ -372,29 +537,55 @@ const Profile: React.FC = () => {
                   startIcon={<AddIcon />}
                   onClick={() => setEduDialog({ open: true, editIndex: -1, data: { degree: '', institution: '', year: '' } })}
                   sx={{ mb: 2 }}
+                  size={isMobile ? 'small' : 'medium'}
+                  fullWidth={isMobile}
                 >
                   {t('profile.addEducation')}
                 </Button>
               )}
-              <List>
+              <List sx={{ width: '100%' }}>
                 {education.map((edu, index) => (
                   <React.Fragment key={index}>
                     <ListItem
+                      sx={{
+                        px: { xs: 0, sm: 1 },
+                        py: { xs: 1, sm: 1.5 },
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: { xs: 1, sm: 0 }
+                      }}
                       secondaryAction={editMode && (
-                        <IconButton edge="end" onClick={() => setEduDialog({ open: true, editIndex: index, data: edu })}>
-                          <EditIcon />
+                        <IconButton
+                          edge="end"
+                          onClick={() => setEduDialog({ open: true, editIndex: index, data: edu })}
+                          size="small"
+                          sx={{ mt: { xs: 0, sm: 0 } }}
+                        >
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       )}
                     >
                       <ListItemText
-                        primary={`${edu.degree} ${t('profile.at')} ${edu.institution}`}
-                        secondary={edu.year}
+                        primary={
+                          <Typography variant="body1" sx={{ fontWeight: 500, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                            {`${edu.degree} ${t('profile.at')} ${edu.institution}`}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography component="span" variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                            {edu.year}
+                          </Typography>
+                        }
                       />
                     </ListItem>
-                    {index < education.length - 1 && <Divider />}
+                    {index < education.length - 1 && <Divider sx={{ my: 1 }} />}
                   </React.Fragment>
                 ))}
-                {education.length === 0 && <Typography color="text.secondary">{t('profile.noEducation')}</Typography>}
+                {education.length === 0 && (
+                  <Typography color="text.secondary" variant="body2">
+                    {t('profile.noEducation')}
+                  </Typography>
+                )}
               </List>
             </Grid>
           </Grid>
@@ -402,7 +593,7 @@ const Profile: React.FC = () => {
 
         {/* Tab 2: CV & Portfolio */}
         <TabPanel value={tabValue} index={1}>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid item xs={12}>
               <Box
                 {...getRootProps()}
@@ -410,67 +601,75 @@ const Profile: React.FC = () => {
                   border: '2px dashed',
                   borderColor: isDragActive ? 'primary.main' : mode === 'dark' ? 'rgba(255,255,255,0.3)' : '#ccc',
                   borderRadius: 2,
-                  p: 4,
+                  p: { xs: 2, sm: 3, md: 4 },
                   textAlign: 'center',
                   cursor: 'pointer',
                   bgcolor: isDragActive ? 'action.hover' : 'transparent',
-                  mb: 3
+                  mb: { xs: 2, sm: 3 }
                 }}
               >
                 <input {...getInputProps()} />
-                <CloudUploadIcon sx={{ fontSize: 48, color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : '#ccc', mb: 2 }} />
-                <Typography>
+                <CloudUploadIcon sx={{ fontSize: { xs: 32, sm: 40, md: 48 }, color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : '#ccc', mb: 1 }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' } }}>
                   {isDragActive ? t('profile.dropFiles') : t('profile.dragDrop')}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' }, display: 'block', mt: 0.5 }}>
                   {t('profile.fileSupport')}
                 </Typography>
               </Box>
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>{t('profile.uploadedFiles')}</Typography>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }}>
+                {t('profile.uploadedFiles')}
+              </Typography>
               {profile?.files && profile.files.length > 0 ? (
-                <Grid container spacing={2}>
+                <Grid container spacing={{ xs: 1, sm: 2 }}>
                   {profile.files.map((file) => (
                     <Grid item xs={12} sm={6} md={4} key={file._id}>
-                      <Card>
-                        {file.type === 'portfolio' && file.url.startsWith('data:image') ? (
-                          <CardMedia
-                            component="img"
-                            height="140"
-                            image={file.url}
-                            alt={file.name}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              height: 140,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: mode === 'dark' ? '#2d2d2d' : '#f5f5f5'
-                            }}
-                          >
-                            {file.type === 'cv' ? (
+                      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{
+                          aspectRatio: '1/1',
+                          bgcolor: mode === 'dark' ? 'grey.900' : 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          {file.type === 'portfolio' && file.url.startsWith('data:image') ? (
+                            <CardMedia
+                              component="img"
+                              height="140"
+                              image={file.url}
+                              alt={file.name}
+                              sx={{ objectFit: 'cover' }}
+                            />
+                          ) : (
+                            file.type === 'cv' ? (
                               <PictureAsPdfIcon sx={{ fontSize: 60, color: '#d32f2f' }} />
                             ) : (
                               <ImageIcon sx={{ fontSize: 60, color: mode === 'dark' ? '#aaa' : '#999' }} />
-                            )}
-                          </Box>
-                        )}
-                        <CardContent>
-                          <Typography noWrap variant="body2">{file.name}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatFileSize(file.size)} · {format(new Date(file.uploadedAt), 'MMM d, yyyy')}
+                            )
+                          )}
+                        </Box>
+                        <CardContent sx={{ flexGrow: 1, p: { xs: 1, sm: 1.5, md: 2 } }}>
+                          <Typography noWrap variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' } }}>
+                            {file.name}
                           </Typography>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.6rem', sm: '0.65rem', md: '0.75rem' } }}>
+                              {formatFileSize(file.size)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.6rem', sm: '0.65rem', md: '0.75rem' } }}>
+                              {format(new Date(file.uploadedAt), 'MMM d, yyyy')}
+                            </Typography>
+                          </Box>
                         </CardContent>
-                        <CardActions>
+                        <CardActions sx={{ p: { xs: 1, sm: 1.5, md: 2 }, pt: 0 }}>
                           <IconButton size="small" onClick={() => { setPreviewFile(file); setPreviewOpen(true); }}>
-                            <VisibilityIcon />
+                            <VisibilityIcon fontSize="small" />
                           </IconButton>
                           <IconButton size="small" color="error" onClick={() => handleDeleteFile(file._id)}>
-                            <DeleteIcon />
+                            <DeleteIcon fontSize="small" />
                           </IconButton>
                         </CardActions>
                       </Card>
@@ -478,133 +677,188 @@ const Profile: React.FC = () => {
                   ))}
                 </Grid>
               ) : (
-                <Alert severity="info">{t('profile.noFiles')}</Alert>
+                <Alert severity="info" sx={{ fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' } }}>
+                  {t('profile.noFiles')}
+                </Alert>
               )}
             </Grid>
           </Grid>
         </TabPanel>
+
+        {/* Preview Dialog */}
+        <Dialog
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          maxWidth="md"
+          fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              m: { xs: 0, sm: 2 },
+              borderRadius: { xs: 0, sm: 2 }
+            }
+          }}
+        >
+          <DialogTitle sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }}>
+            {t('profile.preview')}
+          </DialogTitle>
+          <DialogContent>
+            {previewFile && (
+              previewFile.url.startsWith('data:image') ? (
+                <img className='imagess'
+                  src={previewFile.url}
+                  alt={previewFile.name}
+                  
+                />
+              ) : (
+                <iframe className='iframess'
+                  src={previewFile.url}
+                  title={previewFile.name}
+                 
+                />
+              )
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: { xs: 1, sm: 2 } }}>
+            <Button onClick={() => setPreviewOpen(false)}>{t('common.close')}</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Experience Dialog */}
+        <Dialog
+          open={expDialog.open}
+          onClose={() => setExpDialog({ ...expDialog, open: false })}
+          maxWidth="sm"
+          fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              m: { xs: 0, sm: 2 },
+              borderRadius: { xs: 0, sm: 2 }
+            }
+          }}
+        >
+          <DialogTitle sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }}>
+            {expDialog.editIndex === -1 ? t('profile.addExperience') : t('profile.editExperience')}
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label={t('profile.title')}
+              value={expDialog.data.title}
+              onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, title: e.target.value } })}
+              margin="dense"
+              size={isMobile ? 'small' : 'medium'}
+            />
+            <TextField
+              fullWidth
+              label={t('profile.company')}
+              value={expDialog.data.company}
+              onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, company: e.target.value } })}
+              margin="dense"
+              size={isMobile ? 'small' : 'medium'}
+            />
+            <TextField
+              fullWidth
+              label={t('profile.years')}
+              value={expDialog.data.years}
+              onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, years: e.target.value } })}
+              margin="dense"
+              placeholder={t('profile.yearsPlaceholder')}
+              size={isMobile ? 'small' : 'medium'}
+            />
+            <TextField
+              fullWidth
+              label={t('profile.description')}
+              multiline
+              rows={isMobile ? 2 : 3}
+              value={expDialog.data.description || ''}
+              onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, description: e.target.value } })}
+              margin="dense"
+              size={isMobile ? 'small' : 'medium'}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: { xs: 1, sm: 2 } }}>
+            <Button onClick={() => setExpDialog({ ...expDialog, open: false })} size={isMobile ? 'small' : 'medium'}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={() => {
+              if (expDialog.editIndex === -1) {
+                setExperience([...experience, expDialog.data]);
+              } else {
+                const newExp = [...experience];
+                newExp[expDialog.editIndex] = expDialog.data;
+                setExperience(newExp);
+              }
+              setExpDialog({ open: false, editIndex: -1, data: { title: '', company: '', years: '', description: '' } });
+            }} variant="contained" size={isMobile ? 'small' : 'medium'}>
+              {t('common.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Education Dialog */}
+        <Dialog
+          open={eduDialog.open}
+          onClose={() => setEduDialog({ ...eduDialog, open: false })}
+          maxWidth="sm"
+          fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              m: { xs: 0, sm: 2 },
+              borderRadius: { xs: 0, sm: 2 }
+            }
+          }}
+        >
+          <DialogTitle sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }}>
+            {eduDialog.editIndex === -1 ? t('profile.addEducation') : t('profile.editEducation')}
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              label={t('profile.degree')}
+              value={eduDialog.data.degree}
+              onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, degree: e.target.value } })}
+              margin="dense"
+              size={isMobile ? 'small' : 'medium'}
+            />
+            <TextField
+              fullWidth
+              label={t('profile.institution')}
+              value={eduDialog.data.institution}
+              onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, institution: e.target.value } })}
+              margin="dense"
+              size={isMobile ? 'small' : 'medium'}
+            />
+            <TextField
+              fullWidth
+              label={t('profile.year')}
+              value={eduDialog.data.year}
+              onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, year: e.target.value } })}
+              margin="dense"
+              size={isMobile ? 'small' : 'medium'}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: { xs: 1, sm: 2 } }}>
+            <Button onClick={() => setEduDialog({ ...eduDialog, open: false })} size={isMobile ? 'small' : 'medium'}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={() => {
+              if (eduDialog.editIndex === -1) {
+                setEducation([...education, eduDialog.data]);
+              } else {
+                const newEdu = [...education];
+                newEdu[eduDialog.editIndex] = eduDialog.data;
+                setEducation(newEdu);
+              }
+              setEduDialog({ open: false, editIndex: -1, data: { degree: '', institution: '', year: '' } });
+            }} variant="contained" size={isMobile ? 'small' : 'medium'}>
+              {t('common.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
-
-      {/* Preview Dialog */}
-      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{t('profile.preview')}</DialogTitle>
-        <DialogContent>
-          {previewFile && (
-            previewFile.url.startsWith('data:image') ? (
-              <img
-                src={previewFile.url}
-                alt={previewFile.name}
-                className="profile-preview-image"
-              />
-            ) : (
-              <iframe
-                src={previewFile.url}
-                title={previewFile.name}
-                className="profile-preview-iframe"
-              />
-            )
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPreviewOpen(false)}>{t('common.close')}</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Experience Dialog */}
-      <Dialog open={expDialog.open} onClose={() => setExpDialog({ ...expDialog, open: false })} maxWidth="sm" fullWidth>
-        <DialogTitle>{expDialog.editIndex === -1 ? t('profile.addExperience') : t('profile.editExperience')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label={t('profile.title')}
-            value={expDialog.data.title}
-            onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, title: e.target.value } })}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label={t('profile.company')}
-            value={expDialog.data.company}
-            onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, company: e.target.value } })}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label={t('profile.years')}
-            value={expDialog.data.years}
-            onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, years: e.target.value } })}
-            margin="normal"
-            placeholder={t('profile.yearsPlaceholder')}
-          />
-          <TextField
-            fullWidth
-            label={t('profile.description')}
-            multiline
-            rows={3}
-            value={expDialog.data.description || ''}
-            onChange={(e) => setExpDialog({ ...expDialog, data: { ...expDialog.data, description: e.target.value } })}
-            margin="normal"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExpDialog({ ...expDialog, open: false })}>{t('common.cancel')}</Button>
-          <Button onClick={() => {
-            if (expDialog.editIndex === -1) {
-              setExperience([...experience, expDialog.data]);
-            } else {
-              const newExp = [...experience];
-              newExp[expDialog.editIndex] = expDialog.data;
-              setExperience(newExp);
-            }
-            setExpDialog({ open: false, editIndex: -1, data: { title: '', company: '', years: '', description: '' } });
-          }} variant="contained">
-            {t('common.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Education Dialog */}
-      <Dialog open={eduDialog.open} onClose={() => setEduDialog({ ...eduDialog, open: false })} maxWidth="sm" fullWidth>
-        <DialogTitle>{eduDialog.editIndex === -1 ? t('profile.addEducation') : t('profile.editEducation')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label={t('profile.degree')}
-            value={eduDialog.data.degree}
-            onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, degree: e.target.value } })}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label={t('profile.institution')}
-            value={eduDialog.data.institution}
-            onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, institution: e.target.value } })}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label={t('profile.year')}
-            value={eduDialog.data.year}
-            onChange={(e) => setEduDialog({ ...eduDialog, data: { ...eduDialog.data, year: e.target.value } })}
-            margin="normal"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEduDialog({ ...eduDialog, open: false })}>{t('common.cancel')}</Button>
-          <Button onClick={() => {
-            if (eduDialog.editIndex === -1) {
-              setEducation([...education, eduDialog.data]);
-            } else {
-              const newEdu = [...education];
-              newEdu[eduDialog.editIndex] = eduDialog.data;
-              setEducation(newEdu);
-            }
-            setEduDialog({ open: false, editIndex: -1, data: { degree: '', institution: '', year: '' } });
-          }} variant="contained">
-            {t('common.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };

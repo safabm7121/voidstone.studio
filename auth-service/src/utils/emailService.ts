@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER, // voidstonestudio@gmail.com
-    pass: process.env.EMAIL_PASS, // Your Gmail app password
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS, 
   },
 });
 
@@ -164,12 +164,12 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
   };
 
   try {
-    console.log(`📧 Attempting to send password reset email to ${email}...`);
+    console.log(` Attempting to send password reset email to ${email}...`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to ${email}: ${info.messageId}`);
+    console.log(` Password reset email sent to ${email}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Error sending password reset email:', error);
+    console.error(' Error sending password reset email:', error);
     throw error;
   }
 };
@@ -178,10 +178,10 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
 export const testEmailConnection = async () => {
   try {
     await transporter.verify();
-    console.log('✅ Email transporter verified successfully');
+    console.log(' Email transporter verified successfully');
     return true;
   } catch (error) {
-    console.error('❌ Email transporter verification failed:', error);
+    console.error(' Email transporter verification failed:', error);
     return false;
   }
 };

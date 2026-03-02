@@ -29,6 +29,7 @@
     "explore": "Explorer la collection",
     "featured": "Collection en vedette",
     "story": "Notre histoire",
+    "editHero": "Modifier l'héro",
     "storyText": "Fondé en 2024, Voidstone Studio est né d'une vision de créer une mode qui transcende les tendances. Chaque pièce est méticuleusement fabriquée, alliant minimalisme moderne et influences gothiques pour créer quelque chose de vraiment unique."
   },
   "products": {
@@ -103,7 +104,10 @@
   "cancelled": "Annulé",
   "appointmentId": "ID de rendez-vous",
   "bookedOn": "Réservé le",
-  "appointmentDetails": "Détails du rendez-vous"
+  "appointmentDetails": "Détails du rendez-vous",
+  "cancelReasonPlaceholder": "Veuillez fournir une raison pour l'annulation...",
+  "noAvailabilityMonth": "Aucune disponibilité pour ce mois"  
+
 },
   "cart": {
     "title": "Panier",
@@ -362,6 +366,37 @@
     "all": "Tous",
     "filter": "Filtrer",
     "search": "Rechercher",
-    "next": "Suivant"
+    "next": "Suivant",
+      "history": {
+    "title": "Historique : {{productName}}",
+    "errorLoading": "Échec du chargement de l'historique",
+    "noHistory": "Aucun historique disponible",
+    "noHistoryDescription": "Les modifications de ce produit apparaîtront ici",
+    "unknownUser": "Inconnu",
+    "noChanges": "Aucune modification détaillée enregistrée",
+    "units": "{{count}} unité",
+    "units_plural": "{{count}} unités",
+    "actions": {
+      "create": "CRÉATION",
+      "update": "MODIFICATION",
+      "delete": "SUPPRESSION"
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "price": "Prix",
+      "category": "Catégorie",
+      "stock": "Stock",
+      "designer": "Designer",
+      "tags": "Étiquettes",
+      "images": "Images"
+    },
+    "table": {
+      "dateTime": "Date et heure",
+      "action": "Action",
+      "user": "Utilisateur",
+      "changes": "Modifications"
+    }
+  }
   }
 }
