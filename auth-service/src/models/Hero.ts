@@ -2,8 +2,9 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IHero extends Document {
-  imageData: string;  // Base64 image data
-  imageType: string;  // MIME type
+  mediaData: string;  // Base64 media data (image or video)
+  mediaType: string;  // MIME type
+  mediaCategory: 'image' | 'video';  // To distinguish between image and video
   title: string;
   subtitle: string;
   buttonText: string;
@@ -15,13 +16,18 @@ export interface IHero extends Document {
 }
 
 const heroSchema = new Schema<IHero>({
-  imageData: {
+  mediaData: {
     type: String,
-    required: [true, 'Image data is required']
+    required: [true, 'Media data is required']
   },
-  imageType: {
+  mediaType: {
     type: String,
-    required: [true, 'Image type is required']
+    required: [true, 'Media type is required']
+  },
+  mediaCategory: {
+    type: String,
+    enum: ['image', 'video'],
+    required: [true, 'Media category is required']
   },
   title: {
     type: String,
@@ -52,7 +58,7 @@ const heroSchema = new Schema<IHero>({
   timestamps: true
 });
 
-// Ensure only one active hero image
+// Ensure only one active hero media
 heroSchema.pre('save', async function(this: IHero, next) {
   if (this.isActive) {
     await (this.constructor as any).updateMany(

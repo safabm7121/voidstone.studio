@@ -18,10 +18,10 @@ export const sendAppointmentEmail = async (
       html
     });
     
-    console.log(`✅ Email sent successfully to ${to}`);
+    console.log(` Email sent successfully to ${to}`);
     return response.data;
   } catch (error) {
-    console.error('❌ Failed to send email:', error);
+    console.error(' Failed to send email:', error);
     throw error;
   }
 };
@@ -53,7 +53,7 @@ export const sendAppointmentNotificationToAdmin = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>📅 NEW APPOINTMENT BOOKED</h1>
+          <h1> NEW APPOINTMENT BOOKED</h1>
         </div>
         <div class="content">
           <p>A new appointment has been booked by <strong>${customerName}</strong>.</p>
@@ -87,7 +87,7 @@ export const sendAppointmentNotificationToAdmin = async (
 
   await sendAppointmentEmail(
     ADMIN_EMAIL,
-    `📅 New Appointment: ${customerName} - ${appointmentDetails.consultationType}`,
+    ` New Appointment: ${customerName} - ${appointmentDetails.consultationType}`,
     html
   );
 };
@@ -176,7 +176,7 @@ export const sendAppointmentConfirmedToCustomer = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>✅ Appointment Confirmed!</h1>
+          <h1> Appointment Confirmed!</h1>
         </div>
         <div class="content">
           <p>Dear <strong>${name}</strong>,</p>

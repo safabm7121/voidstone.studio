@@ -39,12 +39,12 @@ const generateTimeSlots = (date: Date): { time: string; isAvailable: boolean }[]
 };
 
 export class AppointmentController {
-  // -----------------------------------------------------------------
+
   //  GET AVAILABILITY for a date range (includes all weekdays)
-  // -----------------------------------------------------------------
+
   async getAvailability(req: AuthRequest, res: Response) {
     try {
-      console.log('📅 getAvailability query:', req.query);
+      console.log(' getAvailability query:', req.query);
       const { startDate, endDate } = req.query;
 
       if (!startDate || !endDate) {
@@ -80,7 +80,7 @@ export class AppointmentController {
 
         // Skip weekends
         if (dayOfWeek === 0 || dayOfWeek === 6) {
-          console.log(`📅 Skipping weekend: ${currentDate.toDateString()}`);
+          console.log(` Skipping weekend: ${currentDate.toDateString()}`);
           continue;
         }
 
@@ -110,7 +110,7 @@ export class AppointmentController {
           // No availability in DB → generate fresh default slots
           const freshSlots = generateTimeSlots(currentDate);
           if (freshSlots.length > 0) {
-            console.log(`📅 Generated ${freshSlots.length} slots for ${currentDate.toDateString()}`);
+            console.log(` Generated ${freshSlots.length} slots for ${currentDate.toDateString()}`);
             result.push({
               _id: new mongoose.Types.ObjectId().toString(),
               designerId: VOIDSTONE_DESIGNER_ID,
@@ -121,17 +121,16 @@ export class AppointmentController {
         }
       }
 
-      console.log(`✅ Returning ${result.length} days of availability`);
+      console.log(` Returning ${result.length} days of availability`);
       return res.json({ availability: result });
     } catch (error) {
-      console.error('❌ getAvailability error:', error);
+      console.error(' getAvailability error:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
 
-  // -----------------------------------------------------------------
   //  BOOK AN APPOINTMENT
-  // -----------------------------------------------------------------
+
   async bookAppointment(req: AuthRequest, res: Response) {
     try {
       console.log('🔍 BOOKING STARTED', { user: req.user, body: req.body });
@@ -150,7 +149,7 @@ export class AppointmentController {
       const appointmentDate = new Date(date);
       appointmentDate.setUTCHours(0, 0, 0, 0);
 
-      console.log('📅 Appointment date (UTC):', appointmentDate.toISOString());
+      console.log(' Appointment date (UTC):', appointmentDate.toISOString());
 
       // ---- Business rules ----
       // 1. No weekends
@@ -191,9 +190,9 @@ export class AppointmentController {
           slots
         });
         await availability.save();
-        console.log('✅ Created new availability for', appointmentDate.toDateString());
-        console.log('💾 Saved availability date:', availability.date.toISOString());
-        console.log('🕒 Saved slots:', availability.slots.map(s => s.time));
+        console.log(' Created new availability for', appointmentDate.toDateString());
+        console.log(' Saved availability date:', availability.date.toISOString());
+        console.log(' Saved slots:', availability.slots.map(s => s.time));
       }
 
       // ---- Verify the chosen slot is still available ----
@@ -222,13 +221,13 @@ export class AppointmentController {
 
       // Save appointment first, then update availability
       await appointment.save();
-      console.log('✅ Appointment saved, id:', appointment._id);
+      console.log(' Appointment saved, id:', appointment._id);
 
       // Mark slot as taken
       availability.slots[slotIndex].isAvailable = false;
       availability.slots[slotIndex].bookedBy = req.user.userId;
       await availability.save();
-      console.log('✅ Availability updated');
+      console.log(' Availability updated');
 
       // ---- Send emails (non‑blocking) ----
       try {
@@ -242,9 +241,9 @@ export class AppointmentController {
           finalCustomerName,
           req.user.email
         );
-        console.log('✅ Confirmation emails sent');
+        console.log(' Confirmation emails sent');
       } catch (emailErr) {
-        console.error('❌ Email sending failed (non‑critical):', emailErr);
+        console.error(' Email sending failed (non‑critical):', emailErr);
       }
 
       // Return success
@@ -259,14 +258,12 @@ export class AppointmentController {
         }
       });
     } catch (error) {
-      console.error('❌ FATAL booking error:', error);
+      console.error(' FATAL booking error:', error);
       return res.status(500).json({ error: 'Server error. Please try again.' });
     }
   }
 
-  // -----------------------------------------------------------------
   //  GET MY APPOINTMENTS (customer)
-  // -----------------------------------------------------------------
   async getMyAppointments(req: AuthRequest, res: Response) {
     try {
       if (!req.user) {
@@ -277,14 +274,12 @@ export class AppointmentController {
         .limit(50);
       res.json({ appointments });
     } catch (error) {
-      console.error('❌ getMyAppointments error:', error);
+      console.error(' getMyAppointments error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
 
-  // -----------------------------------------------------------------
   //  CANCEL APPOINTMENT (customer or admin)
-  // -----------------------------------------------------------------
   async cancelAppointment(req: AuthRequest, res: Response) {
     try {
       if (!req.user) {
@@ -325,14 +320,12 @@ export class AppointmentController {
 
       res.json({ message: 'Appointment cancelled successfully' });
     } catch (error) {
-      console.error('❌ cancelAppointment error:', error);
+      console.error(' cancelAppointment error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
 
-  // -----------------------------------------------------------------
   //  CONFIRM APPOINTMENT (admin only)
-  // -----------------------------------------------------------------
   async confirmAppointment(req: AuthRequest, res: Response) {
     try {
       if (!req.user || req.user.role !== 'admin') {
@@ -355,14 +348,12 @@ export class AppointmentController {
 
       res.json({ message: 'Appointment confirmed successfully' });
     } catch (error) {
-      console.error('❌ confirmAppointment error:', error);
+      console.error(' confirmAppointment error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
 
-  // -----------------------------------------------------------------
   //  GET ALL APPOINTMENTS (admin only)
-  // -----------------------------------------------------------------
   async getAllAppointments(req: AuthRequest, res: Response) {
     try {
       if (!req.user || req.user.role !== 'admin') {
@@ -372,7 +363,7 @@ export class AppointmentController {
       const appointments = await Appointment.find({}).sort({ date: -1 }).limit(100);
       res.json({ appointments });
     } catch (error) {
-      console.error('❌ getAllAppointments error:', error);
+      console.error(' getAllAppointments error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }

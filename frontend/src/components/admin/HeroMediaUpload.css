@@ -1,0 +1,209 @@
+/* components/admin/HeroMediaUpload.css */
+
+.hero-media-dialog {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hero-media-dialog .dialog-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5f5f5;
+  padding: 16px 24px;
+}
+
+.hero-media-dialog .dialog-content {
+  padding: 24px 24px;
+}
+
+.hero-media-dialog .media-container {
+  margin-bottom: 32px;
+}
+
+.hero-media-dialog .media-label {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.hero-media-dialog .media-box {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.hero-media-dialog .media-image,
+.hero-media-dialog .media-video {
+  width: 100%;
+  max-height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-media-dialog .preview-media-image,
+.hero-media-dialog .preview-media-video {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  display: block;
+}
+
+.hero-media-dialog .dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  background-color: transparent;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.hero-media-dialog .dropzone-active {
+  border-color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.04);
+}
+
+.hero-media-dialog .dropzone-error {
+  border-color: #d32f2f;
+}
+
+.hero-media-dialog .dropzone:hover {
+  border-color: #1976d2;
+  background-color: rgba(25, 118, 210, 0.04);
+}
+
+.hero-media-dialog .dropzone-content {
+  width: 100%;
+}
+
+.hero-media-dialog .preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.hero-media-dialog .preview-title {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.875rem;
+}
+
+.hero-media-dialog .file-size {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+}
+
+.hero-media-dialog .preview-box {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.hero-media-dialog .preview-caption {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+  margin-top: 8px;
+  display: block;
+}
+
+.hero-media-dialog .upload-icon {
+  font-size: 48px;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.hero-media-dialog .warning-text {
+  color: #ed6c02;
+  display: block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+}
+
+.hero-media-dialog .warning-text-block {
+  color: #ed6c02;
+  display: block;
+  font-size: 0.75rem;
+}
+
+.hero-media-dialog .progress-container {
+  margin-top: 24px;
+}
+
+.hero-media-dialog .linear-progress {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e0e0e0;
+}
+
+.hero-media-dialog .linear-progress .MuiLinearProgress-bar {
+  background-color: #000000;
+}
+
+.hero-media-dialog .progress-text {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+  margin-top: 8px;
+  display: block;
+  text-align: center;
+}
+
+.hero-media-dialog .requirements {
+  margin-top: 24px;
+}
+
+.hero-media-dialog .requirements-title {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+}
+
+.hero-media-dialog .requirements-text {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.hero-media-dialog .dialog-actions {
+  padding: 24px;
+  background-color: #fafafa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.hero-media-dialog .delete-button {
+  margin-right: auto;
+}
+
+.hero-media-dialog .upload-button {
+  background-color: #000000;
+}
+
+.hero-media-dialog .upload-button:hover {
+  background-color: #333333;
+}
+
+.hero-media-dialog .upload-button.Mui-disabled {
+  background-color: #cccccc;
+}
+
+.hero-media-dialog .uploading-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-media-dialog .mute-button {
+  margin-right: 8px;
+}
+
+.hero-media-dialog .alert {
+  margin-bottom: 24px;
+}

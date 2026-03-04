@@ -67,10 +67,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// ============= PROXY ROUTES =============
-// IMPORTANT: Proxy routes must come BEFORE rate limiting in test mode
-// so the mock can be called
-
+// PROXY ROUTES
 // Helper to create proxy options with error handling
 const createProxyWithErrorHandling = (serviceName: string, targetUrl: string, pathRewrite?: Record<string, string>): Options => {
     const options: Options = {
@@ -187,7 +184,7 @@ app.get('/', (req: Request, res: Response) => {
     });
 });
 
-// ============= CONSUL REGISTRATION =============
+// CONSUL REGISTRATION
 
 // Only register with Consul if not in test environment
 if (!isTestEnvironment) {
@@ -213,28 +210,25 @@ if (!isTestEnvironment) {
     const localIp = getLocalIp();
 
     const server = app.listen(Number(PORT), () => {
-        console.log('\n=================================');
-        console.log('🚪 Voidstone API Gateway');
-        console.log('=================================');
-        console.log(`📡 Port: ${PORT}`);
-        console.log(`🔗 Health: http://localhost:${PORT}/health`);
-        console.log(`📊 Metrics: http://localhost:${PORT}/metrics`);
-        console.log(`🔗 Test: http://localhost:${PORT}/test`);
-        console.log(`📡 Local IP: ${localIp}`);
-        console.log('\n📋 Proxy Routes:');
+        console.log(' Voidstone API Gateway');
+        console.log(` Port: ${PORT}`);
+        console.log(` Health: http://localhost:${PORT}/health`);
+        console.log(` Metrics: http://localhost:${PORT}/metrics`);
+        console.log(` Test: http://localhost:${PORT}/test`);
+        console.log(` Local IP: ${localIp}`);
+        console.log('\n Proxy Routes:');
         console.log(`   POST/GET  /api/auth/*     → auth-service (port 3001)`);
         console.log(`   POST/GET  /api/products/* → product-service (port 3004)`);
         console.log(`   POST/GET  /api/appointments/* → appointment-service (port 3003)`);
         console.log(`   POST      /api/orders/*   → auth-service (port 3001)`);
         console.log(`   POST      /api/contact/*  → auth-service (port 3001)`);
-        console.log('=================================\n');
 
         // Try different addresses for Consul registration
         const addresses = [localIp, 'api-gateway', 'host.docker.internal', 'localhost'];
         
         const tryRegister = async (index: number) => {
             if (index >= addresses.length) {
-                console.log('⚠️ Could not register with Consul');
+                console.log(' Could not register with Consul');
                 return;
             }
 
@@ -254,10 +248,10 @@ if (!isTestEnvironment) {
                     tags: ['gateway', 'api', 'nodejs', 'edge-service']
                 } as any);
                 
-                console.log(`✅ Registered with Consul using ${address}`);
-                console.log(`🔍 View at: http://localhost:8500/ui/dc1/services/api-gateway`);
+                console.log(` Registered with Consul using ${address}`);
+                console.log(` View at: http://localhost:8500/ui/dc1/services/api-gateway`);
             } catch (err) {
-                console.log(`🔄 Retry ${index + 1}/${addresses.length}...`);
+                console.log(` Retry ${index + 1}/${addresses.length}...`);
                 tryRegister(index + 1);
             }
         };
@@ -267,15 +261,15 @@ if (!isTestEnvironment) {
 
     // Graceful shutdown
     const shutdown = async () => {
-        console.log('\n🛑 Shutting down gracefully...');
+        console.log('\n Shutting down gracefully...');
         try {
             await consulClient.agent.service.deregister(serviceId);
-            console.log('✅ Deregistered from Consul');
+            console.log(' Deregistered from Consul');
         } catch (error) {
-            console.error('❌ Error deregistering from Consul:', error);
+            console.error(' Error deregistering from Consul:', error);
         } finally {
             server.close(() => {
-                console.log('👋 Server closed');
+                console.log(' Server closed');
                 process.exit(0);
             });
         }

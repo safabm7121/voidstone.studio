@@ -32,7 +32,7 @@ const userProfileSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true // This creates the index, remove the separate index line below
+    unique: true 
   },
   bio: {
     type: String,

@@ -9,8 +9,10 @@ import { productApi } from '../services/api';
 import { heroService } from '../services/heroService';
 import ThreeDCarousel from '../components/home/ThreeDCarousel';
 import ParallaxSection from '../components/common/ParallaxSection';
-import HeroImageUpload from '../components/admin/HeroImageUpload';
+import HeroMediaUpload from '../components/admin/HeroMediaUpload.tsx';
 import EditIcon from '@mui/icons-material/Edit';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import { useAuth } from '../context/AuthContext';
 import '../styles/animation.css';
 import '../styles/parallax.css';
@@ -30,11 +32,13 @@ const Home: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [heroMedia, setHeroMedia] = useState<any>(null);
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
+  const [isMuted, setIsMuted] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const { elementRef: heroRef, isVisible: heroVisible } = useIntersectionObserver({ threshold: 0.1 });
   
-  // Use parallax for the hero section content - cast the ref to HTMLDivElement
+  // Use parallax for the hero section content
   const heroContentParallaxRef = useParallax(0.2) as React.RefObject<HTMLDivElement>;
 
   // Check if user is admin
@@ -42,17 +46,24 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     fetchFeaturedProducts();
-    fetchHeroImage();
+    fetchHeroMedia();
   }, []);
 
-  const fetchHeroImage = async () => {
+  const fetchHeroMedia = async () => {
     try {
       const hero = await heroService.getHeroImage();
-      if (hero && hero.imageData) {
-        setHeroImage(hero.imageData);
+      if (hero) {
+        setHeroMedia(hero);
+        
+        // Check if it's a video based on imageType
+        if (hero.imageType && hero.imageType.startsWith('video/')) {
+          setMediaType('video');
+        } else {
+          setMediaType('image');
+        }
       }
     } catch (error) {
-      console.error('Error fetching hero image:', error);
+      console.error('Error fetching hero media:', error);
     }
   };
 
@@ -68,9 +79,25 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleUploadSuccess = (imageData: string) => {
-    setHeroImage(imageData);
+  const handleUploadSuccess = () => {
+    // Refresh the hero media after upload
+    fetchHeroMedia();
   };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+
+  // Helper function to get the media URL
+  const getMediaUrl = (): string | undefined => {
+    if (!heroMedia || !heroMedia.imageData) return undefined;
+    
+    // Use imageType if available, otherwise default to image/jpeg
+    const type = heroMedia.imageType || 'image/jpeg';
+    return `data:${type};base64,${heroMedia.imageData}`;
+  };
+
+  const mediaUrl = getMediaUrl();
 
   return (
     <Box>
@@ -78,9 +105,21 @@ const Home: React.FC = () => {
       <ParallaxSection 
         height="vh-90" 
         speed={0.3} 
-        bgImage={heroImage || undefined}
+        bgImage={!mediaUrl || mediaType === 'video' ? undefined : mediaUrl}
       >
         <Box className="hero-section">
+          {/* Background Video for Video Type */}
+          {mediaType === 'video' && mediaUrl && (
+            <video
+              src={mediaUrl}
+              autoPlay
+              loop
+              muted={isMuted}
+              playsInline
+              className="hero-background-video"
+            />
+          )}
+          
           <Box className="hero-overlay" />
           
           {/* Admin Edit Button - Only visible to admin */}
@@ -95,8 +134,20 @@ const Home: React.FC = () => {
             </Tooltip>
           )}
           
+          {/* Mute/Unmute Button for Videos - Only visible for video type */}
+          {mediaType === 'video' && mediaUrl && (
+            <Tooltip title={isMuted ? t('home.unmute') : t('home.mute')}>
+              <IconButton
+                className="hero-mute-button"
+                onClick={toggleMute}
+              >
+                {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
+          
           <Container maxWidth="lg" className="hero-content">
-            {/* Apply parallax effect to the content - now properly typed */}
+            {/* Apply parallax effect to the content */}
             <div ref={heroContentParallaxRef}>
               <motion.div
                 ref={heroRef}
@@ -108,13 +159,13 @@ const Home: React.FC = () => {
                   variant="h1"
                   className="hero-title"
                 >
-                  {t('home.title')}
+                  {heroMedia?.title || t('home.title')}
                 </Typography>
                 <Typography
                   variant="h2"
                   className="hero-subtitle"
                 >
-                  {t('home.subtitle')}
+                  {heroMedia?.subtitle || t('home.subtitle')}
                 </Typography>
                 <Button
                   component={Link}
@@ -123,7 +174,7 @@ const Home: React.FC = () => {
                   size="large"
                   className="hero-button"
                 >
-                  {t('home.explore')}
+                  {heroMedia?.buttonText || t('home.explore')}
                 </Button>
               </motion.div>
             </div>
@@ -176,11 +227,12 @@ const Home: React.FC = () => {
         </Container>
       </Box>
 
-      {/* Hero Image Upload Dialog */}
-      <HeroImageUpload
+      {/* Hero Media Upload Dialog */}
+      <HeroMediaUpload
         open={uploadDialogOpen}
         onClose={() => setUploadDialogOpen(false)}
-        currentImage={heroImage || undefined}
+        currentMedia={mediaUrl}
+        currentMediaType={heroMedia?.imageType}
         onUploadSuccess={handleUploadSuccess}
       />
     </Box>

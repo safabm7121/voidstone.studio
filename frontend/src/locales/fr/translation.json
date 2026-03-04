@@ -30,7 +30,9 @@
     "featured": "Collection en vedette",
     "story": "Notre histoire",
     "editHero": "Modifier l'héro",
-    "storyText": "Fondé en 2024, Voidstone Studio est né d'une vision de créer une mode qui transcende les tendances. Chaque pièce est méticuleusement fabriquée, alliant minimalisme moderne et influences gothiques pour créer quelque chose de vraiment unique."
+    "storyText": "Fondé en 2024, Voidstone Studio est né d'une vision de créer une mode qui transcende les tendances. Chaque pièce est méticuleusement fabriquée, alliant minimalisme moderne et influences gothiques pour créer quelque chose de vraiment unique.",
+     "mute": "Muet",
+    "unmute": "Activer le son"
   },
   "products": {
     "title": "Notre collection",

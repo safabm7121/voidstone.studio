@@ -30,7 +30,9 @@
     "featured": "Featured Collection",
     "story": "Our Story",
     "editHero": "Edit Hero",
-    "storyText": "Founded in 2024, Voidstone Studio emerged from a vision to create fashion that transcends trends. Each piece is meticulously crafted, blending modern minimalism with gothic influences to create something truly unique."
+    "storyText": "Founded in 2024, Voidstone Studio emerged from a vision to create fashion that transcends trends. Each piece is meticulously crafted, blending modern minimalism with gothic influences to create something truly unique." ,
+    "mute": "Mute",
+    "unmute": "Unmute"
   },
   "products": {
     "title": "Our Collection",

@@ -136,7 +136,7 @@ if (!isTestEnvironment) {
   connectDatabase();
 }
 
-// ============= SERVER STARTUP =============
+// SERVER STARTUP
 // Only start server if not in test environment, or if this file is being run directly
 if (require.main === module || !isTestEnvironment) {
   // Consul registration - only in non-test environment
@@ -150,22 +150,19 @@ if (require.main === module || !isTestEnvironment) {
     const localIp = getLocalIp();
 
     const server = app.listen(PORT, () => {
-      console.log('\n=================================');
-      console.log('📅 Appointment Service');
-      console.log('=================================');
-      console.log(`📡 Port: ${PORT}`);
-      console.log(`🔗 Health: http://localhost:${PORT}/health`);
-      console.log(`📊 Metrics: http://localhost:${PORT}/metrics`);
-      console.log(`🔧 Test: http://localhost:${PORT}/api/test`);
-      console.log(`📡 Local IP: ${localIp}`);
-      console.log('=================================\n');
+      console.log(' Appointment Service');
+      console.log(` Port: ${PORT}`);
+      console.log(` Health: http://localhost:${PORT}/health`);
+      console.log(` Metrics: http://localhost:${PORT}/metrics`);
+      console.log(` Test: http://localhost:${PORT}/api/test`);
+      console.log(` Local IP: ${localIp}`);
 
       // Register with Consul
       const addresses = [localIp, 'host.docker.internal', 'localhost'];
       
       const tryRegister = async (index: number) => {
         if (index >= addresses.length) {
-          console.log('⚠️ Could not register with Consul');
+          console.log(' Could not register with Consul');
           return;
         }
 
@@ -185,9 +182,9 @@ if (require.main === module || !isTestEnvironment) {
             tags: ['appointment', 'booking', 'calendar']
           } as any);
           
-          console.log(`✅ Registered with Consul using ${address}`);
+          console.log(` Registered with Consul using ${address}`);
         } catch (err) {
-          console.log(`🔄 Retry ${index + 1}/${addresses.length}...`);
+          console.log(` Retry ${index + 1}/${addresses.length}...`);
           tryRegister(index + 1);
         }
       };
@@ -197,15 +194,15 @@ if (require.main === module || !isTestEnvironment) {
 
     // Graceful shutdown
     const shutdown = async () => {
-      console.log('\n🛑 Shutting down...');
+      console.log('\n Shutting down...');
       try {
         await consulClient.agent.service.deregister(serviceId);
-        console.log('✅ Deregistered from Consul');
+        console.log(' Deregistered from Consul');
       } catch (error) {
-        console.error('❌ Error deregistering from Consul:', error);
+        console.error(' Error deregistering from Consul:', error);
       } finally {
         server.close(() => {
-          console.log('👋 Server closed');
+          console.log(' Server closed');
           process.exit(0);
         });
       }
@@ -215,7 +212,7 @@ if (require.main === module || !isTestEnvironment) {
     process.on('SIGINT', shutdown);
   } else {
     // In test mode, just make the app available without starting server
-    console.log(`📅 Appointment Service configured for test mode`);
+    console.log(` Appointment Service configured for test mode`);
   }
 }
 

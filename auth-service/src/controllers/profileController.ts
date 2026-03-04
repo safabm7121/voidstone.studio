@@ -12,7 +12,7 @@ const VALID_FILE_TYPES = ['cv', 'portfolio', 'certificate'] as const;
 type ValidFileType = typeof VALID_FILE_TYPES[number];
 
 export class ProfileController {
-  // ==================== GET PROFILE ====================
+  //  GET PROFILE 
   async getProfile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -42,12 +42,12 @@ export class ProfileController {
 
       res.json({ profile });
     } catch (error) {
-      console.error('❌ Get profile error:', error);
+      console.error(' Get profile error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
 
-  // ==================== UPDATE PROFILE ====================
+  //  UPDATE PROFILE 
   async updateProfile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -118,7 +118,7 @@ export class ProfileController {
 
       res.json({ profile });
     } catch (error) {
-      console.error('❌ Update profile error:', error);
+      console.error(' Update profile error:', error);
       
       // Handle validation errors
       if (error instanceof mongoose.Error.ValidationError) {
@@ -129,7 +129,7 @@ export class ProfileController {
     }
   }
 
-  // ==================== UPLOAD FILE ====================
+  // UPLOAD FILE
   async uploadFile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -210,7 +210,7 @@ export class ProfileController {
 
       res.json({ profile });
     } catch (error) {
-      console.error('❌ Upload file error:', error);
+      console.error(' Upload file error:', error);
       
       // Handle validation errors
       if (error instanceof mongoose.Error.ValidationError) {
@@ -221,7 +221,7 @@ export class ProfileController {
     }
   }
 
-  // ==================== DELETE FILE ====================
+  //  DELETE FILE 
   async deleteFile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -258,7 +258,7 @@ export class ProfileController {
 
       res.json({ profile });
     } catch (error) {
-      console.error('❌ Delete file error:', error);
+      console.error(' Delete file error:', error);
       
       // Check if error is related to invalid ObjectId
       if (error instanceof Error && error.name === 'BSONError') {
@@ -305,7 +305,7 @@ export class ProfileController {
       const file = profile.files.find(f => f._id.toString() === fileId);
       res.json({ file });
     } catch (error) {
-      console.error('❌ Get file error:', error);
+      console.error(' Get file error:', error);
       
       if (error instanceof Error && error.name === 'BSONError') {
         return res.status(400).json({ error: 'Invalid file ID format' });

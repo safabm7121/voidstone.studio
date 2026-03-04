@@ -1,4 +1,4 @@
-// routes/heroRoutes.ts (updated)
+
 import { Router } from 'express';
 import { HeroController } from '../controllers/heroController';
 import { authenticateToken } from '../middleware/auth';

@@ -5,13 +5,20 @@ import { Hero } from '../models/Hero';
 import { User } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 
-// Maximum file size in bytes (50MB)
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+// Maximum file size in bytes (200MB for videos, 50MB for images)
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
 
-// Valid file types
-const VALID_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+// Valid file types - expanded to include more video formats
+const VALID_MIME_TYPES = [
+  // Images
+  'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff',
+  // Videos - expanded list
+  'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 
+  'video/3gpp', 'video/mpeg', 'video/x-ms-wmv', 'video/x-flv'
+];
 
-// Admin email (only this specific admin can change hero image)
+// Admin email (only this specific admin can change hero media)
 const ADMIN_EMAIL = 'voidstonestudio@gmail.com';
 
 export class HeroController {
@@ -26,20 +33,30 @@ export class HeroController {
     }
   }
 
-  // ==================== GET ACTIVE HERO IMAGE ====================
+  // Helper method to determine media category
+  private getMediaCategory(mimeType: string): 'image' | 'video' {
+    return mimeType.startsWith('video/') ? 'video' : 'image';
+  }
+
+  // Helper method to get max file size based on media type
+  private getMaxFileSize(mimeType: string): number {
+    return mimeType.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+  }
+
+  //  GET ACTIVE HERO MEDIA 
   async getActiveHero(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const hero = await Hero.findOne({ isActive: true });
       
-      // If no hero image exists, return null (frontend will use default)
+      // If no hero media exists, return null (frontend will use default)
       return res.json({ hero: hero || null });
     } catch (error) {
-      console.error('❌ Error fetching hero image:', error);
-      return res.status(500).json({ error: 'Failed to fetch hero image' });
+      console.error('❌ Error fetching hero media:', error);
+      return res.status(500).json({ error: 'Failed to fetch hero media' });
     }
   }
 
-  // ==================== UPLOAD HERO IMAGE ====================
+  //  UPLOAD HERO MEDIA (Image or Video)
   async uploadHeroImage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const userId = req.user?.userId;
@@ -51,7 +68,7 @@ export class HeroController {
       const isVoidstoneAdmin = await this.isVoidstoneAdmin(userId);
       if (!isVoidstoneAdmin) {
         return res.status(403).json({ 
-          error: 'Only Voidstone Studio admin can change the hero image' 
+          error: 'Only Voidstone Studio admin can change the hero media' 
         });
       }
 
@@ -64,27 +81,35 @@ export class HeroController {
         });
       }
 
-      // Validate file type
-      if (!VALID_MIME_TYPES.includes(imageType)) {
+      // Validate file type - check if it starts with image/ or video/
+      if (!imageType.startsWith('image/') && !imageType.startsWith('video/')) {
         return res.status(400).json({ 
-          error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.' 
+          error: 'Invalid file type. Only image and video files are allowed.' 
         });
       }
 
+      // Get max file size based on media type
+      const maxSize = this.getMaxFileSize(imageType);
+      
       // Validate file size
-      if (fileSize > MAX_FILE_SIZE) {
+      if (fileSize > maxSize) {
+        const maxSizeMB = maxSize / (1024 * 1024);
         return res.status(413).json({ 
-          error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.` 
+          error: `File too large. Maximum size for ${imageType.startsWith('video/') ? 'videos' : 'images'} is ${maxSizeMB}MB.` 
         });
       }
 
-      // Deactivate all existing hero images and delete them
+      // Determine media category
+      const mediaCategory = this.getMediaCategory(imageType);
+
+      // Deactivate all existing hero media and delete them
       await Hero.deleteMany({});
 
-      // Create new hero image record
+      // Create new hero media record
       const hero = new Hero({
-        imageData,
-        imageType,
+        mediaData: imageData,
+        mediaType: imageType,
+        mediaCategory,
         uploadedBy: new mongoose.Types.ObjectId(userId),
         fileSize,
         isActive: true
@@ -92,18 +117,18 @@ export class HeroController {
 
       await hero.save();
 
-      console.log(`✅ Hero image uploaded by admin: ${ADMIN_EMAIL}`);
+      console.log(`✅ Hero ${mediaCategory} uploaded by admin: ${ADMIN_EMAIL}`);
       return res.json({ 
         hero,
-        message: 'Hero image uploaded successfully' 
+        message: `Hero ${mediaCategory} uploaded successfully` 
       });
     } catch (error) {
-      console.error('❌ Error uploading hero image:', error);
-      return res.status(500).json({ error: 'Failed to upload hero image' });
+      console.error('❌ Error uploading hero media:', error);
+      return res.status(500).json({ error: 'Failed to upload hero media' });
     }
   }
 
-  // ==================== DELETE HERO IMAGE ====================
+  // ==================== DELETE HERO MEDIA ====================
   async deleteHeroImage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const userId = req.user?.userId;
@@ -115,22 +140,22 @@ export class HeroController {
       const isVoidstoneAdmin = await this.isVoidstoneAdmin(userId);
       if (!isVoidstoneAdmin) {
         return res.status(403).json({ 
-          error: 'Only Voidstone Studio admin can delete the hero image' 
+          error: 'Only Voidstone Studio admin can delete the hero media' 
         });
       }
 
       // Delete all records from database
       await Hero.deleteMany({});
 
-      console.log(`✅ All hero images deleted by admin: ${ADMIN_EMAIL}`);
-      return res.json({ message: 'Hero image deleted successfully' });
+      console.log(`✅ All hero media deleted by admin: ${ADMIN_EMAIL}`);
+      return res.json({ message: 'Hero media deleted successfully' });
     } catch (error) {
-      console.error('❌ Error deleting hero image:', error);
-      return res.status(500).json({ error: 'Failed to delete hero image' });
+      console.error('❌ Error deleting hero media:', error);
+      return res.status(500).json({ error: 'Failed to delete hero media' });
     }
   }
 
-  // ==================== UPDATE HERO TEXT ====================
+  //  UPDATE HERO TEXT 
   async updateHeroText(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const userId = req.user?.userId;
@@ -151,7 +176,7 @@ export class HeroController {
       const hero = await Hero.findOne({ isActive: true });
       
       if (!hero) {
-        return res.status(404).json({ error: 'No active hero image found' });
+        return res.status(404).json({ error: 'No active hero media found' });
       }
 
       if (title) hero.title = title;
