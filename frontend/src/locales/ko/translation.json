@@ -50,7 +50,24 @@
     "clearFilters": "필터 초기화",
     "noProducts": "제품 없음",
     "viewDetails": "상세보기",
-    "addToCart": "장바구니 추가"
+    "addToCart": "장바구니 추가",
+     "categories": {
+    "men": "남성",
+    "women": "여성",
+    "art": "아트",
+    "accessories": "액세서리",
+    "shirts": "셔츠",
+    "tShirts": "티셔츠",
+    "pants": "바지",
+    "jeans": "청바지",
+    "jackets": "재킷",
+    "coats": "코트",
+    "dresses": "드레스",
+    "skirts": "치마",
+    "bags": "가방",
+    "shoes": "신발",
+    "hats": "모자"
+  }
   },
   "designers": {
     "title": "디자이너",

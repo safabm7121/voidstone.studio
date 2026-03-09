@@ -31,7 +31,9 @@ const Products: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'slider'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  // New hierarchical category state
+  const [mainCategory, setMainCategory] = useState('All');
+  const [subCategory, setSubCategory] = useState('');
   const [priceRange, setPriceRange] = useState<number[]>([0, 500]);
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
@@ -46,10 +48,14 @@ const Products: React.FC = () => {
   const itemsPerPage = 9;
   const { elementRef, isVisible } = useIntersectionObserver({ threshold: 0.1 });
 
-  const categories = [
-    'All', 'Men', 'Women', 'Accessories', 'Shirts', 'T-Shirts',
-    'Pants', 'Jeans', 'Jackets', 'Coats', 'Dresses', 'Skirts', 'Bags', 'Shoes', 'Hats'
-  ];
+  // Main category options (All is not a product category)
+  const mainCategories = ['All', 'Men', 'Women', 'Art'];
+
+  // Subcategories for Men and Women
+  const subCategoriesByGender: Record<string, string[]> = {
+    Men: ['Accessories', 'Shirts', 'T-Shirts', 'Pants', 'Jeans', 'Jackets', 'Coats', 'Dresses', 'Skirts', 'Bags', 'Shoes', 'Hats'],
+    Women: ['Accessories', 'Shirts', 'T-Shirts', 'Pants', 'Jeans', 'Jackets', 'Coats', 'Dresses', 'Skirts', 'Bags', 'Shoes', 'Hats']
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -57,7 +63,7 @@ const Products: React.FC = () => {
 
   useEffect(() => {
     filterAndSortProducts();
-  }, [products, searchTerm, selectedCategory, priceRange, sortBy]);
+  }, [products, searchTerm, mainCategory, subCategory, priceRange, sortBy]);
 
   const fetchProducts = async () => {
     try {
@@ -137,8 +143,20 @@ const Products: React.FC = () => {
       );
     }
     
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => product.category?.toLowerCase() === selectedCategory.toLowerCase());
+    // Apply hierarchical category filter
+    if (mainCategory !== 'All') {
+      if (mainCategory === 'Art') {
+        filtered = filtered.filter(product => product.category === 'Art');
+      } else if (subCategory) {
+        // Gender + specific subcategory
+        const fullCategory = `${mainCategory} ${subCategory}`;
+        filtered = filtered.filter(product => product.category === fullCategory);
+      } else {
+        // Gender selected, no subcategory → show all products of that gender
+        filtered = filtered.filter(product =>
+          product.category.startsWith(mainCategory + ' ')
+        );
+      }
     }
     
     filtered = filtered.filter(product => product.price >= priceRange[0] && product.price <= priceRange[1]);
@@ -189,14 +207,54 @@ const Products: React.FC = () => {
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} 
             />
           </Grid>
-          <Grid item xs={6} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>{t('products.category')}</InputLabel>
-              <Select value={selectedCategory} label={t('products.category')} onChange={(e) => setSelectedCategory(e.target.value)}>
-                {categories.map((cat) => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
+          {/* Main category dropdown */}
+         
+<Grid item xs={6} md={2}>
+  <FormControl fullWidth>
+    <InputLabel>{t('products.category')}</InputLabel>
+    <Select 
+      value={mainCategory} 
+      label={t('products.category')} 
+      onChange={(e) => {
+        setMainCategory(e.target.value);
+        setSubCategory('');
+      }}
+    >
+      {mainCategories.map((cat) => {
+        if (cat === 'All') {
+          return <MenuItem key="All" value="All">{t('common.all')}</MenuItem>;
+        }
+        return (
+          <MenuItem key={cat} value={cat}>
+            {t(`products.categories.${cat.toLowerCase()}`)}
+          </MenuItem>
+        );
+      })}
+    </Select>
+  </FormControl>
+</Grid>
+
+{(mainCategory === 'Men' || mainCategory === 'Women') && (
+  <Grid item xs={6} md={2}>
+    <FormControl fullWidth>
+      <InputLabel>{t('products.subcategory')}</InputLabel>
+      <Select 
+        value={subCategory} 
+        label={t('products.subcategory')} 
+        onChange={(e) => setSubCategory(e.target.value)}
+      >
+        {subCategoriesByGender[mainCategory].map((sub) => {
+          const translationKey = sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase();
+          return (
+            <MenuItem key={sub} value={sub}>
+              {t(`products.categories.${translationKey}`)}
+            </MenuItem>
+          );
+        })}
+      </Select>
+    </FormControl>
+  </Grid>
+)}
           <Grid item xs={6} md={2}>
             <FormControl fullWidth>
               <InputLabel>{t('products.sortBy')}</InputLabel>
@@ -244,14 +302,15 @@ const Products: React.FC = () => {
         </AnimatePresence>
       </Paper>
 
-      {(searchTerm || selectedCategory !== 'All' || priceRange[0] > 0 || priceRange[1] < 500) && (
+      {(searchTerm || mainCategory !== 'All' || subCategory || priceRange[0] > 0 || priceRange[1] < 500) && (
         <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
           <Typography variant="body1" color="text.secondary">
             {filteredProducts.length} {t('products.productsFound')}
           </Typography>
           <Button variant="text" onClick={() => { 
             setSearchTerm(''); 
-            setSelectedCategory('All'); 
+            setMainCategory('All');
+            setSubCategory('');
             setPriceRange([0, 500]); 
             setSortBy('newest');
           }}>
@@ -265,7 +324,8 @@ const Products: React.FC = () => {
           <Typography variant="h5" color="text.secondary" gutterBottom>{t('products.noProducts')}</Typography>
           <Button variant="contained" onClick={() => { 
             setSearchTerm(''); 
-            setSelectedCategory('All'); 
+            setMainCategory('All');
+            setSubCategory('');
             setPriceRange([0, 500]); 
             setSortBy('newest');
           }}>

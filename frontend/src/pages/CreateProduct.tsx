@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Container, Paper, Typography, TextField, Button, Grid, Chip, Box, Alert, IconButton
+  Container, Paper, Typography, TextField, Button, Grid, Chip, Box, Alert, IconButton,
+  FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -29,10 +30,32 @@ const CreateProduct: React.FC = () => {
     name: '', 
     description: '', 
     price: '', 
-    category: '', 
     designer: '', 
     stock_quantity: ''
   });
+
+  // New category state
+  const [mainCategory, setMainCategory] = useState('');
+  const [subCategory, setSubCategory] = useState('');
+
+  // Available main categories
+  const mainCategories = ['Men', 'Women', 'Art'];
+
+  // Subcategories for Men and Women
+  const subCategoriesByGender: Record<string, string[]> = {
+    Men: ['Accessories', 'Shirts', 'T-Shirts', 'Pants', 'Jeans', 'Jackets', 'Coats', 'Dresses', 'Skirts', 'Bags', 'Shoes', 'Hats'],
+    Women: ['Accessories', 'Shirts', 'T-Shirts', 'Pants', 'Jeans', 'Jackets', 'Coats', 'Dresses', 'Skirts', 'Bags', 'Shoes', 'Hats']
+  };
+
+  // Helper to split category string into main and sub
+  const splitCategory = (cat: string) => {
+    if (!cat) return { main: '', sub: '' };
+    const parts = cat.split(' ');
+    if (parts.length >= 2) {
+      return { main: parts[0], sub: parts.slice(1).join(' ') };
+    }
+    return { main: cat, sub: '' };
+  };
 
   // Load product if in edit mode
   useEffect(() => {
@@ -52,10 +75,14 @@ const CreateProduct: React.FC = () => {
         name: product.name || '',
         description: product.description || '',
         price: product.price?.toString() || '',
-        category: product.category || '',
         designer: product.designer || '',
         stock_quantity: product.stock_quantity?.toString() || '0'
       });
+      
+      // Split category into main and sub
+      const { main, sub } = splitCategory(product.category || '');
+      setMainCategory(main);
+      setSubCategory(sub);
       
       setImages(product.images || []);
       setTags(product.tags || []);
@@ -123,17 +150,31 @@ const CreateProduct: React.FC = () => {
     console.log('Is edit mode?', isEditMode);
     console.log('Product ID:', productId);
     
-    if (!formData.name || !formData.description || !formData.price || !formData.category) {
-      setError('Please fill in all required fields');
+    // Validate required fields
+    if (!formData.name || !formData.description || !formData.price || !mainCategory) {
+      setError('Please fill in all required fields and select a category');
       setLoading(false);
       return;
+    }
+
+    // For Men/Women, subcategory must be selected
+    if ((mainCategory === 'Men' || mainCategory === 'Women') && !subCategory) {
+      setError(`Please select a subcategory for ${mainCategory}`);
+      setLoading(false);
+      return;
+    }
+
+    // Build the full category string
+    let category = mainCategory;
+    if (mainCategory !== 'Art' && subCategory) {
+      category = `${mainCategory} ${subCategory}`;
     }
     
     const productData = {
       name: formData.name,
       description: formData.description,
       price: parseFloat(formData.price),
-      category: formData.category,
+      category: category,
       designer: formData.designer || 'Voidstone Studio',
       stock_quantity: parseInt(formData.stock_quantity) || 0,
       images: images,
@@ -269,18 +310,51 @@ const CreateProduct: React.FC = () => {
               />
             </Grid>
             
+            {/* Main Category Dropdown */}
             <Grid item xs={12} sm={6}>
-              <TextField 
-                fullWidth 
-                name="category" 
-                label={t('createProduct.category')} 
-                value={formData.category} 
-                onChange={handleChange} 
-                required 
-                disabled={loading}
-                error={!formData.category && error.includes('fill')}
-              />
+              <FormControl fullWidth required error={!mainCategory && error.includes('category')}>
+                <InputLabel>{t('products.category')}</InputLabel>
+                <Select
+                  value={mainCategory}
+                  label={t('products.category')}
+                  onChange={(e) => {
+                    setMainCategory(e.target.value);
+                    setSubCategory(''); // reset sub when main changes
+                  }}
+                  disabled={loading}
+                >
+                  {mainCategories.map((cat) => (
+                    <MenuItem key={cat} value={cat}>
+                      {t(`products.categories.${cat.toLowerCase()}`)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
+
+            {/* Subcategory Dropdown (only for Men/Women) */}
+            {(mainCategory === 'Men' || mainCategory === 'Women') && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={!subCategory && error.includes('subcategory')}>
+                  <InputLabel>{t('products.subcategory')}</InputLabel>
+                  <Select
+                    value={subCategory}
+                    label={t('products.subcategory')}
+                    onChange={(e) => setSubCategory(e.target.value)}
+                    disabled={loading}
+                  >
+                    {subCategoriesByGender[mainCategory].map((sub) => {
+                      const translationKey = sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase();
+                      return (
+                        <MenuItem key={sub} value={sub}>
+                          {t(`products.categories.${translationKey}`)}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
             
             <Grid item xs={12} sm={6}>
               <TextField 

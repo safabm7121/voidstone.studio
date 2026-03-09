@@ -6,13 +6,13 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enTranslations from './locales/en/translation.json';
 import frTranslations from './locales/fr/translation.json';
 import arTranslations from './locales/ar/translation.json';
-import koTranslations from './locales/ko/translation.json'; // ✅ Add Korean
+import koTranslations from './locales/ko/translation.json'; 
 
 const resources = {
   en: { translation: enTranslations },
   fr: { translation: frTranslations },
   ar: { translation: arTranslations },
-  ko: { translation: koTranslations }, // ✅ Register Korean
+  ko: { translation: koTranslations }, 
 };
 
 i18n

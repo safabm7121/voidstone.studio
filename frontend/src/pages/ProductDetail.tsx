@@ -52,6 +52,16 @@ const ProductDetail: React.FC = () => {
   // Check if user is admin
   const isAdmin = user?.role?.toLowerCase() === 'admin';
 
+  // Helper to split category into main and sub (e.g., "Men Shirts" → main="Men", sub="Shirts")
+  const splitCategory = (cat: string) => {
+    if (!cat) return { main: '', sub: '' };
+    const parts = cat.split(' ');
+    if (parts.length >= 2) {
+      return { main: parts[0], sub: parts.slice(1).join(' ') };
+    }
+    return { main: cat, sub: '' };
+  };
+
   // Fetch product data
   const fetchProduct = useCallback(async () => {
     if (!id) return;
@@ -209,6 +219,8 @@ const ProductDetail: React.FC = () => {
     );
   }
 
+  const { main, sub } = splitCategory(product.category || '');
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <div ref={elementRef} className={`fade-blur ${isVisible ? 'visible' : ''}`}>
@@ -278,62 +290,62 @@ const ProductDetail: React.FC = () => {
               />
             ) : (
               <Card elevation={3}>
-  {product.images?.length > 0 ? (
-    <>
-      <CardMedia
-        component="img"
-        height="400"
-        image={product.images[simpleSliderIndex]}  
-        alt={product.name}
-        sx={{
-          objectFit: 'cover',
-          transition: 'transform 0.3s',
-          '&:hover': { transform: 'scale(1.02)' }
-        }}
-      />
-      {product.images.length > 1 && (
-        <Box sx={{
-          display: 'flex',
-          gap: 1,
-          p: 2,
-          overflowX: 'auto',
-          '&::-webkit-scrollbar': { height: 8 },
-          '&::-webkit-scrollbar-thumb': {
-            bgcolor: 'primary.main',
-            borderRadius: 4,
-          }
-        }}>
-          {product.images.map((img: string, idx: number) => (
-            <Box
-              key={idx}
-              onClick={() => setSimpleSliderIndex(idx)}  // ← Make thumbnails clickable
-              sx={{
-                width: 80,
-                height: 80,
-                border: '2px solid',
-                borderColor: idx === simpleSliderIndex ? 'primary.main' : 'transparent',  // ← Highlight active
-                borderRadius: 1,
-                cursor: 'pointer',
-                backgroundImage: `url(${img})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                  borderColor: 'primary.main'
-                }
-              }}
-            />
-          ))}
-        </Box>
-      )}
-    </>
-  ) : (
-    <Box sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
-      <Typography color="text.secondary">No images available</Typography>
-    </Box>
-  )}
-</Card>
+                {product.images?.length > 0 ? (
+                  <>
+                    <CardMedia
+                      component="img"
+                      height="400"
+                      image={product.images[simpleSliderIndex]}  
+                      alt={product.name}
+                      sx={{
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s',
+                        '&:hover': { transform: 'scale(1.02)' }
+                      }}
+                    />
+                    {product.images.length > 1 && (
+                      <Box sx={{
+                        display: 'flex',
+                        gap: 1,
+                        p: 2,
+                        overflowX: 'auto',
+                        '&::-webkit-scrollbar': { height: 8 },
+                        '&::-webkit-scrollbar-thumb': {
+                          bgcolor: 'primary.main',
+                          borderRadius: 4,
+                        }
+                      }}>
+                        {product.images.map((img: string, idx: number) => (
+                          <Box
+                            key={idx}
+                            onClick={() => setSimpleSliderIndex(idx)}  // ← Make thumbnails clickable
+                            sx={{
+                              width: 80,
+                              height: 80,
+                              border: '2px solid',
+                              borderColor: idx === simpleSliderIndex ? 'primary.main' : 'transparent',  // ← Highlight active
+                              borderRadius: 1,
+                              cursor: 'pointer',
+                              backgroundImage: `url(${img})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                              transition: 'transform 0.2s',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                borderColor: 'primary.main'
+                              }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    )}
+                  </>
+                ) : (
+                  <Box sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
+                    <Typography color="text.secondary">No images available</Typography>
+                  </Box>
+                )}
+              </Card>
             )}
           </Grid>
 
@@ -399,9 +411,22 @@ const ProductDetail: React.FC = () => {
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     {t('product.category')}
                   </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {product.category}
-                  </Typography>
+                  {/* Category chips – main and sub (translated) */}
+                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={t(`products.categories.${main.toLowerCase()}`)}
+                      size="small"
+                      variant="outlined"
+                    />
+                    {sub && (
+                      <Chip
+                        label={t(`products.categories.${sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase()}`)}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
                 </Grid>
                 
                 <Grid item xs={6}>

@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: Mongo2026!
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
       MONGO_INITDB_DATABASE: voidstone_users
     ports:
       - "27017:27017"
@@ -62,20 +62,21 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3001
-      - MONGODB_URI=mongodb://admin:Mongo2026!@mongodb:27017/voidstone_users?authSource=admin
-      - JWT_SECRET=voidstone-super-secret-key-2026
-      - JWT_REFRESH_SECRET=voidstone-refresh-secret-key-2026
+      - MONGODB_URI=mongodb://admin:${MONGO_PASSWORD}@mongodb:27017/voidstone_users?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - JWT_EXPIRY=15m
       - JWT_REFRESH_EXPIRY=7d
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
       - EMAIL_USER=voidstonestudio@gmail.com
-      - EMAIL_PASS=rfinxybarsydjojl
-    volumes:
-      - ./auth-service:/app
-      - /app/node_modules
+      - EMAIL_PASS=${EMAIL_PASS}
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+   # volumes:  # Commented out for production
+#   - ./auth-service:/app
+#   - /app/node_modules
     networks:
       - voidstone-network
     depends_on:
@@ -91,15 +92,16 @@ services:
     ports:
       - "3002:3002"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3002
-      - MONGODB_URI=mongodb://admin:Mongo2026!@mongodb:27017/voidstone_products?authSource=admin
-      - JWT_SECRET=voidstone-super-secret-key-2026
+      - MONGODB_URI=mongodb://admin:${MONGO_PASSWORD}@mongodb:27017/voidstone_products?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
-    volumes:
-      - ./product-service:/app
-      - /app/node_modules
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+    # volumes:
+#   - ./product-service:/app
+#   - /app/node_modules
     networks:
       - voidstone-network
     depends_on:
@@ -115,17 +117,18 @@ services:
     ports:
       - "3003:3003"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3003
-      - MONGODB_URI=mongodb://admin:Mongo2026!@mongodb:27017/voidstone_appointments?authSource=admin
-      - JWT_SECRET=voidstone-super-secret-key-2026
+      - MONGODB_URI=mongodb://admin:${MONGO_PASSWORD}@mongodb:27017/voidstone_appointments?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
       - AUTH_SERVICE_URL=http://auth-service:3001/api
       - ADMIN_EMAIL=voidstonestudio@gmail.com
-    volumes:
-      - ./appointment-service:/app
-      - /app/node_modules
+      - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+   # volumes:
+#   - ./appointment-service:/app
+#   - /app/node_modules
     networks:
       - voidstone-network
     depends_on:
@@ -143,14 +146,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - GATEWAY_PORT=3000
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
       - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend
-    volumes:
-      - ./api-gateway:/app
-      - /app/node_modules
+    # volumes:
+#   - ./api-gateway:/app
+#   - /app/node_modules
     networks:
       - voidstone-network
     depends_on:
@@ -170,10 +173,10 @@ services:
     ports:
       - "5173:80"
     environment:
-      - VITE_API_URL=http://api-gateway:3000
-      - VITE_AUTH_URL=http://auth-service:3001
-      - VITE_PRODUCT_URL=http://product-service:3002
-      - VITE_APPOINTMENT_URL=http://appointment-service:3003
+       - VITE_API_URL=http://api-gateway:3000
+       - VITE_AUTH_URL=http://auth-service:3001   
+       - VITE_PRODUCT_URL=http://product-service:3002
+       - VITE_APPOINTMENT_URL=http://appointment-service:3003
     networks:
       - voidstone-network
     depends_on:

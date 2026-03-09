@@ -50,7 +50,24 @@
     "clearFilters": "Effacer les filtres",
     "noProducts": "Aucun produit trouvé",
     "viewDetails": "Voir détails",
-    "addToCart": "Ajouter au panier"
+    "addToCart": "Ajouter au panier",
+      "categories": {
+    "men": "Hommes",
+    "women": "Femmes",
+    "art": "Art",
+    "accessories": "Accessoires",
+    "shirts": "Chemises",
+    "tShirts": "T-Shirts",
+    "pants": "Pantalons",
+    "jeans": "Jeans",
+    "jackets": "Vestes",
+    "coats": "Manteaux",
+    "dresses": "Robes",
+    "skirts": "Jupes",
+    "bags": "Sacs",
+    "shoes": "Chaussures",
+    "hats": "Chapeaux"
+  }
   },
   "designers": {
     "title": "Nos designers",

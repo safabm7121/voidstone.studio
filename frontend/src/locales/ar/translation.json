@@ -49,7 +49,24 @@
     "clearFilters": "مسح التصفية",
     "noProducts": "لم يتم العثور على منتجات",
     "viewDetails": "عرض التفاصيل",
-    "addToCart": "أضف إلى السلة"
+    "addToCart": "أضف إلى السلة",
+      "categories": {
+    "men": "رجال",
+    "women": "نساء",
+    "art": "فن",
+    "accessories": "إكسسوارات",
+    "shirts": "قمصان",
+    "tShirts": "تي شيرت",
+    "pants": "بناطيل",
+    "jeans": "جينز",
+    "jackets": "جواكت",
+    "coats": "معاطف",
+    "dresses": "فساتين",
+    "skirts": "تنانير",
+    "bags": "حقائب",
+    "shoes": "أحذية",
+    "hats": "قبعات"
+  }
   },
   "designers": {
     "title": "المصممين",

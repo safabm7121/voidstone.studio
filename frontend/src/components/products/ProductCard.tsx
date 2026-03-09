@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Product } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
 import '../../styles/animation.css'; // keep your existing animation
+import { useTranslation } from 'react-i18next';
 
 interface ProductCardProps {
   product: Product;
@@ -27,10 +28,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onEdit,
   onViewHistory
 }) => {
+  const { t } = useTranslation();
   const { elementRef, isVisible } = useIntersectionObserver({ threshold: 0.1 });
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Helper to split category into main and sub (e.g., "Men Shirts" → main="Men", sub="Shirts")
+  const splitCategory = (cat: string) => {
+    if (!cat) return { main: '', sub: '' };
+    const parts = cat.split(' ');
+    if (parts.length >= 2) {
+      return { main: parts[0], sub: parts.slice(1).join(' ') };
+    }
+    return { main: cat, sub: '' };
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -59,6 +71,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.stopPropagation();
     onViewHistory?.(product);
   };
+
+  const { main, sub } = splitCategory(product.category || '');
 
   return (
     <div ref={elementRef} className={`fade-blur ${isVisible ? 'visible' : ''}`}>
@@ -201,13 +215,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
             >
               {product.description}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.disabled"
-              sx={{ display: 'block', mb: 0.5, textTransform: 'uppercase', letterSpacing: 0.5 }}
-            >
-              {product.category}
-            </Typography>
+
+            {/* Category chips – main and sub (translated) */}
+            {product.category && (
+              <Box sx={{ display: 'flex', gap: 0.5, mb: 1, flexWrap: 'wrap' }}>
+                <Chip
+                  label={t(`products.categories.${main.toLowerCase()}`)}
+                  size="small"
+                  variant="outlined"
+                />
+                {sub && (
+                  <Chip
+                    label={t(`products.categories.${sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase()}`)}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                )}
+              </Box>
+            )}
+
             <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
               {formatCurrency(product.price)}
             </Typography>

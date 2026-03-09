@@ -155,18 +155,12 @@ const Home: React.FC = () => {
                 animate={heroVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8 }}
               >
-                <Typography
-                  variant="h1"
-                  className="hero-title"
-                >
-                  {heroMedia?.title || t('home.title')}
-                </Typography>
-                <Typography
-                  variant="h2"
-                  className="hero-subtitle"
-                >
-                  {heroMedia?.subtitle || t('home.subtitle')}
-                </Typography>
+                <Typography variant="h1" className="hero-title">
+  {t('home.title')}
+</Typography>
+               <Typography variant="h2" className="hero-subtitle">
+  {t('home.subtitle')}
+</Typography>
                 <Button
                   component={Link}
                   to="/products"
@@ -174,7 +168,7 @@ const Home: React.FC = () => {
                   size="large"
                   className="hero-button"
                 >
-                  {heroMedia?.buttonText || t('home.explore')}
+                  {t('home.explore')}
                 </Button>
               </motion.div>
             </div>

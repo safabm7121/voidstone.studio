@@ -254,4 +254,3 @@ services:
       - voidstone-network
     depends_on:
       - loki
-      
