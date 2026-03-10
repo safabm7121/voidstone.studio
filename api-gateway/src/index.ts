@@ -218,7 +218,7 @@ if (!isTestEnvironment) {
         console.log(` Local IP: ${localIp}`);
         console.log('\n Proxy Routes:');
         console.log(`   POST/GET  /api/auth/*     → auth-service (port 3001)`);
-        console.log(`   POST/GET  /api/products/* → product-service (port 3004)`);
+        console.log(`   POST/GET  /api/products/* → product-service (port 3002)`);
         console.log(`   POST/GET  /api/appointments/* → appointment-service (port 3003)`);
         console.log(`   POST      /api/orders/*   → auth-service (port 3001)`);
         console.log(`   POST      /api/contact/*  → auth-service (port 3001)`);

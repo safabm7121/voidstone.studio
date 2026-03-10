@@ -1,11 +1,11 @@
 // services/heroApi.ts
 import axios from 'axios';
 
-// Use the same port as your auth or product API
-const HERO_API_URL = 'http://localhost:3001/api'; // Using auth API port
+// Use the auth service URL with /api path
+const HERO_API_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:3001';
 
 export const heroApi = axios.create({
-  baseURL: HERO_API_URL,
+  baseURL: `${HERO_API_URL}/api`,  // Add /api here
   maxBodyLength: 200 * 1024 * 1024, // 200MB
   maxContentLength: 200 * 1024 * 1024, // 200MB
 });
@@ -20,18 +20,15 @@ heroApi.interceptors.request.use((config) => {
     console.log(' Hero API - Token added to request headers');
   }
   
-  if (process.env.NODE_ENV === 'development') {
-    console.log(` Hero API ${config.method?.toUpperCase()} ${config.url}`);
-  }
+  // Log the full URL being called
+  console.log(` Hero API ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   
   return config;
 });
 
 heroApi.interceptors.response.use(
   (response) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(` Hero API ${response.status} ${response.config.url}`);
-    }
+    console.log(` Hero API ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
@@ -40,7 +37,8 @@ heroApi.interceptors.response.use(
       statusText: error.response?.statusText,
       data: error.response?.data,
       message: error.message,
-      url: error.config?.url
+      url: error.config?.url,
+      baseURL: error.config?.baseURL
     });
     
     if (error.response?.status === 401) {

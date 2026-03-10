@@ -1,4 +1,3 @@
-# frontend/Dockerfile
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -9,6 +8,16 @@ RUN npm ci
 
 # Copy source code
 COPY . .
+
+# Build arguments for Vite
+ARG VITE_API_URL
+ARG VITE_AUTH_URL
+ARG VITE_PRODUCT_URL
+ARG VITE_APPOINTMENT_URL
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_AUTH_URL=$VITE_AUTH_URL \
+    VITE_PRODUCT_URL=$VITE_PRODUCT_URL \
+    VITE_APPOINTMENT_URL=$VITE_APPOINTMENT_URL
 
 # Build the app
 RUN npm run build
