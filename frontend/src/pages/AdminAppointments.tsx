@@ -22,6 +22,7 @@ import {
   MenuItem,
   SelectChangeEvent
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { appointmentService } from '../services/appointmentService';
 import { Appointment } from '../types/appointment';
 import { format } from 'date-fns';
@@ -30,6 +31,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const AdminAppointments: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -61,7 +63,7 @@ const AdminAppointments: React.FC = () => {
       setAppointments(data);
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      toast.error('Failed to load appointments');
+      toast.error(t('admin.appointments.loadError'));
     } finally {
       setLoading(false);
     }
@@ -70,22 +72,22 @@ const AdminAppointments: React.FC = () => {
   const handleConfirm = async (id: string) => {
     try {
       await appointmentService.confirmAppointment(id);
-      toast.success('Appointment confirmed successfully');
+      toast.success(t('admin.appointments.confirmSuccess'));
       setConfirmDialog({ open: false, id: '' });
       fetchAllAppointments();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to confirm appointment');
+      toast.error(error.response?.data?.error || t('admin.appointments.confirmError'));
     }
   };
 
   const handleCancel = async () => {
     try {
       await appointmentService.cancelAppointment(cancelDialog.id, cancelDialog.reason);
-      toast.success('Appointment cancelled successfully');
+      toast.success(t('admin.appointments.cancelSuccess'));
       setCancelDialog({ open: false, id: '', reason: '' });
       fetchAllAppointments();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to cancel appointment');
+      toast.error(error.response?.data?.error || t('admin.appointments.cancelError'));
     }
   };
 
@@ -119,31 +121,31 @@ const AdminAppointments: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Admin Dashboard - Appointments
+        {t('admin.appointments.title')}
       </Typography>
 
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Status</InputLabel>
+          <InputLabel>{t('admin.appointments.filterByStatus')}</InputLabel>
           <Select
             value={statusFilter}
-            label="Filter by Status"
+            label={t('admin.appointments.filterByStatus')}
             onChange={handleStatusFilterChange}
           >
-            <MenuItem value="all">All Appointments</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="confirmed">Confirmed</MenuItem>
-            <MenuItem value="cancelled">Cancelled</MenuItem>
-            <MenuItem value="completed">Completed</MenuItem>
+            <MenuItem value="all">{t('admin.appointments.all')}</MenuItem>
+            <MenuItem value="pending">{t('admin.appointments.pending')}</MenuItem>
+            <MenuItem value="confirmed">{t('admin.appointments.confirmed')}</MenuItem>
+            <MenuItem value="cancelled">{t('admin.appointments.cancelled')}</MenuItem>
+            <MenuItem value="completed">{t('admin.appointments.completed')}</MenuItem>
           </Select>
         </FormControl>
         <Typography variant="body2" color="text.secondary">
-          Total: {filteredAppointments.length} appointments
+          {t('admin.appointments.total', { count: filteredAppointments.length })}
         </Typography>
       </Box>
 
       {filteredAppointments.length === 0 ? (
-        <Alert severity="info">No appointments found.</Alert>
+        <Alert severity="info">{t('admin.appointments.noAppointments')}</Alert>
       ) : (
         <Grid container spacing={3}>
           {filteredAppointments.map((apt) => (
@@ -153,7 +155,7 @@ const AdminAppointments: React.FC = () => {
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={2}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Date
+                        {t('admin.appointments.date')}
                       </Typography>
                       <Typography variant="body1">
                         {format(new Date(apt.date), 'MMM d, yyyy')}
@@ -162,7 +164,7 @@ const AdminAppointments: React.FC = () => {
                     
                     <Grid item xs={12} sm={2}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Time
+                        {t('admin.appointments.time')}
                       </Typography>
                       <Typography variant="body1" color="primary">
                         {apt.timeSlot}
@@ -171,7 +173,7 @@ const AdminAppointments: React.FC = () => {
                     
                     <Grid item xs={12} sm={3}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Customer
+                        {t('admin.appointments.customer')}
                       </Typography>
                       <Typography variant="body1">
                         {apt.customerName}
@@ -183,10 +185,10 @@ const AdminAppointments: React.FC = () => {
                     
                     <Grid item xs={12} sm={2}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Type
+                        {t('admin.appointments.type')}
                       </Typography>
                       <Chip 
-                        label={apt.consultationType}
+                        label={t(`appointments.${apt.consultationType.toLowerCase()}`)}
                         size="small"
                         variant="outlined"
                       />
@@ -194,10 +196,10 @@ const AdminAppointments: React.FC = () => {
                     
                     <Grid item xs={12} sm={1}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Status
+                        {t('admin.appointments.status')}
                       </Typography>
                       <Chip 
-                        label={apt.status.toUpperCase()}
+                        label={t(`admin.appointments.${apt.status}`)}
                         color={getStatusColor(apt.status) as any}
                         size="small"
                       />
@@ -213,7 +215,7 @@ const AdminAppointments: React.FC = () => {
                             setDetailsOpen(true);
                           }}
                         >
-                          Details
+                          {t('common.details')}
                         </Button>
                         {apt.status === 'pending' && (
                           <>
@@ -223,7 +225,7 @@ const AdminAppointments: React.FC = () => {
                               color="success"
                               onClick={() => setConfirmDialog({ open: true, id: apt._id })}
                             >
-                              Confirm
+                              {t('admin.appointments.confirm')}
                             </Button>
                             <Button
                               size="small"
@@ -231,7 +233,7 @@ const AdminAppointments: React.FC = () => {
                               color="error"
                               onClick={() => setCancelDialog({ open: true, id: apt._id, reason: '' })}
                             >
-                              Cancel
+                              {t('admin.appointments.cancel')}
                             </Button>
                           </>
                         )}
@@ -247,29 +249,29 @@ const AdminAppointments: React.FC = () => {
 
       {/* Details Dialog */}
       <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Appointment Details</DialogTitle>
+        <DialogTitle>{t('admin.appointments.appointmentDetails')}</DialogTitle>
         <DialogContent>
           {selectedAppointment && (
             <Box sx={{ pt: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">Customer</Typography>
+              <Typography variant="subtitle2" color="text.secondary">{t('admin.appointments.customer')}</Typography>
               <Typography variant="body1" gutterBottom>{selectedAppointment.customerName}</Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>{selectedAppointment.customerEmail}</Typography>
               
               {selectedAppointment.customerPhone && (
                 <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>Phone</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>{t('admin.appointments.phone')}</Typography>
                   <Typography variant="body1" gutterBottom>{selectedAppointment.customerPhone}</Typography>
                 </>
               )}
               
               <Divider sx={{ my: 2 }} />
               
-              <Typography variant="subtitle2" color="text.secondary">Appointment</Typography>
-              <Typography variant="body1">Date: {format(new Date(selectedAppointment.date), 'MMMM d, yyyy')}</Typography>
-              <Typography variant="body1">Time: {selectedAppointment.timeSlot}</Typography>
-              <Typography variant="body1">Type: {selectedAppointment.consultationType}</Typography>
+              <Typography variant="subtitle2" color="text.secondary">{t('admin.appointments.appointment')}</Typography>
+              <Typography variant="body1">{t('admin.appointments.dateLabel')}: {format(new Date(selectedAppointment.date), 'MMMM d, yyyy')}</Typography>
+              <Typography variant="body1">{t('admin.appointments.timeLabel')}: {selectedAppointment.timeSlot}</Typography>
+              <Typography variant="body1">{t('admin.appointments.typeLabel')}: {t(`appointments.${selectedAppointment.consultationType.toLowerCase()}`)}</Typography>
               <Chip 
-                label={selectedAppointment.status}
+                label={t(`admin.appointments.${selectedAppointment.status}`)}
                 color={getStatusColor(selectedAppointment.status) as any}
                 size="small"
                 sx={{ mt: 1 }}
@@ -277,7 +279,7 @@ const AdminAppointments: React.FC = () => {
               
               {selectedAppointment.notes && (
                 <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>Notes</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>{t('admin.appointments.notes')}</Typography>
                   <Typography variant="body2" sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                     {selectedAppointment.notes}
                   </Typography>
@@ -287,35 +289,35 @@ const AdminAppointments: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailsOpen(false)}>Close</Button>
+          <Button onClick={() => setDetailsOpen(false)}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
 
       {/* Confirm Dialog */}
       <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, id: '' })}>
-        <DialogTitle>Confirm Appointment</DialogTitle>
+        <DialogTitle>{t('admin.appointments.confirmTitle')}</DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to confirm this appointment?</Typography>
+          <Typography>{t('admin.appointments.confirmMessage')}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog({ open: false, id: '' })}>Cancel</Button>
+          <Button onClick={() => setConfirmDialog({ open: false, id: '' })}>{t('common.cancel')}</Button>
           <Button 
             onClick={() => handleConfirm(confirmDialog.id)} 
             variant="contained" 
             color="success"
           >
-            Confirm
+            {t('admin.appointments.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Cancel Dialog */}
       <Dialog open={cancelDialog.open} onClose={() => setCancelDialog({ open: false, id: '', reason: '' })}>
-        <DialogTitle>Cancel Appointment</DialogTitle>
+        <DialogTitle>{t('admin.appointments.cancelTitle')}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Reason for cancellation (optional)"
+            label={t('appointments.cancelReasonPlaceholder')}
             value={cancelDialog.reason}
             onChange={(e) => setCancelDialog({ ...cancelDialog, reason: e.target.value })}
             margin="normal"
@@ -325,10 +327,10 @@ const AdminAppointments: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCancelDialog({ open: false, id: '', reason: '' })}>
-            Go Back
+            {t('common.back')}
           </Button>
           <Button onClick={handleCancel} color="error" variant="contained">
-            Confirm Cancellation
+            {t('admin.appointments.confirmCancellation')}
           </Button>
         </DialogActions>
       </Dialog>
