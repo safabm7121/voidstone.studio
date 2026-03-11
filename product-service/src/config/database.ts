@@ -14,13 +14,13 @@ if (!isTestEnvironment) {
     
     mongoose.connect(MONGODB_URI)
         .then(() => {
-            console.log('✅ Connected to MongoDB');
+            console.log(' Connected to MongoDB');
         })
         .catch((error) => {
-            console.error('❌ MongoDB connection error:', error.message);
+            console.error(' MongoDB connection error:', error.message);
         });
 } else {
-    console.log('🧪 Test environment detected - skipping real MongoDB connection');
+    console.log(' Test environment detected - skipping real MongoDB connection');
 }
 
 export { mongoose };

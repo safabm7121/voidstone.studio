@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import ProductCard from './ProductCard';
-import { Product } from '../../types'; // ← IMPORT SHARED TYPE
+import { Product } from '../../types'; 
 
 const CapsuleSlider: React.FC<{ products: Product[] }> = ({ products }) => {
   const sliderRef = useRef<HTMLDivElement>(null);

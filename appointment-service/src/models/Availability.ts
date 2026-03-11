@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 
 export interface IAvailability extends mongoose.Document {
-  designerId: string; // Changed from ObjectId to string
+  designerId: string; 
   date: Date;
   slots: Array<{
     time: string;
     isAvailable: boolean;
-    bookedBy?: string; // Changed from ObjectId to string
+    bookedBy?: string; 
   }>;
   createdAt: Date;
   updatedAt: Date;
@@ -14,7 +14,7 @@ export interface IAvailability extends mongoose.Document {
 
 const availabilitySchema = new mongoose.Schema({
   designerId: { 
-    type: String, // Changed from ObjectId to String
+    type: String, 
     required: true,
     index: true
   },
@@ -32,7 +32,7 @@ const availabilitySchema = new mongoose.Schema({
       default: true 
     },
     bookedBy: { 
-      type: String, // Changed from ObjectId to String
+      type: String, 
       ref: 'User' 
     }
   }]

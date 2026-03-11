@@ -287,7 +287,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             View Details
           </Button>
           <Box sx={{ flex: 1 }} />
-       <IconButton
+        <IconButton
   onClick={handleAddToCart}
   disabled={!isAuthenticated}
   sx={{

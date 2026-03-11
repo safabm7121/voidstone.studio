@@ -318,12 +318,12 @@ const ProductDetail: React.FC = () => {
                         {product.images.map((img: string, idx: number) => (
                           <Box
                             key={idx}
-                            onClick={() => setSimpleSliderIndex(idx)}  // ← Make thumbnails clickable
+                            onClick={() => setSimpleSliderIndex(idx)}  
                             sx={{
                               width: 80,
                               height: 80,
                               border: '2px solid',
-                              borderColor: idx === simpleSliderIndex ? 'primary.main' : 'transparent',  // ← Highlight active
+                              borderColor: idx === simpleSliderIndex ? 'primary.main' : 'transparent',  
                               borderRadius: 1,
                               cursor: 'pointer',
                               backgroundImage: `url(${img})`,

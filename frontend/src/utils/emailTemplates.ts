@@ -71,7 +71,7 @@ export const getBuyerEmailTemplate = (orderData: any) => {
           </div>
 
           <div class="order-info">
-            <h3>🚚 Shipping Information</h3>
+            <h3> Shipping Information</h3>
             <p><strong>Name:</strong> ${shippingInfo.firstName} ${shippingInfo.lastName}</p>
             <p><strong>Email:</strong> ${shippingInfo.email}</p>
             <p><strong>Address:</strong> ${shippingInfo.address}</p>
@@ -81,7 +81,7 @@ export const getBuyerEmailTemplate = (orderData: any) => {
           </div>
 
           <div class="order-info">
-            <h3>💳 Payment Method</h3>
+            <h3> Payment Method</h3>
             <p>${paymentMethodToText(shippingInfo.paymentMethod)}</p>
           </div>
 
@@ -134,24 +134,24 @@ export const getStoreEmailTemplate = (orderData: any) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>🛍️ NEW ORDER ALERT</h1>
+          <h1> NEW ORDER ALERT</h1>
         </div>
         <div class="content">
           <h2>New Order Received!</h2>
           
           <div class="order-info">
-            <h3>📋 Order Details</h3>
+            <h3> Order Details</h3>
             <p><strong>Order ID:</strong> <span class="highlight">${orderId}</span></p>
             <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
           </div>
 
-          <h3>👤 Customer Information</h3>
+          <h3> Customer Information</h3>
           <div class="order-info">
             <p><strong>Name:</strong> ${shippingInfo.firstName} ${shippingInfo.lastName}</p>
             <p><strong>Email:</strong> ${shippingInfo.email}</p>
           </div>
 
-          <h3>📦 Order Items</h3>
+          <h3> Order Items</h3>
           <table>
             <thead>
               <tr>
@@ -170,7 +170,7 @@ export const getStoreEmailTemplate = (orderData: any) => {
             <p><strong>Total Amount:</strong> $${cartTotal.toFixed(2)}</p>
           </div>
 
-          <h3>🚚 Shipping Address</h3>
+          <h3> Shipping Address</h3>
           <div class="order-info">
             <p>${shippingInfo.firstName} ${shippingInfo.lastName}</p>
             <p>${shippingInfo.address}</p>
@@ -178,13 +178,13 @@ export const getStoreEmailTemplate = (orderData: any) => {
             <p>${shippingInfo.country === 'TN' ? '🇹🇳 Tunisia' : shippingInfo.country}</p>
           </div>
 
-          <h3>💳 Payment Method</h3>
+          <h3> Payment Method</h3>
           <div class="order-info">
             <p>${paymentMethodToText(shippingInfo.paymentMethod)}</p>
           </div>
 
           <p style="font-size: 18px; text-align: center; margin-top: 30px;">
-            ⚡ Process this order as soon as possible!
+            Process this order as soon as possible!
           </p>
         </div>
         <div class="footer">
@@ -198,10 +198,10 @@ export const getStoreEmailTemplate = (orderData: any) => {
 
 const paymentMethodToText = (method: string): string => {
   switch(method) {
-    case 'credit_card': return '💳 Credit Card';
-    case 'paypal': return '🅿️ PayPal';
-    case 'bank_transfer': return '🏦 Bank Transfer';
-    case 'cash_on_delivery': return '💵 Cash on Delivery';
+    case 'credit_card': return ' Credit Card';
+    case 'paypal': return '🅿 PayPal';
+    case 'bank_transfer': return ' Bank Transfer';
+    case 'cash_on_delivery': return ' Cash on Delivery';
     default: return method;
   }
 };

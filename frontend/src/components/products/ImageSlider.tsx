@@ -60,8 +60,8 @@ const compressImage = async (base64String: string, maxWidth = 2000, maxHeight = 
       ctx.drawImage(img, 0, 0, width, height);
       
       const format = base64String.includes('image/png') ? 'image/png' : 
-                     base64String.includes('image/webp') ? 'image/webp' : 
-                     'image/jpeg';
+                      base64String.includes('image/webp') ? 'image/webp' : 
+                      'image/jpeg';
       
       const compressed = canvas.toDataURL(format, quality);
       resolve(compressed);
@@ -557,9 +557,9 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
                 left: { xs: 5, sm: 10 },
                 top: '50%',
                 transform: 'translateY(-50%)',
-                width: { xs: 48, sm: 48 }, // Even larger touch target for 2-image case
+                width: { xs: 48, sm: 48 },
                 height: { xs: 48, sm: 48 },
-                bgcolor: 'rgba(0,0,0,0.5)', // Slightly more visible
+                bgcolor: 'rgba(0,0,0,0.5)', 
                 color: 'white',
                 zIndex: 2000,
                 cursor: 'pointer',

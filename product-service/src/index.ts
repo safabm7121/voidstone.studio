@@ -6,7 +6,7 @@ import consul from 'consul';
 import rateLimit from 'express-rate-limit';
 import client from 'prom-client';
 import productRoutes from './routes/productRoutes';
-import './config/database'; // This initializes the MongoDB connection
+import './config/database';
 
 dotenv.config();
 
@@ -128,7 +128,7 @@ app.get('/', (req: Request, res: Response) => {
     });
 });
 
-// ============= CONSUL REGISTRATION =============
+// CONSUL REGISTRATION 
 // Only register with Consul if not in test environment
 if (!isTestEnvironment) {
     const consulClient = new consul({ 
@@ -138,18 +138,15 @@ if (!isTestEnvironment) {
     const serviceId = 'product-service-1';
 
     const server = app.listen(PORT, () => {
-        console.log('\n=================================');
-        console.log('📦 Product Service (MongoDB)');
-        console.log('=================================');
-        console.log(`📡 Port: ${PORT}`);
-        console.log(`🔗 Health: http://localhost:${PORT}/health`);
-        console.log(`📊 Metrics: http://localhost:${PORT}/metrics`);
-        console.log(`📝 GET /products - List all products`);
-        console.log(`➕ POST /products - Create product (auth)`);
-        console.log(`📋 PUT /products/:id - Update product (auth)`);
-        console.log(`🗑️ DELETE /products/:id - Delete product (auth)`);
-        console.log(`📜 GET /products/:id/history - View product history (auth)`);
-        console.log('=================================\n');
+        console.log(' Product Service (MongoDB)');
+        console.log(` Port: ${PORT}`);
+        console.log(` Health: http://localhost:${PORT}/health`);
+        console.log(` Metrics: http://localhost:${PORT}/metrics`);
+        console.log(` GET /products - List all products`);
+        console.log(` POST /products - Create product (auth)`);
+        console.log(` PUT /products/:id - Update product (auth)`);
+        console.log(` DELETE /products/:id - Delete product (auth)`);
+        console.log(` GET /products/:id/history - View product history (auth)`);
 
         try {
             // Service registration expects number for port
@@ -163,23 +160,23 @@ if (!isTestEnvironment) {
                     interval: '10s' 
                 }
             } as any);
-            console.log('✅ Registered with Consul at http://localhost:8500');
+            console.log(' Registered with Consul at http://localhost:8500');
         } catch (error: any) {
-            console.error('❌ Failed to register with Consul:', error.message);
+            console.error(' Failed to register with Consul:', error.message);
         }
     });
 
     // Graceful shutdown
     const shutdown = () => {
-        console.log('\n🛑 Shutting down...');
+        console.log('\n Shutting down...');
         try { 
             (consulClient.agent.service as any).deregister(serviceId); 
-            console.log('✅ Deregistered from Consul');
+            console.log(' Deregistered from Consul');
         } catch (error) { 
-            console.error('❌ Error deregistering from Consul:', error);
+            console.error(' Error deregistering from Consul:', error);
         }
         server.close(() => {
-            console.log('👋 Server closed');
+            console.log(' Server closed');
             process.exit(0);
         });
     };
@@ -187,7 +184,7 @@ if (!isTestEnvironment) {
     process.on('SIGTERM', shutdown);
     process.on('SIGINT', shutdown);
 } else {
-    console.log('🧪 Product Service configured for test mode');
+    console.log(' Product Service configured for test mode');
 }
 
 export default app;

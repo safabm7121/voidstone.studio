@@ -440,11 +440,11 @@ const Cart: React.FC = () => {
               sx={{ 
                 mb: 2, 
                 py: { xs: 1.2, sm: 1.3, md: 1.5 },
-                // This will be black in light mode, white in dark mode
+               
                 bgcolor: 'text.primary',
-                color: 'background.paper', // This ensures text contrast
+                color: 'background.paper', 
                 '&:hover': { 
-                  bgcolor: 'text.secondary' // Adapts to dark mode automatically
+                  bgcolor: 'text.secondary' 
                 },
                 fontSize: { xs: '0.9rem', sm: '1rem' }
               }}

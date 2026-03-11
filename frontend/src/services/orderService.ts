@@ -25,7 +25,7 @@ const AUTH_API_URL = 'http://localhost:3001/api';
 
 export const sendOrderEmails = async (orderData: OrderData) => {
   try {
-    console.log('📧 Sending order emails to backend...');
+    console.log(' Sending order emails to backend...');
     console.log('Order data being sent:', JSON.stringify(orderData, null, 2));
     
     const response = await axios.post(`${AUTH_API_URL}/orders/send-emails`, orderData, {
@@ -34,11 +34,11 @@ export const sendOrderEmails = async (orderData: OrderData) => {
       }
     });
     
-    console.log('✅ Order emails sent successfully via backend');
+    console.log(' Order emails sent successfully via backend');
     return response.data;
     
   } catch (error) {
-    console.error('❌ Error sending order emails:', error);
+    console.error(' Error sending order emails:', error);
     
     // Log more details about the error
     if (axios.isAxiosError(error)) {
@@ -48,16 +48,16 @@ export const sendOrderEmails = async (orderData: OrderData) => {
     }
     
     // Fallback to console logging if backend fails
-    console.log('📧 ========== EMAIL TO BUYER (FALLBACK) ==========');
+    console.log(' ========== EMAIL TO BUYER (FALLBACK) ==========');
     console.log('To:', orderData.shippingInfo.email);
     console.log('Subject:', `Order Confirmation - ${orderData.orderId}`);
     console.log('Order Details:', JSON.stringify(orderData, null, 2));
     
-    console.log('📧 ========== EMAIL TO STORE (FALLBACK) ==========');
+    console.log(' ========== EMAIL TO STORE (FALLBACK) ==========');
     console.log('To: voidstonestone@gmail.com');
-    console.log('Subject:', `🛍️ New Order Received - ${orderData.orderId}`);
+    console.log('Subject:', ` New Order Received - ${orderData.orderId}`);
     console.log('Order Details:', JSON.stringify(orderData, null, 2));
-    console.log('📧 ===================================');
+    console.log(' ===================================');
     
     throw error;
   }

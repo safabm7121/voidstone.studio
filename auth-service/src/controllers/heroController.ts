@@ -1,4 +1,4 @@
-// controllers/heroController.ts
+
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { Hero } from '../models/Hero';
@@ -117,18 +117,18 @@ export class HeroController {
 
       await hero.save();
 
-      console.log(`✅ Hero ${mediaCategory} uploaded by admin: ${ADMIN_EMAIL}`);
+      console.log(` Hero ${mediaCategory} uploaded by admin: ${ADMIN_EMAIL}`);
       return res.json({ 
         hero,
         message: `Hero ${mediaCategory} uploaded successfully` 
       });
     } catch (error) {
-      console.error('❌ Error uploading hero media:', error);
+      console.error(' Error uploading hero media:', error);
       return res.status(500).json({ error: 'Failed to upload hero media' });
     }
   }
 
-  // ==================== DELETE HERO MEDIA ====================
+  // DELETE HERO MEDIA 
   async deleteHeroImage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const userId = req.user?.userId;
@@ -147,10 +147,10 @@ export class HeroController {
       // Delete all records from database
       await Hero.deleteMany({});
 
-      console.log(`✅ All hero media deleted by admin: ${ADMIN_EMAIL}`);
+      console.log(` All hero media deleted by admin: ${ADMIN_EMAIL}`);
       return res.json({ message: 'Hero media deleted successfully' });
     } catch (error) {
-      console.error('❌ Error deleting hero media:', error);
+      console.error(' Error deleting hero media:', error);
       return res.status(500).json({ error: 'Failed to delete hero media' });
     }
   }
@@ -185,13 +185,13 @@ export class HeroController {
 
       await hero.save();
 
-      console.log(`✅ Hero text updated by admin: ${ADMIN_EMAIL}`);
+      console.log(`Hero text updated by admin: ${ADMIN_EMAIL}`);
       return res.json({ 
         hero,
         message: 'Hero text updated successfully' 
       });
     } catch (error) {
-      console.error('❌ Error updating hero text:', error);
+      console.error(' Error updating hero text:', error);
       return res.status(500).json({ error: 'Failed to update hero text' });
     }
   }

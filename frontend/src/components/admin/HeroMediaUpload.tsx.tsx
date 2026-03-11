@@ -1,4 +1,4 @@
-// components/admin/HeroMediaUpload.tsx
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Dialog,

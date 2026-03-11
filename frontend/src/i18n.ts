@@ -37,7 +37,7 @@ i18n
 // Update document direction when language changes
 i18n.on('languageChanged', (lng) => {
   const direction = i18n.dir(lng);
-  console.log('🔤 Language changed to:', lng, 'Direction:', direction);
+  console.log(' Language changed to:', lng, 'Direction:', direction);
 
   document.documentElement.setAttribute('dir', direction);
   document.documentElement.setAttribute('lang', lng);
@@ -60,7 +60,7 @@ const initializeDirection = () => {
   const initialLng = savedLang || 'en';
   const initialDir = initialLng === 'ar' ? 'rtl' : 'ltr';
 
-  console.log('🚀 Initializing with:', { initialLng, initialDir });
+  console.log(' Initializing with:', { initialLng, initialDir });
 
   document.documentElement.setAttribute('dir', initialDir);
   document.documentElement.setAttribute('lang', initialLng);

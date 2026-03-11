@@ -148,7 +148,7 @@ app.get('/metrics', async (req: Request, res: Response) => {
   }
 });
 
-// ============= USER MANAGEMENT ENDPOINTS =============
+//  USER MANAGEMENT ENDPOINTS 
 app.get('/api/users', async (req: Request, res: Response) => {
   try {
     const { role } = req.query;
@@ -179,7 +179,7 @@ app.get('/api/users/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ============= AUTH ENDPOINTS =============
+// AUTH ENDPOINTS
 app.post('/api/auth/register', async (req: Request, res: Response) => {
   try {
     const { error } = registerSchema.validate(req.body);
@@ -417,7 +417,7 @@ app.get('/api/auth/me', async (req: Request, res: Response) => {
   }
 });
 
-// ============= CONTACT EMAIL ENDPOINT =============
+// CONTACT EMAIL ENDPOINT 
 app.post('/api/contact/send', async (req: Request, res: Response) => {
   try {
     const { name, email, message } = req.body;
@@ -639,7 +639,7 @@ const getStoreEmailTemplate = (data: any) => {
   `;
 };
 
-// ============= ORDER EMAIL ENDPOINT =============
+// ORDER EMAIL ENDPOINT
 app.post('/api/orders/send-emails', async (req: Request, res: Response) => {
   try {
     const { items, shippingInfo, cartTotal, orderId } = req.body;
@@ -678,7 +678,7 @@ app.post('/api/orders/send-emails', async (req: Request, res: Response) => {
   }
 });
 
-// ============= APPOINTMENT EMAIL ENDPOINT =============
+//  APPOINTMENT EMAIL ENDPOINT 
 app.post('/api/appointment-email', async (req: Request, res: Response) => {
   try {
     const { to, subject, html } = req.body;
@@ -706,7 +706,7 @@ app.use('/api', profileRoutes);
 // Hero routes
 app.use('/api', heroRoutes);
 
-// ============= CONSUL REGISTRATION =============
+// CONSUL REGISTRATION
 const consulClient = new consul({
   host: process.env.CONSUL_HOST || 'localhost',
   port: process.env.CONSUL_PORT || '8500'

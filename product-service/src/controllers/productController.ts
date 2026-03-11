@@ -86,24 +86,24 @@ export class ProductController {
                 product
             });
         } catch (error) {
-            console.error('❌ Create product error:', error);
+            console.error(' Create product error:', error);
             res.status(500).json({ error: 'Internal server error: ' + (error as Error).message });
         }
     }
 
     async getAllProducts(req: Request, res: Response) {
         try {
-            console.log('📦 Fetching all products...');
+            console.log(' Fetching all products...');
             if (mongoose.connection.readyState !== 1) {
-                console.error('❌ MongoDB not connected');
+                console.error(' MongoDB not connected');
                 return res.status(500).json({ error: 'Database connection error' });
             }
 
             const products = await Product.find({ is_active: true }).sort({ created_at: -1 });
-            console.log(`✅ Found ${products.length} products`);
+            console.log(` Found ${products.length} products`);
             res.json({ products });
         } catch (error) {
-            console.error('❌ Get products error:', error);
+            console.error(' Get products error:', error);
             res.status(500).json({ error: 'Internal server error: ' + (error as Error).message });
         }
     }
@@ -119,7 +119,7 @@ export class ProductController {
 
             res.json({ product });
         } catch (error) {
-            console.error('❌ Get product error:', error);
+            console.error(' Get product error:', error);
             res.status(500).json({ error: 'Internal server error: ' + (error as Error).message });
         }
     }
@@ -145,7 +145,7 @@ export class ProductController {
             const userRole = req.user?.role || 'user';
 
             const updateFields = ['name', 'description', 'price', 'category', 'designer', 
-                                 'stock_quantity', 'images', 'tags'] as const;
+                                    'stock_quantity', 'images', 'tags'] as const;
             const changes: { field: string; oldValue: any; newValue: any }[] = [];
 
             updateFields.forEach(field => {
@@ -201,7 +201,7 @@ export class ProductController {
                 product
             });
         } catch (error) {
-            console.error('❌ Update product error:', error);
+            console.error(' Update product error:', error);
             res.status(500).json({ error: 'Internal server error: ' + (error as Error).message });
         }
     }
@@ -255,7 +255,7 @@ export class ProductController {
 
             res.json({ message: 'Product deleted successfully' });
         } catch (error) {
-            console.error('❌ Delete product error:', error);
+            console.error(' Delete product error:', error);
             res.status(500).json({ error: 'Internal server error: ' + (error as Error).message });
         }
     }
@@ -291,7 +291,7 @@ export class ProductController {
 
             res.json({ history: transformedHistory });
         } catch (error) {
-            console.error('❌ Get history error:', error);
+            console.error(' Get history error:', error);
             res.status(500).json({ error: 'Internal server error: ' + (error as Error).message });
         }
     }

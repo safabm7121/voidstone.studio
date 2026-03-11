@@ -9,8 +9,8 @@ export const sendAppointmentEmail = async (
   html: string
 ): Promise<void> => {
   try {
-    console.log(`📧 Sending email to: ${to}`);
-    console.log(`📧 Subject: ${subject}`);
+    console.log(` Sending email to: ${to}`);
+    console.log(` Subject: ${subject}`);
     
     const response = await axios.post(`${AUTH_SERVICE_URL}/appointment-email`, {
       to,

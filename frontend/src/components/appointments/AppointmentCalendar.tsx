@@ -54,16 +54,16 @@ const AppointmentCalendar: React.FC = () => {
     try {
       const startDate = format(startOfWeek(selectedDate), 'yyyy-MM-dd');
       const endDate = format(addDays(startOfWeek(selectedDate), 7), 'yyyy-MM-dd');
-      console.log('📅 Fetching availability:', { startDate, endDate });
+      console.log(' Fetching availability:', { startDate, endDate });
       const data = await appointmentService.getAvailability(startDate, endDate);
-      console.log('✅ Availability data:', data);
+      console.log(' Availability data:', data);
       setAvailability(data);
       
       if (data.length === 0) {
         setErrorMessage('No availability found for this week. Please try another date.');
       }
     } catch (error: any) {
-      console.error('❌ Error fetching availability:', error);
+      console.error(' Error fetching availability:', error);
       const errorMsg = error.response?.data?.error || 'Failed to load availability';
       setErrorMessage(errorMsg);
       toast.error(errorMsg);
@@ -114,7 +114,7 @@ const AppointmentCalendar: React.FC = () => {
       // Refresh availability
       await fetchAvailability();
     } catch (error: any) {
-      console.error('❌ Error booking appointment:', error);
+      console.error(' Error booking appointment:', error);
       const errorMsg = error.response?.data?.error || 'Failed to book appointment';
       toast.error(errorMsg);
     } finally {

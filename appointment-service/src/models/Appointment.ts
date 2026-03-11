@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 export interface IAppointment extends mongoose.Document {
-  designerId: string; // Changed from ObjectId to string
-  customerId: string; // Changed from ObjectId to string
+  designerId: string; 
+  customerId: string; 
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
@@ -18,11 +18,11 @@ export interface IAppointment extends mongoose.Document {
 
 const appointmentSchema = new mongoose.Schema({
   designerId: { 
-    type: String, // Changed from ObjectId to String
+    type: String, 
     required: true 
   },
   customerId: { 
-    type: String, // Changed from ObjectId to String
+    type: String, 
     required: true 
   },
   customerName: { 

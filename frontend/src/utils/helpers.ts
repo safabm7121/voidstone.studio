@@ -7,9 +7,8 @@ export const formatCurrency = (amount: number): string => {
   }).format(amount).replace('TND', 'DT'); // Replace TND symbol with DT
 };
 
-// Alternative simpler version if you don't want to use Intl:
 export const formatCurrencySimple = (amount: number): string => {
-  return `${amount.toFixed(3)} DT`;  // Example: 25.500 DT
+  return `${amount.toFixed(3)} DT`;  
 };
 
 export const formatDate = (date: string): string => {

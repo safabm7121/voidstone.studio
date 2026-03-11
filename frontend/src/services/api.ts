@@ -10,8 +10,8 @@ const APPOINTMENT_API_URL = import.meta.env.VITE_APPOINTMENT_URL || 'http://loca
 const GATEWAY_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Log which environment we're in
-console.log('🌍 Environment:', import.meta.env.MODE);
-console.log('🔗 API URLs:', {
+console.log(' Environment:', import.meta.env.MODE);
+console.log(' API URLs:', {
   auth: AUTH_API_URL,
   product: PRODUCT_API_URL,
   appointment: APPOINTMENT_API_URL,
@@ -46,7 +46,7 @@ apis.forEach(api => {
     }
     
     if (import.meta.env.DEV) {
-      console.log(`📤 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
+      console.log(` ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
         hasToken: !!token,
         data: config.data
       });
@@ -58,12 +58,12 @@ apis.forEach(api => {
   api.interceptors.response.use(
     (response) => {
       if (import.meta.env.DEV) {
-        console.log(`✅ ${response.status} ${response.config.url}`);
+        console.log(` ${response.status} ${response.config.url}`);
       }
       return response;
     },
     (error) => {
-      console.error('❌ API Error:', {
+      console.error(' API Error:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
@@ -73,13 +73,13 @@ apis.forEach(api => {
       });
       
       if (error.response?.status === 401) {
-        console.error('🔒 Authentication error - token may be expired');
+        console.error(' Authentication error - token may be expired');
       } else if (error.response?.status === 403) {
-        console.error('🔒 Authorization error - insufficient permissions');
+        console.error(' Authorization error - insufficient permissions');
       } else if (error.response?.status === 404) {
-        console.error('🔍 Resource not found - check URL');
+        console.error(' Resource not found - check URL');
       } else if (error.code === 'ECONNREFUSED') {
-        console.error('🔌 Connection refused - is the service running?');
+        console.error(' Connection refused - is the service running?');
       }
       
       return Promise.reject(error);
@@ -99,7 +99,7 @@ authApi.interceptors.request.use((config) => {
 authApi.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('❌ Auth API Error:', {
+    console.error(' Auth API Error:', {
       status: error.response?.status,
       data: error.response?.data,
       url: error.config?.url

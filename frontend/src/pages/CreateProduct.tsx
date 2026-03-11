@@ -181,7 +181,7 @@ const CreateProduct: React.FC = () => {
       tags: tags
     };
     
-    console.log('📦 Product data being sent:', productData);
+    console.log(' Product data being sent:', productData);
     
     try {
       let response;
@@ -194,7 +194,7 @@ const CreateProduct: React.FC = () => {
           }
         });
         toast.success('Product updated successfully!');
-        console.log('✅ Product updated:', response.data);
+        console.log(' Product updated:', response.data);
       } else {
         response = await productApi.post('/products', productData, {
           headers: { 
@@ -203,13 +203,13 @@ const CreateProduct: React.FC = () => {
           }
         });
         toast.success('Product created successfully!');
-        console.log('✅ Product created:', response.data);
+        console.log(' Product created:', response.data);
       }
       
       navigate('/products');
       
     } catch (err: any) {
-      console.error(`❌ Error ${isEditMode ? 'updating' : 'creating'} product:`, err);
+      console.error(` Error ${isEditMode ? 'updating' : 'creating'} product:`, err);
       
       if (err.response) {
         console.error('Error response data:', err.response.data);

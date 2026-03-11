@@ -25,7 +25,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export class ProfileController {
-  // ==================== GET PROFILE ====================
+  // GET PROFILE
   async getProfile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -58,7 +58,7 @@ export class ProfileController {
     }
   }
 
-  // ==================== UPDATE PROFILE ====================
+  //UPDATE PROFILE
   async updateProfile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -126,7 +126,7 @@ export class ProfileController {
         }
       );
 
-      // --- Send email to admin (fire and forget) ---
+      // Send email to admin (fire and forget) 
       this.sendProfileUpdateEmail(userId, profile).catch(err => {
         console.error('Failed to send profile update email:', err);
       });
@@ -143,7 +143,7 @@ export class ProfileController {
     }
   }
 
-  // ==================== UPLOAD FILE ====================
+  //  UPLOAD FILE
   async uploadFile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -233,7 +233,7 @@ export class ProfileController {
     }
   }
 
-  // ==================== DELETE FILE ====================
+  // DELETE FILE 
   async deleteFile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -277,7 +277,7 @@ export class ProfileController {
     }
   }
 
-  // ==================== GET SINGLE FILE ====================
+  // GET SINGLE FILE
   async getFile(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.userId;
@@ -321,7 +321,7 @@ export class ProfileController {
     }
   }
 
-  // ==================== EMAIL HELPER METHODS ====================
+  // EMAIL HELPER METHODS 
 
   /**
    * Sends an email to the admin with the updated profile information

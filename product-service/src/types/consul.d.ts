@@ -1,7 +1,7 @@
 declare module 'consul' {
     interface ConsulOptions {
         host?: string;
-        port?: string | number;  // ← Change this to accept both string and number
+        port?: string | number;
         secure?: boolean;
         ca?: string[];
         defaults?: any;
@@ -11,7 +11,7 @@ declare module 'consul' {
         id?: string;
         name: string;
         address?: string;
-        port?: number;  // Keep this as number for service registration
+        port?: number;  
         tags?: string[];
         check?: {
             http?: string;
