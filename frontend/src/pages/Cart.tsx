@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container, Typography, Box, Paper, IconButton,
-  Button, Grid, Divider, Card, CardMedia, CircularProgress
+  Button, Grid, Divider, Card, CircularProgress
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,6 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { productApi } from '../services/api';
 
-// Format price in Tunisian Dinar
 const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('tn-TN', {
     style: 'currency',
@@ -58,10 +57,10 @@ const Cart: React.FC = () => {
 
       setLoadingImages(true);
       try {
-        // Create an array of promises to fetch each product
+        // array of promises to fetch each product
         const productPromises = cart.map(async (item) => {
           try {
-            // Try to fetch the full product details to get the image
+            // fetch the full product details to get the image
             const response = await productApi.get(`/products/${item._id}`);
             const product = response.data.product;
             return {
@@ -94,7 +93,7 @@ const Cart: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6, md: 8 }, textAlign: 'center' }}>
-        <ShoppingBagIcon sx={{ fontSize: { xs: 60, sm: 70, md: 80 }, color: '#ccc', mb: 2 }} />
+        <ShoppingBagIcon sx={{ fontSize: { xs: 60, sm: 70, md: 80 }, color: 'text.disabled', mb: 2 }} />
         <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
           {t('auth.login')}
         </Typography>
@@ -111,7 +110,7 @@ const Cart: React.FC = () => {
   if (cart.length === 0) {
     return (
       <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6, md: 8 }, textAlign: 'center' }}>
-        <ShoppingBagIcon sx={{ fontSize: { xs: 60, sm: 70, md: 80 }, color: '#ccc', mb: 2 }} />
+        <ShoppingBagIcon sx={{ fontSize: { xs: 60, sm: 70, md: 80 }, color: 'text.disabled', mb: 2 }} />
         <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
           {t('cart.empty')}
         </Typography>
@@ -130,14 +129,22 @@ const Cart: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
-      {/* Header with back button */}
+      {/* Header with back button - theme fixed */}
       <Box sx={{ 
         display: 'flex', 
         alignItems: 'center', 
         mb: { xs: 2, sm: 3, md: 4 },
         flexWrap: 'wrap',
       }}>
-        <IconButton component={Link} to="/products" sx={{ mr: { xs: 1, sm: 2 } }}>
+        <IconButton 
+          component={Link} 
+          to="/products" 
+          sx={{ 
+            mr: { xs: 1, sm: 2 },
+            color: 'text.primary',
+            '&:hover': { bgcolor: 'action.hover' }
+          }}
+        >
           <ArrowBackIcon fontSize={window.innerWidth < 600 ? 'medium' : 'large'} />
         </IconButton>
         <Typography variant="h3" sx={{ 
@@ -166,22 +173,38 @@ const Cart: React.FC = () => {
               return (
                 <Box key={item._id}>
                   <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
-                    {/* Product Image - Responsive sizing */}
+                    {/* Product Image - now matches ProductCard style */}
                     <Grid item xs={3} sm={2} md={2}>
                       <Card sx={{ 
                         borderRadius: 2, 
                         overflow: 'hidden', 
                         height: { xs: 60, sm: 70, md: 80 }, 
-                        width: '100%' 
+                        width: '100%',
+                        bgcolor: 'grey.100'
                       }}>
                         {imageUrl ? (
-                          <CardMedia
-                            component="img"
-                            height={window.innerWidth < 600 ? 60 : window.innerWidth < 900 ? 70 : 80}
-                            image={imageUrl}
-                            alt={item.name}
-                            sx={{ objectFit: 'cover' }}
-                          />
+                          <Box
+                            sx={{
+                              position: 'relative',
+                              width: '100%',
+                              height: '100%',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <Box
+                              component="img"
+                              src={imageUrl}
+                              alt={item.name}
+                              sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                            />
+                          </Box>
                         ) : (
                           <Box
                             sx={{
@@ -189,8 +212,8 @@ const Cart: React.FC = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              bgcolor: '#f5f5f5',
-                              color: '#999',
+                              bgcolor: 'grey.100',
+                              color: 'text.disabled',
                               fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' }
                             }}
                           >
@@ -221,7 +244,7 @@ const Cart: React.FC = () => {
                       )}
                     </Grid>
 
-                    {/* Quantity Controls - Responsive layout */}
+                    {/* Quantity Controls - theme fixed */}
                     <Grid item xs={5} sm={3} md={3}>
                       <Box sx={{ 
                         display: 'flex', 
@@ -233,9 +256,15 @@ const Cart: React.FC = () => {
                           size="small"
                           onClick={() => updateQuantity(item._id, item.quantity - 1)}
                           sx={{ 
-                            border: '1px solid #ddd', 
+                            border: 1,
+                            borderColor: 'divider',
                             borderRadius: 1,
-                            p: { xs: 0.25, sm: 0.5 }
+                            p: { xs: 0.25, sm: 0.5 },
+                            color: 'text.primary',
+                            '&:hover': { 
+                              bgcolor: 'action.hover',
+                              borderColor: 'text.primary'
+                            }
                           }}
                         >
                           <RemoveIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
@@ -252,9 +281,15 @@ const Cart: React.FC = () => {
                           size="small"
                           onClick={() => updateQuantity(item._id, item.quantity + 1)}
                           sx={{ 
-                            border: '1px solid #ddd', 
+                            border: 1,
+                            borderColor: 'divider',
                             borderRadius: 1,
-                            p: { xs: 0.25, sm: 0.5 }
+                            p: { xs: 0.25, sm: 0.5 },
+                            color: 'text.primary',
+                            '&:hover': { 
+                              bgcolor: 'action.hover',
+                              borderColor: 'text.primary'
+                            }
                           }}
                         >
                           <AddIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
@@ -273,10 +308,16 @@ const Cart: React.FC = () => {
                     <Grid item xs={3} sm={1} md={1}>
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <IconButton
-                          color="error"
                           onClick={() => removeFromCart(item._id)}
                           size="small"
-                          sx={{ p: { xs: 0.25, sm: 0.5 } }}
+                          sx={{ 
+                            p: { xs: 0.25, sm: 0.5 },
+                            color: 'error.main',
+                            '&:hover': { 
+                              bgcolor: 'error.main',
+                              color: 'error.contrastText'
+                            }
+                          }}
                         >
                           <DeleteIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
                         </IconButton>
@@ -305,7 +346,14 @@ const Cart: React.FC = () => {
                 fullWidth={window.innerWidth < 600}
                 sx={{ 
                   order: { xs: 2, sm: 1 },
-                  width: { xs: '100%', sm: 'auto' }
+                  width: { xs: '100%', sm: 'auto' },
+                  borderColor: 'error.main',
+                  color: 'error.main',
+                  '&:hover': {
+                    borderColor: 'error.dark',
+                    bgcolor: 'error.main',
+                    color: 'error.contrastText'
+                  }
                 }}
               >
                 {t('cart.clearCart')}
@@ -318,7 +366,9 @@ const Cart: React.FC = () => {
                 fullWidth={window.innerWidth < 600}
                 sx={{ 
                   order: { xs: 1, sm: 2 },
-                  width: { xs: '100%', sm: 'auto' }
+                  width: { xs: '100%', sm: 'auto' },
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: 'action.hover' }
                 }}
               >
                 {t('cart.continueShopping')}
@@ -382,25 +432,25 @@ const Cart: React.FC = () => {
             </Box>
             
            <Button
-  component={Link}
-  to="/checkout"
-  variant="contained"
-  fullWidth
-  size="large"
-  sx={{ 
-    mb: 2, 
-    py: { xs: 1.2, sm: 1.3, md: 1.5 },
-    // This will be black in light mode, white in dark mode
-    bgcolor: 'text.primary',
-    color: 'background.paper', // This ensures text contrast
-    '&:hover': { 
-      bgcolor: 'text.secondary' // Adapts to dark mode automatically
-    },
-    fontSize: { xs: '0.9rem', sm: '1rem' }
-  }}
->
-  {t('cart.checkout')} ({formatPrice(totalWithDelivery)})
-</Button>
+              component={Link}
+              to="/checkout"
+              variant="contained"
+              fullWidth
+              size="large"
+              sx={{ 
+                mb: 2, 
+                py: { xs: 1.2, sm: 1.3, md: 1.5 },
+                // This will be black in light mode, white in dark mode
+                bgcolor: 'text.primary',
+                color: 'background.paper', // This ensures text contrast
+                '&:hover': { 
+                  bgcolor: 'text.secondary' // Adapts to dark mode automatically
+                },
+                fontSize: { xs: '0.9rem', sm: '1rem' }
+              }}
+            >
+              {t('cart.checkout')} ({formatPrice(totalWithDelivery)})
+            </Button>
             
             <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ 
               fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' }

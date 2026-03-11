@@ -110,6 +110,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 onClick={handleViewHistory}
                 sx={{
                   bgcolor: 'background.paper',
+                  color: 'text.primary', // added for dark mode
                   '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
                 }}
               >
@@ -122,6 +123,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 onClick={handleEdit}
                 sx={{
                   bgcolor: 'background.paper',
+                  color: 'text.primary', // added for dark mode
                   '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
                 }}
               >
@@ -134,6 +136,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 onClick={handleDelete}
                 sx={{
                   bgcolor: 'background.paper',
+                  color: 'text.primary', // added for dark mode
                   '&:hover': { bgcolor: 'error.main', color: 'error.contrastText' },
                 }}
               >
@@ -284,17 +287,22 @@ const ProductCard: React.FC<ProductCardProps> = ({
             View Details
           </Button>
           <Box sx={{ flex: 1 }} />
-          <IconButton
-            onClick={handleAddToCart}
-            disabled={!isAuthenticated}
-            sx={{
-              bgcolor: 'action.hover',
-              '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
-            }}
-            title={!isAuthenticated ? 'Login to add' : 'Add to cart'}
-          >
-            <AddShoppingCartIcon />
-          </IconButton>
+       <IconButton
+  onClick={handleAddToCart}
+  disabled={!isAuthenticated}
+  sx={{
+    bgcolor: 'action.hover',
+    color: 'text.primary',              
+    '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
+    '&.Mui-disabled': {                
+      bgcolor: 'action.disabledBackground',
+      color: 'text.disabled'
+    }
+  }}
+  title={!isAuthenticated ? 'Login to add' : 'Add to cart'}
+>
+  <AddShoppingCartIcon />
+</IconButton>
         </CardActions>
       </Card>
     </div>
