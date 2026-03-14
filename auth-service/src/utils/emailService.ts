@@ -1,26 +1,27 @@
 import nodemailer from 'nodemailer';
 
-// Create transporter - this is the ONLY place we create it
 export const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true, // SSL
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  // Add these timeouts
+  connectionTimeout: 60000, // 60 seconds
+  greetingTimeout: 60000,
+  socketTimeout: 60000,
 });
 
-// Verify connection configuration (but don't block startup)
+// Log but don't crash on verify
 transporter.verify((error, success) => {
   if (error) {
-    console.error('❌ Email service configuration error:', error);
-    console.error('   Make sure EMAIL_USER and EMAIL_PASS are correct in environment variables');
+    console.error(' Email service error (but continuing):', error.message);
   } else {
-    console.log('✅ Email server is ready to send messages');
+    console.log(' Email server ready');
   }
 });
-
 // Send verification email
 export const sendVerificationEmail = async (email: string, code: string, firstName: string) => {
   // Validate environment variables

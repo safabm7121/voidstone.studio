@@ -17,6 +17,7 @@
     "test:profile": "cross-env NODE_ENV=test jest tests/integration/profile.test.ts --runInBand"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^2.4.3",
     "consul": "^1.2.0",
     "cors": "^2.8.5",
