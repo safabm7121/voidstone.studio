@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import consul from 'consul';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import client from 'prom-client';
@@ -64,8 +63,6 @@ app.use(cors({
 
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
-
-// REMOVED: Static file serving from uploads directory (no longer needed)
 
 // 2. Metrics middleware AFTER body parsing but BEFORE routes
 app.use((req, res, next) => {
@@ -706,100 +703,113 @@ app.use('/api', profileRoutes);
 // Hero routes
 app.use('/api', heroRoutes);
 
-// CONSUL REGISTRATION
-const consulClient = new consul({
-  host: process.env.CONSUL_HOST || 'localhost',
-  port: process.env.CONSUL_PORT || '8500'
-});
+// MODIFIED: Make Consul registration optional
+// Start server (always start the server, regardless of Consul)
+const server = app.listen(PORT, () => {
+  console.log('\n=================================');
+  console.log(' Auth Service');
+  console.log('=================================');
+  console.log(` Port: ${PORT}`);
+  console.log(` Health: http://localhost:${PORT}/health`);
+  console.log(` Metrics: http://localhost:${PORT}/metrics`);
+  console.log(` GET /api/users - List users (by role)`);
+  console.log(` POST /api/auth/register - Register`);
+  console.log(` POST /api/auth/login - Login`);
+  console.log(` POST /api/appointment-email - Send appointment emails`);
+  console.log(` POST /api/contact/send - Contact form`);
+  console.log(` POST /api/orders/send-emails - Order emails`);
+  console.log(` /api/profile - Profile management`);
+  console.log(`/api/hero - Hero image management (stored in MongoDB)`);
+  console.log('=================================\n');
 
-const serviceId = 'auth-service-1';
+  // MODIFIED: Only try Consul if explicitly enabled
+  if (!isTestEnvironment && process.env.ENABLE_CONSUL === 'true') {
+    try {
+      // Dynamically import consul only if needed
+      const consul = require('consul');
+      
+      const consulClient = new consul({
+        host: process.env.CONSUL_HOST || 'localhost',
+        port: process.env.CONSUL_PORT || '8500'
+      });
 
-// Start server and register with Consul (skip in test environment)
-if (!isTestEnvironment) {
-  const server = app.listen(PORT, () => {
-    console.log('\n=================================');
-    console.log(' Auth Service');
-    console.log('=================================');
-    console.log(` Port: ${PORT}`);
-    console.log(` Health: http://localhost:${PORT}/health`);
-    console.log(` Metrics: http://localhost:${PORT}/metrics`);
-    console.log(` GET /api/users - List users (by role)`);
-    console.log(` POST /api/auth/register - Register`);
-    console.log(` POST /api/auth/login - Login`);
-    console.log(` POST /api/appointment-email - Send appointment emails`);
-    console.log(` POST /api/contact/send - Contact form`);
-    console.log(` POST /api/orders/send-emails - Order emails`);
-    console.log(` /api/profile - Profile management`);
-    console.log(`/api/hero - Hero image management (stored in MongoDB)`);
-    console.log('=================================\n');
+      const serviceId = 'auth-service-1';
 
-    // Get local IP address
-    const { networkInterfaces } = require('os');
-    const nets = networkInterfaces();
-    let localIp = 'localhost';
+      // Get local IP address
+      const { networkInterfaces } = require('os');
+      const nets = networkInterfaces();
+      let localIp = 'localhost';
 
-    for (const name of Object.keys(nets)) {
-      for (const net of nets[name]) {
-        if (net.family === 'IPv4' && !net.internal) {
-          localIp = net.address;
-          break;
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+          if (net.family === 'IPv4' && !net.internal) {
+            localIp = net.address;
+            break;
+          }
         }
       }
-    }
 
-    console.log(` Local IP detected: ${localIp}`);
+      console.log(` Local IP detected: ${localIp}`);
 
-    // Register with Consul using Promises (no callback)
-    const registerWithAddress = async (address: string) => {
-      try {
-        await consulClient.agent.service.register({
-          id: serviceId,
-          name: 'auth-service',
-          address: address,
-          port: Number(PORT),
-          check: {
-            http: `http://${address}:${PORT}/health`,
-            interval: '10s',
-            timeout: '5s',
-            deregistercriticalserviceafter: '30s'
-          },
-          tags: ['auth', 'user-service', 'nodejs', 'email', 'profile', 'hero']
-        } as any);
+      // Register with Consul using Promises
+      const registerWithAddress = async (address: string) => {
+        try {
+          await consulClient.agent.service.register({
+            id: serviceId,
+            name: 'auth-service',
+            address: address,
+            port: Number(PORT),
+            check: {
+              http: `http://${address}:${PORT}/health`,
+              interval: '10s',
+              timeout: '5s',
+              deregistercriticalserviceafter: '30s'
+            },
+            tags: ['auth', 'user-service', 'nodejs', 'email', 'profile', 'hero']
+          } as any);
 
-        console.log(` Registered with Consul using ${address}`);
-        return true;
-      } catch (error: any) {
-        console.error(` Failed to register with Consul using ${address}:`, error.message);
-        return false;
-      }
-    };
+          console.log(` Registered with Consul using ${address}`);
+          return true;
+        } catch (error: any) {
+          console.error(` Failed to register with Consul using ${address}:`, error.message);
+          return false;
+        }
+      };
 
-    // Try local IP first, then localhost as fallback
-    registerWithAddress(localIp).then(success => {
-      if (!success) {
-        registerWithAddress('localhost');
-      }
-    });
-  });
-
-  // Graceful shutdown
-  const shutdown = async () => {
-    console.log('\n Shutting down...');
-    try {
-      await consulClient.agent.service.deregister(serviceId);
-      console.log(' Deregistered from Consul');
-    } catch (error: any) {
-      console.error(' Error deregistering:', error.message);
-    } finally {
-      server.close(() => {
-        console.log(' Server closed');
-        process.exit(0);
+      // Try local IP first, then localhost as fallback
+      registerWithAddress(localIp).then(success => {
+        if (!success) {
+          registerWithAddress('localhost');
+        }
       });
-    }
-  };
 
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
-}
+      // Graceful shutdown with Consul
+      const shutdown = async () => {
+        console.log('\n Shutting down...');
+        try {
+          await consulClient.agent.service.deregister(serviceId);
+          console.log(' Deregistered from Consul');
+        } catch (error: any) {
+          console.error(' Error deregistering:', error.message);
+        } finally {
+          server.close(() => {
+            console.log(' Server closed');
+            process.exit(0);
+          });
+        }
+      };
+
+      process.on('SIGTERM', shutdown);
+      process.on('SIGINT', shutdown);
+      
+    } catch (error) {
+      console.log(' Consul not available - running without service discovery');
+      console.log(' This is fine for Render deployment!');
+    }
+  } else {
+    console.log(' Running without Consul service discovery');
+    console.log(' This is normal for Render deployment!');
+  }
+});
 
 export default app;

@@ -1,16 +1,14 @@
 import nodemailer from 'nodemailer';
 
-// Configure your email transporter
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: 'smtp-relay.brevo.com',
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: 'a4f194001@smtp-brevo.com',
+    pass: process.env.BREVO_SMTP_KEY,
   },
 });
-
 // Verify connection configuration
 transporter.verify((error, success) => {
   if (error) {
@@ -59,7 +57,7 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
             <div class="code">${code}</div>
             <p>This code will expire in 1 hour.</p>
             <p>Or click the button below to verify your email:</p>
-            <a href="http://localhost:5173/verify-email?email=${encodeURIComponent(email)}&code=${code}" class="button">Verify Email</a>
+            <a href="https://voidstone-frontend.onrender.com/verify-email?email=${encodeURIComponent(email)}&code=${code}" class="button">Verify Email</a>
           </div>
           <div class="footer">
             <p>If you didn't request this, please ignore this email.</p>
@@ -142,8 +140,7 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
             <div class="code">${code}</div>
             <p>This code will expire in 1 hour.</p>
             <p>Or click the button below to reset your password:</p>
-            <a href="http://localhost:5173/reset-password?email=${encodeURIComponent(email)}&code=${code}" class="button">Reset Password</a>
-            <p class="warning">If you didn't request this, please ignore this email and ensure your account is secure.</p>
+<a href="https://voidstone-frontend.onrender.com/reset-password?email=${encodeURIComponent(email)}&code=${code}" class="button">Reset Password</a>            <p class="warning">If you didn't request this, please ignore this email and ensure your account is secure.</p>
           </div>
           <div class="footer">
             <p>&copy; ${new Date().getFullYear()} Voidstone Studio. All rights reserved.</p>
