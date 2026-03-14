@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer'; // Keep if used elsewhere, but no longer used for emails
+import nodemailer from 'nodemailer';
 import client from 'prom-client';
 import path from 'path';
 import { User } from './models/User';
@@ -19,15 +19,11 @@ import {
   generateRefreshToken, generateVerificationCode, verifyToken
 } from './utils/helpers';
 import { sendVerificationEmail, sendPasswordResetEmail } from './utils/emailService';
-import { Resend } from 'resend';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Initialize Resend for contact/order/appointment emails
-const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 // Check if running in test environment
 const isTestEnvironment = process.env.NODE_ENV === 'test';
@@ -96,18 +92,38 @@ app.use((req, res, next) => {
 // Connect to MongoDB (skip in test environment)
 if (!isTestEnvironment) {
   if (!process.env.MONGODB_URI) {
-    console.error('❌ MONGODB_URI is not defined');
+    console.error(' MONGODB_URI is not defined');
     process.exit(1);
   }
   mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
+    .then(() => console.log(' Connected to MongoDB'))
     .catch(err => {
-      console.error('❌ MongoDB connection error:', err);
+      console.error(' MongoDB connection error:', err);
       process.exit(1);
     });
 }
 
-// ⚠️⚠️⚠️ OLD SMTP TRANSPORTER IS REMOVED – USING RESEND NOW ⚠️⚠️⚠️
+// Email Transporter Setup
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Verify email transporter (skip in test environment)
+if (!isTestEnvironment) {
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error(' Email service error:', error);
+    } else {
+      console.log(' Email server ready to send messages');
+    }
+  });
+}
 
 // ============= HEALTH CHECK ENDPOINT =============
 app.get('/health', (req: Request, res: Response) => {
@@ -129,7 +145,7 @@ app.get('/metrics', async (req: Request, res: Response) => {
   }
 });
 
-// USER MANAGEMENT ENDPOINTS 
+//  USER MANAGEMENT ENDPOINTS 
 app.get('/api/users', async (req: Request, res: Response) => {
   try {
     const { role } = req.query;
@@ -142,7 +158,7 @@ app.get('/api/users', async (req: Request, res: Response) => {
     const users = await User.find(query).select('-password -verificationCode -resetPasswordCode -resetPasswordExpires');
     res.json({ users });
   } catch (error) {
-    console.error('❌ Error fetching users:', error);
+    console.error(' Error fetching users:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -155,7 +171,7 @@ app.get('/api/users/:id', async (req: Request, res: Response) => {
     }
     res.json({ user });
   } catch (error) {
-    console.error('❌ Error fetching user:', error);
+    console.error(' Error fetching user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -190,14 +206,14 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     await user.save();
 
     // Log the code to console (for development)
-    console.log(`🔐 Verification code for ${email}: ${verificationCode}`);
+    console.log(` Verification code for ${email}: ${verificationCode}`);
 
     // Send verification email (don't block registration if email fails)
     try {
       await sendVerificationEmail(email, verificationCode, firstName);
-      console.log(`✅ Verification email sent to ${email}`);
+      console.log(` Verification email sent to ${email}`);
     } catch (emailError) {
-      console.error(`❌ Failed to send verification email to ${email}:`, emailError);
+      console.error(` Failed to send verification email to ${email}:`, emailError);
       // Continue anyway - user can still use the code from console
     }
 
@@ -206,7 +222,7 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
       email: user.email
     });
   } catch (error) {
-    console.error('❌ Registration error:', error);
+    console.error(' Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -250,7 +266,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('❌ Login error:', error);
+    console.error(' Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -275,7 +291,7 @@ app.post('/api/auth/verify-email', async (req: Request, res: Response) => {
 
     res.json({ message: 'Email verified successfully' });
   } catch (error) {
-    console.error('❌ Email verification error:', error);
+    console.error(' Email verification error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -300,20 +316,20 @@ app.post('/api/auth/forgot-password', async (req: Request, res: Response) => {
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
     await user.save();
 
-    console.log(`🔐 Password reset code for ${email}: ${resetCode}`);
+    console.log(` Password reset code for ${email}: ${resetCode}`);
 
     // Send reset code via email
     try {
       await sendPasswordResetEmail(email, resetCode, user.firstName);
-      console.log(`✅ Password reset email sent to ${email}`);
+      console.log(` Password reset email sent to ${email}`);
     } catch (emailError) {
-      console.error(`❌ Failed to send password reset email:`, emailError);
+      console.error(` Failed to send password reset email:`, emailError);
       // Still return success to prevent email enumeration
     }
 
     res.json({ message: 'If an account exists with this email, a password reset code has been sent' });
   } catch (error) {
-    console.error('❌ Forgot password error:', error);
+    console.error(' Forgot password error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -345,7 +361,7 @@ app.post('/api/auth/reset-password', async (req: Request, res: Response) => {
 
     res.json({ message: 'Password reset successful' });
   } catch (error) {
-    console.error('❌ Reset password error:', error);
+    console.error(' Reset password error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -398,21 +414,21 @@ app.get('/api/auth/me', async (req: Request, res: Response) => {
   }
 });
 
-// CONTACT EMAIL ENDPOINT – UPDATED TO USE RESEND
+// CONTACT EMAIL ENDPOINT 
 app.post('/api/contact/send', async (req: Request, res: Response) => {
   try {
     const { name, email, message } = req.body;
 
-    console.log('📧 ===== CONTACT FORM SUBMISSION =====');
+    console.log(' ===== CONTACT FORM SUBMISSION =====');
     console.log('From:', name);
     console.log('Email:', email);
     console.log('Message:', message);
 
     // Email to store
-    await resend.emails.send({
-      from: 'Voidstone Studio <onboarding@resend.dev>',
-      to: ['voidstonestudio@gmail.com'],
-      subject: `📬 New Contact Message from ${name}`,
+    await transporter.sendMail({
+      from: '"Voidstone Studio Contact" <voidstonestudio@gmail.com>',
+      to: 'voidstonestudio@gmail.com',
+      subject: ` New Contact Message from ${name}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -430,7 +446,7 @@ app.post('/api/contact/send', async (req: Request, res: Response) => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>📬 New Contact Message</h1>
+              <h1> New Contact Message</h1>
             </div>
             <div class="content">
               <div class="field">
@@ -453,9 +469,9 @@ app.post('/api/contact/send', async (req: Request, res: Response) => {
     });
 
     // Auto-reply to user
-    await resend.emails.send({
-      from: 'Voidstone Studio <onboarding@resend.dev>',
-      to: [email],
+    await transporter.sendMail({
+      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
+      to: email,
       subject: 'Thank you for contacting Voidstone Studio',
       html: `
         <!DOCTYPE html>
@@ -484,16 +500,16 @@ app.post('/api/contact/send', async (req: Request, res: Response) => {
       `
     });
 
-    console.log('✅ Contact emails sent successfully');
+    console.log(' Contact emails sent successfully');
     res.json({ success: true, message: 'Message sent successfully' });
 
   } catch (error) {
-    console.error('❌ Error sending contact email:', error);
+    console.error(' Error sending contact email:', error);
     res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
-// Email Templates (unchanged)
+// Email Templates (unchanged, kept as is)
 const getBuyerEmailTemplate = (data: any) => {
   const { items, shippingInfo, cartTotal, orderId } = data;
 
@@ -620,63 +636,63 @@ const getStoreEmailTemplate = (data: any) => {
   `;
 };
 
-// ORDER EMAIL ENDPOINT – UPDATED TO USE RESEND
+// ORDER EMAIL ENDPOINT
 app.post('/api/orders/send-emails', async (req: Request, res: Response) => {
   try {
     const { items, shippingInfo, cartTotal, orderId } = req.body;
 
-    console.log('📧 ===== ORDER EMAIL REQUEST RECEIVED =====');
+    console.log(' ===== ORDER EMAIL REQUEST RECEIVED =====');
     console.log('Order ID:', orderId);
     console.log('Buyer email:', shippingInfo.email);
 
     // Email to buyer
-    await resend.emails.send({
-      from: 'Voidstone Studio <onboarding@resend.dev>',
-      to: [shippingInfo.email],
+    await transporter.sendMail({
+      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
+      to: shippingInfo.email,
       subject: `Order Confirmation - ${orderId}`,
       html: getBuyerEmailTemplate({ items, shippingInfo, cartTotal, orderId })
     });
-    console.log('✅ Buyer email sent');
+    console.log(' Buyer email sent');
 
     // Short delay to avoid rate limiting
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Email to store
-    await resend.emails.send({
-      from: 'Voidstone Studio <onboarding@resend.dev>',
-      to: ['voidstonestudio+store@gmail.com'],
-      subject: `🆕 NEW ORDER ALERT - ${orderId}`,
+    await transporter.sendMail({
+      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
+      to: 'voidstonestudio+store@gmail.com',
+      subject: ` NEW ORDER ALERT - ${orderId}`,
       html: getStoreEmailTemplate({ items, shippingInfo, cartTotal, orderId })
     });
-    console.log('✅ Store notification sent');
+    console.log(' Store notification sent');
 
-    console.log('✅ ===== ALL EMAILS SENT SUCCESSFULLY =====');
+    console.log(' ===== ALL EMAILS SENT SUCCESSFULLY =====');
     res.json({ success: true, message: 'Order emails sent successfully' });
 
   } catch (error) {
-    console.error('❌ Error sending order emails:', error);
+    console.error(' Error sending order emails:', error);
     res.status(500).json({ error: 'Failed to send order emails' });
   }
 });
 
-// APPOINTMENT EMAIL ENDPOINT – UPDATED TO USE RESEND
+//  APPOINTMENT EMAIL ENDPOINT 
 app.post('/api/appointment-email', async (req: Request, res: Response) => {
   try {
     const { to, subject, html } = req.body;
 
-    console.log(`📧 Sending appointment email to: ${to}`);
+    console.log(` Sending appointment email to: ${to}`);
 
-    await resend.emails.send({
-      from: 'Voidstone Studio <onboarding@resend.dev>',
-      to: [to],
+    await transporter.sendMail({
+      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
+      to,
       subject,
       html
     });
 
-    console.log('✅ Appointment email sent successfully');
+    console.log(' Appointment email sent successfully');
     res.json({ success: true });
   } catch (error) {
-    console.error('❌ Error sending appointment email:', error);
+    console.error(' Error sending appointment email:', error);
     res.status(500).json({ error: 'Failed to send email' });
   }
 });
@@ -687,24 +703,24 @@ app.use('/api', profileRoutes);
 // Hero routes
 app.use('/api', heroRoutes);
 
-// Start server
+// MODIFIED: Make Consul registration optional
+// Start server (always start the server, regardless of Consul)
 const server = app.listen(PORT, () => {
   console.log('\n=================================');
-  console.log('🚀 Auth Service');
+  console.log(' Auth Service');
   console.log('=================================');
-  console.log(`📌 Port: ${PORT}`);
-  console.log(`🔍 Health: http://localhost:${PORT}/health`);
-  console.log(`📊 Metrics: http://localhost:${PORT}/metrics`);
-  console.log(`👥 GET /api/users - List users (by role)`);
-  console.log(`📝 POST /api/auth/register - Register`);
-  console.log(`🔑 POST /api/auth/login - Login`);
-  console.log(`📧 POST /api/appointment-email - Send appointment emails`);
-  console.log(`📬 POST /api/contact/send - Contact form`);
-  console.log(`📦 POST /api/orders/send-emails - Order emails`);
-  console.log(`👤 /api/profile - Profile management`);
-  console.log(`🖼️ /api/hero - Hero image management`);
+  console.log(` Port: ${PORT}`);
+  console.log(` Health: http://localhost:${PORT}/health`);
+  console.log(` Metrics: http://localhost:${PORT}/metrics`);
+  console.log(` GET /api/users - List users (by role)`);
+  console.log(` POST /api/auth/register - Register`);
+  console.log(` POST /api/auth/login - Login`);
+  console.log(` POST /api/appointment-email - Send appointment emails`);
+  console.log(` POST /api/contact/send - Contact form`);
+  console.log(` POST /api/orders/send-emails - Order emails`);
+  console.log(` /api/profile - Profile management`);
+  console.log(`/api/hero - Hero image management (stored in MongoDB)`);
   console.log('=================================\n');
-  console.log('📨 Email service: Using Resend API');
 
   // MODIFIED: Only try Consul if explicitly enabled
   if (!isTestEnvironment && process.env.ENABLE_CONSUL === 'true') {
