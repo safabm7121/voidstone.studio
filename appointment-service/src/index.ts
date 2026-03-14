@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import consul from 'consul';
 import rateLimit from 'express-rate-limit';
 import mongoose from 'mongoose';
 import { networkInterfaces } from 'os';
@@ -65,7 +64,7 @@ app.use((req, res, next) => {
 // Middleware
 app.use(helmet());
 app.use(cors({ 
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'], 
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'], 
   credentials: true 
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -118,51 +117,54 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Get local IP
-const getLocalIp = (): string => {
-  const nets = networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name] || []) {
-      if (net.family === 'IPv4' && !net.internal) {
-        return net.address;
-      }
-    }
-  }
-  return 'localhost';
-};
-
 // Connect to database (skip in test mode - tests use in-memory DB)
 if (!isTestEnvironment) {
   connectDatabase();
 }
 
-// SERVER STARTUP
-// Only start server if not in test environment, or if this file is being run directly
-if (require.main === module || !isTestEnvironment) {
-  // Consul registration - only in non-test environment
-  if (!isTestEnvironment) {
-    const consulClient = new consul({ 
-      host: process.env.CONSUL_HOST || 'localhost', 
-      port: process.env.CONSUL_PORT || '8500' 
-    });
+// MODIFIED: Make Consul registration optional
+// Always start the server
+const server = app.listen(PORT, () => {
+  console.log(' Appointment Service');
+  console.log(` Port: ${PORT}`);
+  console.log(` Health: http://localhost:${PORT}/health`);
+  console.log(` Metrics: http://localhost:${PORT}/metrics`);
+  console.log(` Test: http://localhost:${PORT}/api/test`);
 
-    const serviceId = 'appointment-service-1';
-    const localIp = getLocalIp();
+  // MODIFIED: Only try Consul if explicitly enabled
+  if (!isTestEnvironment && process.env.ENABLE_CONSUL === 'true') {
+    try {
+      // Dynamically import consul
+      const consul = require('consul');
+      
+      const consulClient = new consul({ 
+        host: process.env.CONSUL_HOST || 'localhost', 
+        port: process.env.CONSUL_PORT || '8500' 
+      });
 
-    const server = app.listen(PORT, () => {
-      console.log(' Appointment Service');
-      console.log(` Port: ${PORT}`);
-      console.log(` Health: http://localhost:${PORT}/health`);
-      console.log(` Metrics: http://localhost:${PORT}/metrics`);
-      console.log(` Test: http://localhost:${PORT}/api/test`);
-      console.log(` Local IP: ${localIp}`);
+      const serviceId = 'appointment-service-1';
+      
+      // Get local IP
+      const getLocalIp = (): string => {
+        const nets = networkInterfaces();
+        for (const name of Object.keys(nets)) {
+          for (const net of nets[name] || []) {
+            if (net.family === 'IPv4' && !net.internal) {
+              return net.address;
+            }
+          }
+        }
+        return 'localhost';
+      };
+      
+      const localIp = getLocalIp();
 
       // Register with Consul
       const addresses = [localIp, 'host.docker.internal', 'localhost'];
       
       const tryRegister = async (index: number) => {
         if (index >= addresses.length) {
-          console.log(' Could not register with Consul');
+          console.log(' Could not register with Consul - continuing without service discovery');
           return;
         }
 
@@ -184,36 +186,40 @@ if (require.main === module || !isTestEnvironment) {
           
           console.log(` Registered with Consul using ${address}`);
         } catch (err) {
-          console.log(` Retry ${index + 1}/${addresses.length}...`);
+          console.log(` Failed to register with Consul using ${address}, trying next...`);
           tryRegister(index + 1);
         }
       };
 
       tryRegister(0);
-    });
 
-    // Graceful shutdown
-    const shutdown = async () => {
-      console.log('\n Shutting down...');
-      try {
-        await consulClient.agent.service.deregister(serviceId);
-        console.log(' Deregistered from Consul');
-      } catch (error) {
-        console.error(' Error deregistering from Consul:', error);
-      } finally {
-        server.close(() => {
-          console.log(' Server closed');
-          process.exit(0);
-        });
-      }
-    };
+      // Graceful shutdown
+      const shutdown = async () => {
+        console.log('\n Shutting down...');
+        try {
+          await consulClient.agent.service.deregister(serviceId);
+          console.log(' Deregistered from Consul');
+        } catch (error) {
+          console.error(' Error deregistering from Consul:', error);
+        } finally {
+          server.close(() => {
+            console.log(' Server closed');
+            process.exit(0);
+          });
+        }
+      };
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+      process.on('SIGTERM', shutdown);
+      process.on('SIGINT', shutdown);
+      
+    } catch (error) {
+      console.log(' Consul not available - running without service discovery');
+      console.log(' This is fine for Render deployment!');
+    }
   } else {
-    // In test mode, just make the app available without starting server
-    console.log(` Appointment Service configured for test mode`);
+    console.log(' Running without Consul service discovery');
+    console.log(' This is normal for Render deployment!');
   }
-}
+});
 
 export default app;

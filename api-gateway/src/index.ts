@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import consul from 'consul';
 import { createProxyMiddleware, Options } from 'http-proxy-middleware';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -91,34 +90,41 @@ const createProxyWithErrorHandling = (serviceName: string, targetUrl: string, pa
     return options;
 };
 
-// Auth Service Proxy (port 3001)
+// MODIFIED: Use environment variables for service URLs instead of hardcoded service names
+// This way we can set them in Render's environment variables
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:3001';
+const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || 'http://product-service:3002';
+const APPOINTMENT_SERVICE_URL = process.env.APPOINTMENT_SERVICE_URL || 'http://appointment-service:3003';
+
+// Auth Service Proxy
 app.use('/api/auth', createProxyMiddleware(
-    createProxyWithErrorHandling('auth-service', 'http://auth-service:3001', {
+    createProxyWithErrorHandling('auth-service', AUTH_SERVICE_URL, {
         '^/api/auth': '/api/auth'
     })
 ));
 
-// Product Service Proxy (port 3002)
+// Product Service Proxy
 app.use('/api/products', createProxyMiddleware(
-    createProxyWithErrorHandling('product-service', 'http://product-service:3002', {
+    createProxyWithErrorHandling('product-service', PRODUCT_SERVICE_URL, {
         '^/api/products': '/products'  
     })
 ));
-// Appointment Service Proxy (port 3003)
+
+// Appointment Service Proxy
 app.use('/api/appointments', createProxyMiddleware(
-    createProxyWithErrorHandling('appointment-service', 'http://appointment-service:3003', {
+    createProxyWithErrorHandling('appointment-service', APPOINTMENT_SERVICE_URL, {
         '^/api/appointments': '/api/appointments'
     })
 ));
 
 // Orders route (handled by auth-service)
 app.use('/api/orders', createProxyMiddleware(
-    createProxyWithErrorHandling('auth-service', 'http://auth-service:3001')
+    createProxyWithErrorHandling('auth-service', AUTH_SERVICE_URL)
 ));
 
 // Contact route (handled by auth-service)
 app.use('/api/contact', createProxyMiddleware(
-    createProxyWithErrorHandling('auth-service', 'http://auth-service:3001')
+    createProxyWithErrorHandling('auth-service', AUTH_SERVICE_URL)
 ));
 
 // Rate limiting - applied AFTER proxy routes in test mode
@@ -184,102 +190,112 @@ app.get('/', (req: Request, res: Response) => {
     });
 });
 
-// CONSUL REGISTRATION
+// MODIFIED: Make Consul registration optional
+const server = app.listen(Number(PORT), () => {
+    console.log(' Voidstone API Gateway');
+    console.log(` Port: ${PORT}`);
+    console.log(` Health: http://localhost:${PORT}/health`);
+    console.log(` Metrics: http://localhost:${PORT}/metrics`);
+    console.log(` Test: http://localhost:${PORT}/test`);
+    
+    console.log('\n Service URLs:');
+    console.log(`   Auth Service: ${AUTH_SERVICE_URL}`);
+    console.log(`   Product Service: ${PRODUCT_SERVICE_URL}`);
+    console.log(`   Appointment Service: ${APPOINTMENT_SERVICE_URL}`);
+    
+    console.log('\n Proxy Routes:');
+    console.log(`   POST/GET  /api/auth/*     → auth-service`);
+    console.log(`   POST/GET  /api/products/* → product-service`);
+    console.log(`   POST/GET  /api/appointments/* → appointment-service`);
+    console.log(`   POST      /api/orders/*   → auth-service`);
+    console.log(`   POST      /api/contact/*  → auth-service`);
 
-// Only register with Consul if not in test environment
-if (!isTestEnvironment) {
-    // Get local IP address for Consul registration
-    const getLocalIp = (): string => {
-        const nets = networkInterfaces();
-        for (const name of Object.keys(nets)) {
-            for (const net of nets[name] || []) {
-                if (net.family === 'IPv4' && !net.internal) {
-                    return net.address;
-                }
-            }
-        }
-        return 'api-gateway'; // fallback to service name
-    };
-
-    const consulClient = new consul({
-        host: process.env.CONSUL_HOST || 'consul',
-        port: parseInt(process.env.CONSUL_PORT || '8500', 10)
-    });
-
-    const serviceId = 'api-gateway-1';
-    const localIp = getLocalIp();
-
-    const server = app.listen(Number(PORT), () => {
-        console.log(' Voidstone API Gateway');
-        console.log(` Port: ${PORT}`);
-        console.log(` Health: http://localhost:${PORT}/health`);
-        console.log(` Metrics: http://localhost:${PORT}/metrics`);
-        console.log(` Test: http://localhost:${PORT}/test`);
-        console.log(` Local IP: ${localIp}`);
-        console.log('\n Proxy Routes:');
-        console.log(`   POST/GET  /api/auth/*     → auth-service (port 3001)`);
-        console.log(`   POST/GET  /api/products/* → product-service (port 3002)`);
-        console.log(`   POST/GET  /api/appointments/* → appointment-service (port 3003)`);
-        console.log(`   POST      /api/orders/*   → auth-service (port 3001)`);
-        console.log(`   POST      /api/contact/*  → auth-service (port 3001)`);
-
-        // Try different addresses for Consul registration
-        const addresses = [localIp, 'api-gateway', 'host.docker.internal', 'localhost'];
-        
-        const tryRegister = async (index: number) => {
-            if (index >= addresses.length) {
-                console.log(' Could not register with Consul');
-                return;
-            }
-
-            const address = addresses[index];
-            try {
-                await consulClient.agent.service.register({
-                    id: serviceId,
-                    name: 'api-gateway',
-                    address: address,
-                    port: Number(PORT),
-                    check: {
-                        http: `http://${address}:${PORT}/health`,
-                        interval: '10s',
-                        timeout: '5s',
-                        deregistercriticalserviceafter: '30s'
-                    },
-                    tags: ['gateway', 'api', 'nodejs', 'edge-service']
-                } as any);
-                
-                console.log(` Registered with Consul using ${address}`);
-                console.log(` View at: http://localhost:8500/ui/dc1/services/api-gateway`);
-            } catch (err) {
-                console.log(` Retry ${index + 1}/${addresses.length}...`);
-                tryRegister(index + 1);
-            }
-        };
-
-        tryRegister(0);
-    });
-
-    // Graceful shutdown
-    const shutdown = async () => {
-        console.log('\n Shutting down gracefully...');
+    // MODIFIED: Only try Consul if explicitly enabled and not in test
+    if (!isTestEnvironment && process.env.ENABLE_CONSUL === 'true') {
+        // Wrap Consul registration in a try-catch and make it optional
         try {
-            await consulClient.agent.service.deregister(serviceId);
-            console.log(' Deregistered from Consul');
-        } catch (error) {
-            console.error(' Error deregistering from Consul:', error);
-        } finally {
-            server.close(() => {
-                console.log(' Server closed');
-                process.exit(0);
-            });
-        }
-    };
+            // Dynamically import consul only if we need it
+            const consul = require('consul');
+            
+            // Get local IP address for Consul registration
+            const getLocalIp = (): string => {
+                const nets = networkInterfaces();
+                for (const name of Object.keys(nets)) {
+                    for (const net of nets[name] || []) {
+                        if (net.family === 'IPv4' && !net.internal) {
+                            return net.address;
+                        }
+                    }
+                }
+                return 'api-gateway'; // fallback to service name
+            };
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-} else {
-    // In test mode, just make sure the app is listening
-    console.log(` API Gateway configured for test mode on port ${PORT}`);
-}
+            const consulClient = new consul({
+                host: process.env.CONSUL_HOST || 'consul',
+                port: parseInt(process.env.CONSUL_PORT || '8500', 10)
+            });
+
+            const serviceId = 'api-gateway-1';
+            const localIp = getLocalIp();
+
+            // Try different addresses for Consul registration
+            const addresses = [localIp, 'api-gateway', 'host.docker.internal', 'localhost'];
+            
+            const tryRegister = async (index: number) => {
+                if (index >= addresses.length) {
+                    console.log(' Could not register with Consul - continuing without service discovery');
+                    return;
+                }
+
+                const address = addresses[index];
+                try {
+                    await consulClient.agent.service.register({
+                        id: serviceId,
+                        name: 'api-gateway',
+                        address: address,
+                        port: Number(PORT),
+                        check: {
+                            http: `http://${address}:${PORT}/health`,
+                            interval: '10s',
+                            timeout: '5s',
+                            deregistercriticalserviceafter: '30s'
+                        },
+                        tags: ['gateway', 'api', 'nodejs', 'edge-service']
+                    } as any);
+                    
+                    console.log(` Registered with Consul using ${address}`);
+                    
+                    // MODIFIED: Setup graceful shutdown with Consul
+                    const shutdown = async () => {
+                        console.log('\n Shutting down gracefully...');
+                        try {
+                            await consulClient.agent.service.deregister(serviceId);
+                            console.log(' Deregistered from Consul');
+                        } catch (error) {
+                            console.error(' Error deregistering from Consul:', error);
+                        } finally {
+                            process.exit(0);
+                        }
+                    };
+
+                    process.on('SIGTERM', shutdown);
+                    process.on('SIGINT', shutdown);
+                    
+                } catch (err) {
+                    console.log(` Failed to register with Consul using ${address}, trying next...`);
+                    tryRegister(index + 1);
+                }
+            };
+
+            tryRegister(0);
+        } catch (error) {
+            console.log(' Consul not available - running without service discovery');
+            console.log(' This is fine for Render deployment!');
+        }
+    } else {
+        console.log('\n Running without Consul service discovery');
+        console.log(' This is normal for Render deployment!');
+    }
+});
 
 export default app;

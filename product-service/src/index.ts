@@ -2,7 +2,6 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import consul from 'consul';
 import rateLimit from 'express-rate-limit';
 import client from 'prom-client';
 import productRoutes from './routes/productRoutes';
@@ -62,7 +61,7 @@ app.use((req, res, next) => {
 // Middleware
 app.use(helmet());
 app.use(cors({ 
-    origin: ['http://localhost:5173', 'http://localhost:3000'], 
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'http://localhost:3000'], 
     credentials: true 
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -128,27 +127,31 @@ app.get('/', (req: Request, res: Response) => {
     });
 });
 
-// CONSUL REGISTRATION 
-// Only register with Consul if not in test environment
-if (!isTestEnvironment) {
-    const consulClient = new consul({ 
-        host: process.env.CONSUL_HOST || 'localhost', 
-        port: process.env.CONSUL_PORT || '8500'  
-    } as any);
-    const serviceId = 'product-service-1';
+// MODIFIED: Make Consul registration optional
+// Always start the server
+const server = app.listen(PORT, () => {
+    console.log(' Product Service (MongoDB)');
+    console.log(` Port: ${PORT}`);
+    console.log(` Health: http://localhost:${PORT}/health`);
+    console.log(` Metrics: http://localhost:${PORT}/metrics`);
+    console.log(` GET /products - List all products`);
+    console.log(` POST /products - Create product (auth)`);
+    console.log(` PUT /products/:id - Update product (auth)`);
+    console.log(` DELETE /products/:id - Delete product (auth)`);
+    console.log(` GET /products/:id/history - View product history (auth)`);
 
-    const server = app.listen(PORT, () => {
-        console.log(' Product Service (MongoDB)');
-        console.log(` Port: ${PORT}`);
-        console.log(` Health: http://localhost:${PORT}/health`);
-        console.log(` Metrics: http://localhost:${PORT}/metrics`);
-        console.log(` GET /products - List all products`);
-        console.log(` POST /products - Create product (auth)`);
-        console.log(` PUT /products/:id - Update product (auth)`);
-        console.log(` DELETE /products/:id - Delete product (auth)`);
-        console.log(` GET /products/:id/history - View product history (auth)`);
-
+    // MODIFIED: Only try Consul if explicitly enabled
+    if (!isTestEnvironment && process.env.ENABLE_CONSUL === 'true') {
         try {
+            const consul = require('consul');
+            
+            const consulClient = new consul({ 
+                host: process.env.CONSUL_HOST || 'localhost', 
+                port: process.env.CONSUL_PORT || '8500'  
+            } as any);
+            
+            const serviceId = 'product-service-1';
+
             // Service registration expects number for port
             consulClient.agent.service.register({
                 id: serviceId,
@@ -160,31 +163,34 @@ if (!isTestEnvironment) {
                     interval: '10s' 
                 }
             } as any);
-            console.log(' Registered with Consul at http://localhost:8500');
+            console.log(' Registered with Consul');
+
+            // Graceful shutdown
+            const shutdown = () => {
+                console.log('\n Shutting down...');
+                try { 
+                    consulClient.agent.service.deregister(serviceId); 
+                    console.log(' Deregistered from Consul');
+                } catch (error) { 
+                    console.error(' Error deregistering from Consul:', error);
+                }
+                server.close(() => {
+                    console.log(' Server closed');
+                    process.exit(0);
+                });
+            };
+
+            process.on('SIGTERM', shutdown);
+            process.on('SIGINT', shutdown);
+            
         } catch (error: any) {
-            console.error(' Failed to register with Consul:', error.message);
+            console.log(' Consul not available - running without service discovery');
+            console.log(' This is fine for Render deployment!');
         }
-    });
-
-    // Graceful shutdown
-    const shutdown = () => {
-        console.log('\n Shutting down...');
-        try { 
-            (consulClient.agent.service as any).deregister(serviceId); 
-            console.log(' Deregistered from Consul');
-        } catch (error) { 
-            console.error(' Error deregistering from Consul:', error);
-        }
-        server.close(() => {
-            console.log(' Server closed');
-            process.exit(0);
-        });
-    };
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-} else {
-    console.log(' Product Service configured for test mode');
-}
+    } else {
+        console.log(' Running without Consul service discovery');
+        console.log(' This is normal for Render deployment!');
+    }
+});
 
 export default app;
