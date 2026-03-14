@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer'; // Keep if used elsewhere, but no longer used for emails
 import client from 'prom-client';
 import path from 'path';
 import { User } from './models/User';
@@ -19,11 +19,15 @@ import {
   generateRefreshToken, generateVerificationCode, verifyToken
 } from './utils/helpers';
 import { sendVerificationEmail, sendPasswordResetEmail } from './utils/emailService';
+import { Resend } from 'resend';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Initialize Resend for contact/order/appointment emails
+const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 // Check if running in test environment
 const isTestEnvironment = process.env.NODE_ENV === 'test';
@@ -103,29 +107,7 @@ if (!isTestEnvironment) {
     });
 }
 
-// ⚠️⚠️⚠️ THIS TRANSPORTER IS COMMENTED OUT - USING EMAILSERVICE.TS INSTEAD ⚠️⚠️⚠️
-/*
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Verify email transporter (skip in test environment)
-if (!isTestEnvironment) {
-  transporter.verify((error, success) => {
-    if (error) {
-      console.error('❌ Email service error:', error);
-    } else {
-      console.log('✅ Email server ready to send messages');
-    }
-  });
-}
-*/
+// ⚠️⚠️⚠️ OLD SMTP TRANSPORTER IS REMOVED – USING RESEND NOW ⚠️⚠️⚠️
 
 // ============= HEALTH CHECK ENDPOINT =============
 app.get('/health', (req: Request, res: Response) => {
@@ -416,7 +398,7 @@ app.get('/api/auth/me', async (req: Request, res: Response) => {
   }
 });
 
-// CONTACT EMAIL ENDPOINT 
+// CONTACT EMAIL ENDPOINT – UPDATED TO USE RESEND
 app.post('/api/contact/send', async (req: Request, res: Response) => {
   try {
     const { name, email, message } = req.body;
@@ -426,24 +408,10 @@ app.post('/api/contact/send', async (req: Request, res: Response) => {
     console.log('Email:', email);
     console.log('Message:', message);
 
-    // Create a temporary transporter for contact emails
-    const contactTransporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'a4f194001@smtp-brevo.com',
-        pass: process.env.BREVO_SMTP_KEY || '',
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    } as any);
-
     // Email to store
-    await contactTransporter.sendMail({
-      from: '"Voidstone Studio Contact" <voidstonestudio@gmail.com>',
-      to: 'voidstonestudio@gmail.com',
+    await resend.emails.send({
+      from: 'Voidstone Studio <onboarding@resend.dev>',
+      to: ['voidstonestudio@gmail.com'],
       subject: `📬 New Contact Message from ${name}`,
       html: `
         <!DOCTYPE html>
@@ -485,9 +453,9 @@ app.post('/api/contact/send', async (req: Request, res: Response) => {
     });
 
     // Auto-reply to user
-    await contactTransporter.sendMail({
-      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
-      to: email,
+    await resend.emails.send({
+      from: 'Voidstone Studio <onboarding@resend.dev>',
+      to: [email],
       subject: 'Thank you for contacting Voidstone Studio',
       html: `
         <!DOCTYPE html>
@@ -525,7 +493,7 @@ app.post('/api/contact/send', async (req: Request, res: Response) => {
   }
 });
 
-// Email Templates (unchanged, kept as is)
+// Email Templates (unchanged)
 const getBuyerEmailTemplate = (data: any) => {
   const { items, shippingInfo, cartTotal, orderId } = data;
 
@@ -652,7 +620,7 @@ const getStoreEmailTemplate = (data: any) => {
   `;
 };
 
-// ORDER EMAIL ENDPOINT
+// ORDER EMAIL ENDPOINT – UPDATED TO USE RESEND
 app.post('/api/orders/send-emails', async (req: Request, res: Response) => {
   try {
     const { items, shippingInfo, cartTotal, orderId } = req.body;
@@ -661,24 +629,10 @@ app.post('/api/orders/send-emails', async (req: Request, res: Response) => {
     console.log('Order ID:', orderId);
     console.log('Buyer email:', shippingInfo.email);
 
-    // Create a temporary transporter for order emails
-    const orderTransporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'a4f194001@smtp-brevo.com',
-        pass: process.env.BREVO_SMTP_KEY || '',
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    } as any);
-
     // Email to buyer
-    await orderTransporter.sendMail({
-      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
-      to: shippingInfo.email,
+    await resend.emails.send({
+      from: 'Voidstone Studio <onboarding@resend.dev>',
+      to: [shippingInfo.email],
       subject: `Order Confirmation - ${orderId}`,
       html: getBuyerEmailTemplate({ items, shippingInfo, cartTotal, orderId })
     });
@@ -688,9 +642,9 @@ app.post('/api/orders/send-emails', async (req: Request, res: Response) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Email to store
-    await orderTransporter.sendMail({
-      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
-      to: 'voidstonestudio+store@gmail.com',
+    await resend.emails.send({
+      from: 'Voidstone Studio <onboarding@resend.dev>',
+      to: ['voidstonestudio+store@gmail.com'],
       subject: `🆕 NEW ORDER ALERT - ${orderId}`,
       html: getStoreEmailTemplate({ items, shippingInfo, cartTotal, orderId })
     });
@@ -705,30 +659,16 @@ app.post('/api/orders/send-emails', async (req: Request, res: Response) => {
   }
 });
 
-// APPOINTMENT EMAIL ENDPOINT 
+// APPOINTMENT EMAIL ENDPOINT – UPDATED TO USE RESEND
 app.post('/api/appointment-email', async (req: Request, res: Response) => {
   try {
     const { to, subject, html } = req.body;
 
     console.log(`📧 Sending appointment email to: ${to}`);
 
-    // Create a temporary transporter for appointment emails
-    const appointmentTransporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'a4f194001@smtp-brevo.com',
-        pass: process.env.BREVO_SMTP_KEY || '',
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    } as any);
-
-    await appointmentTransporter.sendMail({
-      from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
-      to,
+    await resend.emails.send({
+      from: 'Voidstone Studio <onboarding@resend.dev>',
+      to: [to],
       subject,
       html
     });
@@ -747,8 +687,7 @@ app.use('/api', profileRoutes);
 // Hero routes
 app.use('/api', heroRoutes);
 
-// MODIFIED: Make Consul registration optional
-// Start server (always start the server, regardless of Consul)
+// Start server
 const server = app.listen(PORT, () => {
   console.log('\n=================================');
   console.log('🚀 Auth Service');
@@ -765,7 +704,7 @@ const server = app.listen(PORT, () => {
   console.log(`👤 /api/profile - Profile management`);
   console.log(`🖼️ /api/hero - Hero image management`);
   console.log('=================================\n');
-  console.log('📨 Email service: Using Brevo SMTP');
+  console.log('📨 Email service: Using Resend API');
 
   // MODIFIED: Only try Consul if explicitly enabled
   if (!isTestEnvironment && process.env.ENABLE_CONSUL === 'true') {
