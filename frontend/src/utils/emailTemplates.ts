@@ -1,3 +1,5 @@
+import { FRONTEND_URL } from '../config/urls';
+
 export const getBuyerEmailTemplate = (orderData: any) => {
   const { shippingInfo, items, cartTotal, orderId } = orderData;
   
@@ -87,7 +89,7 @@ export const getBuyerEmailTemplate = (orderData: any) => {
 
           <p>We'll notify you when your order ships.</p>
           
-          <a href="http://localhost:5173/orders/${orderId}" class="button">Track Your Order</a>
+          <a href="${FRONTEND_URL}/orders/${orderId}" class="button">Track Your Order</a>
         </div>
         <div class="footer">
           <p>© ${new Date().getFullYear()} Voidstone Studio. All rights reserved.</p>
