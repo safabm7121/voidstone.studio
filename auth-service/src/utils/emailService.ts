@@ -1,35 +1,42 @@
 import nodemailer from 'nodemailer';
 
-// Configure your email transporter
+// Configure your email transporter with Brevo SMTP (works on Render)
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 2525,  // CHANGE FROM 587 TO 2525
+  host: 'smtp-relay.brevo.com',
+  port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: 'a4f194001@smtp-brevo.com',
+    pass: process.env.BREVO_SMTP_KEY || '',
   },
-});
+  // Add these to prevent timeouts
+  connectionTimeout: 30000,
+  socketTimeout: 30000,
+  // Force TCP connection instead of IPv6
+  tls: {
+    rejectUnauthorized: false
+  }
+} as any); // Use 'as any' to bypass TypeScript checking
 
 // Verify connection configuration
 transporter.verify((error, success) => {
   if (error) {
     console.error(' Email service configuration error:', error);
   } else {
-    console.log(' Email server is ready to send messages');
+    console.log('Email server is ready to send messages via Brevo');
   }
 });
 
 // Send verification email
 export const sendVerificationEmail = async (email: string, code: string, firstName: string) => {
   // Validate environment variables
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
+  if (!process.env.BREVO_SMTP_KEY) {
+    console.error(' BREVO_SMTP_KEY not configured in .env');
     throw new Error('Email configuration missing');
   }
 
   const mailOptions = {
-    from: `"Voidstone Studio" <${process.env.EMAIL_USER}>`,
+    from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
     to: email,
     subject: 'Verify Your Voidstone Studio Account',
     html: `
@@ -88,7 +95,6 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
   } catch (error) {
     console.error(' Error sending verification email:', error);
     
-    // More detailed error logging
     if (error instanceof Error) {
       console.error('Error details:', {
         message: error.message,
@@ -101,16 +107,16 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
   }
 };
 
-// NEW: Send password reset email
+// Send password reset email
 export const sendPasswordResetEmail = async (email: string, code: string, firstName: string) => {
   // Validate environment variables
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
+  if (!process.env.BREVO_SMTP_KEY) {
+    console.error(' BREVO_SMTP_KEY not configured in .env');
     throw new Error('Email configuration missing');
   }
 
   const mailOptions = {
-    from: `"Voidstone Studio" <${process.env.EMAIL_USER}>`,
+    from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
     to: email,
     subject: 'Reset Your Voidstone Studio Password',
     html: `
@@ -163,17 +169,17 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
   };
 
   try {
-    console.log(`Attempting to send password reset email to ${email}...`);
+    console.log(` Attempting to send password reset email to ${email}...`);
     const info = await transporter.sendMail(mailOptions);
     console.log(` Password reset email sent to ${email}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    console.error(' Error sending password reset email:', error);
     throw error;
   }
 };
 
-// Optional: Add a test function to verify email configuration
+// Test function to verify email configuration
 export const testEmailConnection = async () => {
   try {
     await transporter.verify();
