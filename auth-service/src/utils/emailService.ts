@@ -1,14 +1,16 @@
 import nodemailer from 'nodemailer';
 
+// Configure your email transporter
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
+  host: 'smtp.gmail.com',
+  port: 2525,  // CHANGE FROM 587 TO 2525
   secure: false,
   auth: {
-    user: 'a4f194001@smtp-brevo.com',
-    pass: process.env.BREVO_SMTP_KEY,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
+
 // Verify connection configuration
 transporter.verify((error, success) => {
   if (error) {
