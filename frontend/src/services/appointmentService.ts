@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { BookAppointmentData, Appointment, Availability } from '../types/appointment';
 
-const API_URL = 'http://localhost:3003/api';
+// Use environment variable with fallback
+const API_URL = import.meta.env.VITE_APPOINTMENT_URL || 'http://localhost:3003';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`,  // Add /api here
   headers: {
     'Content-Type': 'application/json',
   }
@@ -22,7 +23,7 @@ api.interceptors.request.use((config) => {
     console.warn(' No token found in localStorage');
   }
   
-  console.log(` Request: ${config.method?.toUpperCase()} ${config.url}`);
+  console.log(` Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 

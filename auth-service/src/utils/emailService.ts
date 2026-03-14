@@ -1,22 +1,23 @@
 import nodemailer from 'nodemailer';
 
-// Configure your email transporter
-const transporter = nodemailer.createTransport({
+// Create transporter - this is the ONLY place we create it
+export const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER, // voidstonestudio@gmail.com
-    pass: process.env.EMAIL_PASS, // Your Gmail app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-// Verify connection configuration
+// Verify connection configuration (but don't block startup)
 transporter.verify((error, success) => {
   if (error) {
-    console.error(' Email service configuration error:', error);
+    console.error('❌ Email service configuration error:', error);
+    console.error('   Make sure EMAIL_USER and EMAIL_PASS are correct in environment variables');
   } else {
-    console.log(' Email server is ready to send messages');
+    console.log('✅ Email server is ready to send messages');
   }
 });
 
@@ -24,7 +25,7 @@ transporter.verify((error, success) => {
 export const sendVerificationEmail = async (email: string, code: string, firstName: string) => {
   // Validate environment variables
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
+    console.error('❌ EMAIL_USER or EMAIL_PASS not configured in environment');
     throw new Error('Email configuration missing');
   }
 
@@ -59,7 +60,7 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
             <div class="code">${code}</div>
             <p>This code will expire in 1 hour.</p>
             <p>Or click the button below to verify your email:</p>
-            <a href="http://localhost:5173/verify-email?email=${encodeURIComponent(email)}&code=${code}" class="button">Verify Email</a>
+            <a href="https://voidstone-frontend.onrender.com/verify-email?email=${encodeURIComponent(email)}&code=${code}" class="button">Verify Email</a>
           </div>
           <div class="footer">
             <p>If you didn't request this, please ignore this email.</p>
@@ -101,11 +102,11 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
   }
 };
 
-// NEW: Send password reset email
+// Send password reset email
 export const sendPasswordResetEmail = async (email: string, code: string, firstName: string) => {
   // Validate environment variables
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
+    console.error('❌ EMAIL_USER or EMAIL_PASS not configured in environment');
     throw new Error('Email configuration missing');
   }
 
@@ -142,7 +143,7 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
             <div class="code">${code}</div>
             <p>This code will expire in 1 hour.</p>
             <p>Or click the button below to reset your password:</p>
-            <a href="http://localhost:5173/reset-password?email=${encodeURIComponent(email)}&code=${code}" class="button">Reset Password</a>
+            <a href="https://voidstone-frontend.onrender.com/reset-password?email=${encodeURIComponent(email)}&code=${code}" class="button">Reset Password</a>
             <p class="warning">If you didn't request this, please ignore this email and ensure your account is secure.</p>
           </div>
           <div class="footer">
@@ -174,7 +175,7 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
   }
 };
 
-// Optional: Add a test function to verify email configuration
+// Test function to verify email configuration
 export const testEmailConnection = async () => {
   try {
     await transporter.verify();

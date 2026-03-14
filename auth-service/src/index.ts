@@ -4,7 +4,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
 import client from 'prom-client';
 import path from 'path';
 import { User } from './models/User';
@@ -18,7 +17,7 @@ import {
   hashPassword, comparePasswords, generateToken,
   generateRefreshToken, generateVerificationCode, verifyToken
 } from './utils/helpers';
-import { sendVerificationEmail, sendPasswordResetEmail } from './utils/emailService';
+import { sendVerificationEmail, sendPasswordResetEmail, transporter } from './utils/emailService';
 
 dotenv.config();
 
@@ -103,28 +102,6 @@ if (!isTestEnvironment) {
     });
 }
 
-// Email Transporter Setup
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Verify email transporter (skip in test environment)
-if (!isTestEnvironment) {
-  transporter.verify((error, success) => {
-    if (error) {
-      console.error(' Email service error:', error);
-    } else {
-      console.log(' Email server ready to send messages');
-    }
-  });
-}
-
 // ============= HEALTH CHECK ENDPOINT =============
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
@@ -194,19 +171,27 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     const hashedPassword = await hashPassword(password);
     const verificationCode = generateVerificationCode();
 
+    // Check if this is the admin email
+    const isAdminEmail = email === process.env.ADMIN_EMAIL;
+    
     const user = new User({
       email,
       password: hashedPassword,
       firstName,
       lastName,
       verificationCode,
-      role: 'client'
+      role: isAdminEmail ? 'admin' : 'client' // Auto-assign admin role
     });
 
     await user.save();
 
     // Log the code to console (for development)
     console.log(` Verification code for ${email}: ${verificationCode}`);
+    
+    // Log if this is an admin registration
+    if (isAdminEmail) {
+      console.log('🎉 ADMIN USER CREATED!');
+    }
 
     // Send verification email (don't block registration if email fails)
     try {
@@ -219,7 +204,8 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
 
     res.status(201).json({
       message: 'User created successfully. Please verify your email.',
-      email: user.email
+      email: user.email,
+      role: user.role // Return the role so frontend knows
     });
   } catch (error) {
     console.error(' Registration error:', error);
@@ -248,6 +234,15 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
 
     if (!user.isVerified) {
       return res.status(401).json({ error: 'Please verify your email first' });
+    }
+
+    // ENSURE ADMIN EMAIL ALWAYS HAS ADMIN ROLE (double-check on login)
+    const isAdminEmail = email === process.env.ADMIN_EMAIL;
+    if (isAdminEmail && user.role !== 'admin') {
+      // If somehow the admin lost their role, restore it
+      user.role = 'admin';
+      await user.save();
+      console.log('🔧 Admin role restored for', email);
     }
 
     const token = generateToken(user._id.toString(), user.email, user.role);

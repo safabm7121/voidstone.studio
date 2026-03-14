@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+// Use environment variable with fallback
+const API_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:3001';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   }
