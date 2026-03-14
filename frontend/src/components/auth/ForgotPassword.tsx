@@ -29,7 +29,7 @@ const ForgotPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:3001/api/auth/forgot-password', { email });
+      await axios.post('/auth/forgot-password', { email });
       setSuccess(t('auth.resetCodeSent'));
       // Store email for the reset password page
       localStorage.setItem('resetPasswordEmail', email);

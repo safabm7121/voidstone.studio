@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import axios from 'axios';
 import { toast } from 'react-toastify';
+import { authApi } from '../services/api'; // Import the configured axios instance
 
 interface User {
   id: string;
@@ -39,17 +39,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
 
-  const api = axios.create({
-    baseURL: 'http://localhost:3001/api',
-  });
-
-  // Add token to requests
-  api.interceptors.request.use((config) => {
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
+  // Use the imported authApi instead of creating a new one
+  const api = authApi;
 
   // Fetch user profile
   const fetchUserProfile = async () => {

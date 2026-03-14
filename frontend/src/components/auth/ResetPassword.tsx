@@ -83,7 +83,7 @@ const ResetPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:3001/api/auth/reset-password', {
+      await axios.post('/auth/reset-password', {
         email: formData.email,
         code: formData.code,
         newPassword: formData.newPassword
