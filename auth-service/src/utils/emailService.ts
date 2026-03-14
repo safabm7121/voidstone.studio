@@ -1,32 +1,30 @@
 import nodemailer from 'nodemailer';
 
-export const transporter = nodemailer.createTransport({
+// Configure your email transporter
+const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // SSL
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  // Add these timeouts
-  connectionTimeout: 60000, // 60 seconds
-  greetingTimeout: 60000,
-  socketTimeout: 60000,
 });
 
-// Log but don't crash on verify
+// Verify connection configuration
 transporter.verify((error, success) => {
   if (error) {
-    console.error(' Email service error (but continuing):', error.message);
+    console.error(' Email service configuration error:', error);
   } else {
-    console.log(' Email server ready');
+    console.log(' Email server is ready to send messages');
   }
 });
+
 // Send verification email
 export const sendVerificationEmail = async (email: string, code: string, firstName: string) => {
   // Validate environment variables
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('❌ EMAIL_USER or EMAIL_PASS not configured in environment');
+    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
     throw new Error('Email configuration missing');
   }
 
@@ -61,7 +59,7 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
             <div class="code">${code}</div>
             <p>This code will expire in 1 hour.</p>
             <p>Or click the button below to verify your email:</p>
-            <a href="https://voidstone-frontend.onrender.com/verify-email?email=${encodeURIComponent(email)}&code=${code}" class="button">Verify Email</a>
+            <a href="http://localhost:5173/verify-email?email=${encodeURIComponent(email)}&code=${code}" class="button">Verify Email</a>
           </div>
           <div class="footer">
             <p>If you didn't request this, please ignore this email.</p>
@@ -83,12 +81,12 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
   };
 
   try {
-    console.log(`📧 Attempting to send verification email to ${email}...`);
+    console.log(` Attempting to send verification email to ${email}...`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Verification email sent to ${email}: ${info.messageId}`);
+    console.log(` Verification email sent to ${email}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Error sending verification email:', error);
+    console.error(' Error sending verification email:', error);
     
     // More detailed error logging
     if (error instanceof Error) {
@@ -103,11 +101,11 @@ export const sendVerificationEmail = async (email: string, code: string, firstNa
   }
 };
 
-// Send password reset email
+// NEW: Send password reset email
 export const sendPasswordResetEmail = async (email: string, code: string, firstName: string) => {
   // Validate environment variables
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error('❌ EMAIL_USER or EMAIL_PASS not configured in environment');
+    console.error(' EMAIL_USER or EMAIL_PASS not configured in .env');
     throw new Error('Email configuration missing');
   }
 
@@ -144,7 +142,7 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
             <div class="code">${code}</div>
             <p>This code will expire in 1 hour.</p>
             <p>Or click the button below to reset your password:</p>
-            <a href="https://voidstone-frontend.onrender.com/reset-password?email=${encodeURIComponent(email)}&code=${code}" class="button">Reset Password</a>
+            <a href="http://localhost:5173/reset-password?email=${encodeURIComponent(email)}&code=${code}" class="button">Reset Password</a>
             <p class="warning">If you didn't request this, please ignore this email and ensure your account is secure.</p>
           </div>
           <div class="footer">
@@ -166,24 +164,24 @@ export const sendPasswordResetEmail = async (email: string, code: string, firstN
   };
 
   try {
-    console.log(`📧 Attempting to send password reset email to ${email}...`);
+    console.log(`Attempting to send password reset email to ${email}...`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to ${email}: ${info.messageId}`);
+    console.log(` Password reset email sent to ${email}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Error sending password reset email:', error);
+    console.error('Error sending password reset email:', error);
     throw error;
   }
 };
 
-// Test function to verify email configuration
+// Optional: Add a test function to verify email configuration
 export const testEmailConnection = async () => {
   try {
     await transporter.verify();
-    console.log('✅ Email transporter verified successfully');
+    console.log(' Email transporter verified successfully');
     return true;
   } catch (error) {
-    console.error('❌ Email transporter verification failed:', error);
+    console.error(' Email transporter verification failed:', error);
     return false;
   }
 };

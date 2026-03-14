@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { transporter } from './../utils/emailService';
+
 export interface AuthRequest extends Request {
   user?: {
     userId: string;
