@@ -304,36 +304,55 @@ app.post('/api/auth/forgot-password', async (req: Request, res: Response) => {
     }
 
     const { email } = req.body;
+    console.log(`📧 Forgot password requested for: ${email}`);
 
     const user = await User.findOne({ email });
     if (!user) {
-      // Return success even if user doesn't exist (security best practice)
+      console.log(` User not found: ${email}`);
       return res.json({ message: 'If an account exists with this email, a password reset code has been sent' });
     }
 
+    console.log(` User found: ${user.firstName} ${user.lastName}`);
+
     const resetCode = generateVerificationCode();
+    console.log(` Generated reset code: ${resetCode}`);
+
     user.resetPasswordCode = resetCode;
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
     await user.save();
+    console.log(` User updated with reset code`);
 
-    console.log(` Password reset code for ${email}: ${resetCode}`);
-
-    // Send reset code via email
+    // Send reset code via email with try-catch that doesn't crash
     try {
+      console.log(`📧 Attempting to send password reset email to ${email}...`);
       await sendPasswordResetEmail(email, resetCode, user.firstName);
-      console.log(` Password reset email sent to ${email}`);
+      console.log(`✅ Password reset email sent to ${email}`);
     } catch (emailError) {
       console.error(` Failed to send password reset email:`, emailError);
+      // Log the full error details
+      if (emailError instanceof Error) {
+        console.error('Error details:', {
+          message: emailError.message,
+          name: emailError.name,
+          stack: emailError.stack
+        });
+      }
       // Still return success to prevent email enumeration
     }
 
     res.json({ message: 'If an account exists with this email, a password reset code has been sent' });
   } catch (error) {
     console.error(' Forgot password error:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 app.post('/api/auth/reset-password', async (req: Request, res: Response) => {
   try {
     const { error } = resetPasswordSchema.validate(req.body);
