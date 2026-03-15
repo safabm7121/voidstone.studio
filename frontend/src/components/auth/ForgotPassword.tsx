@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import { authApi } from '../../services/api'; // ✅ Import authApi instead of axios
 
 const ForgotPassword: React.FC = () => {
   const { t } = useTranslation();
@@ -22,29 +22,39 @@ const ForgotPassword: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setSuccess('');
+  setLoading(true);
 
-    try {
-      await axios.post('/auth/forgot-password', { email });
-      setSuccess(t('auth.resetCodeSent'));
-      // Store email for the reset password page
-      localStorage.setItem('resetPasswordEmail', email);
-      
-      // Redirect to reset password page after 3 seconds
-      setTimeout(() => {
-        navigate('/reset-password');
-      }, 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.error || t('auth.forgotPasswordFailed'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    // Log the actual URL being used
+    console.log('🔍 BaseURL:', authApi.defaults.baseURL);
+    console.log('🔍 Full URL:', `${authApi.defaults.baseURL}/api/auth/forgot-password`);
 
+    // Try direct fetch to bypass any axios issues
+    const response = await fetch('https://p01--voidstone-auth--mpfdn46pqp5y.code.run/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    const data = await response.json();
+    console.log('🔍 Response:', data);
+
+    if (!response.ok) throw new Error(data.error || 'Failed');
+
+    setSuccess(t('auth.resetCodeSent'));
+    localStorage.setItem('resetPasswordEmail', email);
+    setTimeout(() => navigate('/reset-password'), 3000);
+  } catch (err: any) {
+    console.error('🔍 Error:', err);
+    setError(err.message || t('auth.forgotPasswordFailed'));
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <Container maxWidth="sm" className="auth-page" sx={{ mt: 8 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
