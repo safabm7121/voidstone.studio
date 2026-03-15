@@ -25,12 +25,11 @@ const Contact: React.FC = () => {
     
     try {
       // Use authApi instead of direct axios - this will handle the baseURL correctly
-      await authApi.post('/contact/send', {
-        name: formData.name,
-        email: formData.email,
-        message: formData.message
-      });
-      
+     await authApi.post('/api/contact/send', {
+  name: formData.name,
+  email: formData.email,
+  message: formData.message
+});
       setSubmitted(true);
       setFormData({ name: '', email: '', message: '' });
       setTimeout(() => setSubmitted(false), 5000);
