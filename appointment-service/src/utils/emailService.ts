@@ -1,7 +1,7 @@
 import axios from 'axios';
-
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001/api';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'voidstonestudio@gmail.com';
+
 
 export const sendAppointmentEmail = async (
   to: string, 
@@ -12,7 +12,8 @@ export const sendAppointmentEmail = async (
     console.log(` Sending email to: ${to}`);
     console.log(` Subject: ${subject}`);
     
-    const response = await axios.post(`${AUTH_SERVICE_URL}/appointment-email`, {
+    // Use explicit /api path
+    const response = await axios.post(`${AUTH_SERVICE_URL}/api/appointment-email`, {
       to,
       subject,
       html

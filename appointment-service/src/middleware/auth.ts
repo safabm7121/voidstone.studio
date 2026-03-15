@@ -26,7 +26,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
       email: string;
       role: string;
     };
-    console.log('✅ Token verified successfully:', { userId: decoded.userId, role: decoded.role });
+    console.log(' Token verified successfully:', { userId: decoded.userId, role: decoded.role });
     req.user = decoded;
     next();
   } catch (error) {
