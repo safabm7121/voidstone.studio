@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Container, Typography, Box, Paper, IconButton,
-  Button, Grid, Divider, Card, CircularProgress
+  Button, Grid, Divider, Card
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,6 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { productApi } from '../services/api';
 
 const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('tn-TN', {
@@ -25,70 +24,15 @@ const formatPrice = (price: number): string => {
 };
 
 // Delivery fee constant
-const DELIVERY_FEE = 8; // 8 DT
-
-interface CartItemWithImage {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  category?: string;
-  imageUrl?: string;
-  hasImage?: boolean;
-}
+const DELIVERY_FEE = 8;
 
 const Cart: React.FC = () => {
   const { t } = useTranslation();
   const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
-  const [cartItemsWithImages, setCartItemsWithImages] = useState<CartItemWithImage[]>([]);
-  const [loadingImages, setLoadingImages] = useState(false);
 
   // Calculate total with delivery
   const totalWithDelivery = cartTotal + (cartTotal > 0 ? DELIVERY_FEE : 0);
-
-  // Fetch product images for cart items
-  useEffect(() => {
-    const fetchProductImages = async () => {
-      if (cart.length === 0) {
-        setCartItemsWithImages([]);
-        return;
-      }
-
-      setLoadingImages(true);
-      try {
-        // array of promises to fetch each product
-        const productPromises = cart.map(async (item) => {
-          try {
-            // fetch the full product details to get the image
-            const response = await productApi.get(`/products/${item._id}`);
-            const product = response.data.product;
-            return {
-              ...item,
-              imageUrl: product.images?.[0] || null,
-              hasImage: product.images?.length > 0
-            };
-          } catch (error) {
-            console.error(`Error fetching product ${item._id}:`, error);
-            return {
-              ...item,
-              imageUrl: null,
-              hasImage: false
-            };
-          }
-        });
-
-        const itemsWithImages = await Promise.all(productPromises);
-        setCartItemsWithImages(itemsWithImages);
-      } catch (error) {
-        console.error('Error fetching product images:', error);
-      } finally {
-        setLoadingImages(false);
-      }
-    };
-
-    fetchProductImages();
-  }, [cart]);
 
   if (!isAuthenticated) {
     return (
@@ -124,12 +68,9 @@ const Cart: React.FC = () => {
     );
   }
 
-  // Determine which items to display (with images or fallback to cart)
-  const displayItems = cartItemsWithImages.length > 0 ? cartItemsWithImages : cart;
-
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
-      {/* Header with back button - theme fixed */}
+      {/* Header with back button */}
       <Box sx={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -159,177 +100,168 @@ const Cart: React.FC = () => {
         {/* Cart Items */}
         <Grid item xs={12} lg={8}>
           <Paper elevation={2} sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
-            {loadingImages && (
-              <Box display="flex" justifyContent="center" py={2}>
-                <CircularProgress size={24} />
-              </Box>
-            )}
-            
-            {displayItems.map((item, index) => {
-              // Safely access imageUrl - check if it exists on the item
-              const imageUrl = 'imageUrl' in item ? (item as CartItemWithImage).imageUrl : null;
-              const hasImage = 'hasImage' in item ? (item as CartItemWithImage).hasImage : false;
-              
-              return (
-                <Box key={item._id}>
-                  <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
-                    {/* Product Image - now matches ProductCard style */}
-                    <Grid item xs={3} sm={2} md={2}>
-                      <Card sx={{ 
-                        borderRadius: 2, 
-                        overflow: 'hidden', 
-                        height: { xs: 60, sm: 70, md: 80 }, 
-                        width: '100%',
-                        bgcolor: 'grey.100'
-                      }}>
-                        {imageUrl ? (
+            {cart.map((item, index) => (
+              <Box key={item._id}>
+                <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
+                  {/* Product Image */}
+                  <Grid item xs={3} sm={2} md={2}>
+                    <Card sx={{ 
+                      borderRadius: 2, 
+                      overflow: 'hidden', 
+                      height: { xs: 60, sm: 70, md: 80 }, 
+                      width: '100%',
+                      bgcolor: 'grey.100'
+                    }}>
+                      {item.imageUrl ? (
+                        <Box
+                          sx={{
+                            position: 'relative',
+                            width: '100%',
+                            height: '100%',
+                            overflow: 'hidden',
+                          }}
+                        >
                           <Box
+                            component="img"
+                            src={item.imageUrl}
+                            alt={item.name}
                             sx={{
-                              position: 'relative',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
                               width: '100%',
                               height: '100%',
-                              overflow: 'hidden',
+                              objectFit: 'cover',
                             }}
-                          >
-                            <Box
-                              component="img"
-                              src={imageUrl}
-                              alt={item.name}
-                              sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                              }}
-                            />
-                          </Box>
-                        ) : (
-                          <Box
-                            sx={{
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: 'grey.100',
-                              color: 'text.disabled',
-                              fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' }
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
                             }}
-                          >
-                            {hasImage ? 'Loading...' : 'No image'}
-                          </Box>
-                        )}
-                      </Card>
-                    </Grid>
-
-                    {/* Product Details - Responsive text */}
-                    <Grid item xs={9} sm={5} md={4}>
-                      <Typography variant="subtitle1" fontWeight={600} sx={{ 
-                        fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        maxWidth: { xs: 180, sm: 250, md: 300 }
-                      }}>
-                        {item.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' } }}>
-                        {formatPrice(item.price)} {t('cart.each')}
-                      </Typography>
-                      {item.category && (
-                        <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' } }}>
-                          {item.category}
-                        </Typography>
+                          />
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'grey.100',
+                            color: 'text.disabled',
+                            fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' }
+                          }}
+                        >
+                          No image
+                        </Box>
                       )}
-                    </Grid>
+                    </Card>
+                  </Grid>
 
-                    {/* Quantity Controls - theme fixed */}
-                    <Grid item xs={5} sm={3} md={3}>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: { xs: 0.5, sm: 0.75, md: 1 },
-                        justifyContent: { xs: 'flex-start', sm: 'center' }
-                      }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                          sx={{ 
-                            border: 1,
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            p: { xs: 0.25, sm: 0.5 },
-                            color: 'text.primary',
-                            '&:hover': { 
-                              bgcolor: 'action.hover',
-                              borderColor: 'text.primary'
-                            }
-                          }}
-                        >
-                          <RemoveIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
-                        </IconButton>
-                        <Typography sx={{ 
-                          minWidth: { xs: 24, sm: 28, md: 30 }, 
-                          textAlign: 'center', 
-                          fontWeight: 500,
-                          fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' }
-                        }}>
-                          {item.quantity}
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                          sx={{ 
-                            border: 1,
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            p: { xs: 0.25, sm: 0.5 },
-                            color: 'text.primary',
-                            '&:hover': { 
-                              bgcolor: 'action.hover',
-                              borderColor: 'text.primary'
-                            }
-                          }}
-                        >
-                          <AddIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
-                        </IconButton>
-                      </Box>
-                    </Grid>
+                  {/* Product Details */}
+                  <Grid item xs={9} sm={5} md={4}>
+                    <Typography variant="subtitle1" fontWeight={600} sx={{ 
+                      fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: { xs: 180, sm: 250, md: 300 }
+                    }}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' } }}>
+                      {formatPrice(item.price)} {t('cart.each')}
+                    </Typography>
+                    {item.category && (
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.6rem', sm: '0.7rem', md: '0.75rem' } }}>
+                        {item.category}
+                      </Typography>
+                    )}
+                  </Grid>
 
-                    {/* Price and Delete - Responsive layout */}
-                    <Grid item xs={4} sm={1} md={2}>
-                      <Typography variant="subtitle1" fontWeight={700} align="right" sx={{ 
+                  {/* Quantity Controls */}
+                  <Grid item xs={5} sm={3} md={3}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: { xs: 0.5, sm: 0.75, md: 1 },
+                      justifyContent: { xs: 'flex-start', sm: 'center' }
+                    }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                        sx={{ 
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          p: { xs: 0.25, sm: 0.5 },
+                          color: 'text.primary',
+                          '&:hover': { 
+                            bgcolor: 'action.hover',
+                            borderColor: 'text.primary'
+                          }
+                        }}
+                      >
+                        <RemoveIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
+                      </IconButton>
+                      <Typography sx={{ 
+                        minWidth: { xs: 24, sm: 28, md: 30 }, 
+                        textAlign: 'center', 
+                        fontWeight: 500,
                         fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' }
                       }}>
-                        {formatPrice(item.price * item.quantity)}
+                        {item.quantity}
                       </Typography>
-                    </Grid>
-                    <Grid item xs={3} sm={1} md={1}>
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <IconButton
-                          onClick={() => removeFromCart(item._id)}
-                          size="small"
-                          sx={{ 
-                            p: { xs: 0.25, sm: 0.5 },
-                            color: 'error.main',
-                            '&:hover': { 
-                              bgcolor: 'error.main',
-                              color: 'error.contrastText'
-                            }
-                          }}
-                        >
-                          <DeleteIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
-                        </IconButton>
-                      </Box>
-                    </Grid>
+                      <IconButton
+                        size="small"
+                        onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                        sx={{ 
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          p: { xs: 0.25, sm: 0.5 },
+                          color: 'text.primary',
+                          '&:hover': { 
+                            bgcolor: 'action.hover',
+                            borderColor: 'text.primary'
+                          }
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: { xs: 14, sm: 16, md: 18 } }} />
+                      </IconButton>
+                    </Box>
                   </Grid>
-                  {index < cart.length - 1 && <Divider sx={{ my: { xs: 2, sm: 2.5, md: 3 } }} />}
-                </Box>
-              );
-            })}
 
-            {/* Cart Actions - Responsive buttons */}
+                  {/* Price and Delete */}
+                  <Grid item xs={4} sm={1} md={2}>
+                    <Typography variant="subtitle1" fontWeight={700} align="right" sx={{ 
+                      fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' }
+                    }}>
+                      {formatPrice(item.price * item.quantity)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={3} sm={1} md={1}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <IconButton
+                        onClick={() => removeFromCart(item._id)}
+                        size="small"
+                        sx={{ 
+                          p: { xs: 0.25, sm: 0.5 },
+                          color: 'error.main',
+                          '&:hover': { 
+                            bgcolor: 'error.main',
+                            color: 'error.contrastText'
+                          }
+                        }}
+                      >
+                        <DeleteIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
+                      </IconButton>
+                    </Box>
+                  </Grid>
+                </Grid>
+                {index < cart.length - 1 && <Divider sx={{ my: { xs: 2, sm: 2.5, md: 3 } }} />}
+              </Box>
+            ))}
+
+            {/* Cart Actions */}
             <Box sx={{ 
               mt: { xs: 3, sm: 3.5, md: 4 }, 
               display: 'flex', 
@@ -377,7 +309,7 @@ const Cart: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Order Summary - Responsive sticky positioning */}
+        {/* Order Summary */}
         <Grid item xs={12} lg={4}>
           <Paper elevation={2} sx={{ 
             p: { xs: 2, sm: 2.5, md: 3 }, 
@@ -440,7 +372,6 @@ const Cart: React.FC = () => {
               sx={{ 
                 mb: 2, 
                 py: { xs: 1.2, sm: 1.3, md: 1.5 },
-               
                 bgcolor: 'text.primary',
                 color: 'background.paper', 
                 '&:hover': { 

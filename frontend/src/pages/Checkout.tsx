@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Container, Typography, Box, Paper, Stepper, Step, StepLabel,
   Grid, TextField, Button, Divider, Card, CardMedia, RadioGroup,
-  FormControlLabel, Radio, CircularProgress, InputLabel, FormControl, Select, MenuItem
+  FormControlLabel, Radio, InputLabel, FormControl, Select, MenuItem
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,6 @@ import { toast } from 'react-toastify';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { sendOrderEmails, generateOrderId } from '../services/orderService';
-import { productApi } from '../services/api';
 
 // Format price in Tunisian Dinar
 const formatPrice = (price: number): string => {
@@ -24,27 +23,16 @@ const formatPrice = (price: number): string => {
   }).format(price).replace('TND', 'DT').trim();
 };
 
-// Delivery fee constant (must match Cart.tsx)
+// Delivery fee constant
 const DELIVERY_FEE = 8;
 
 const steps = ['shippingInfo', 'paymentMethod', 'reviewOrder'];
-
-interface CartItemWithImage {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  category?: string;
-  imageUrl?: string;
-}
 
 const Checkout: React.FC = () => {
   const { t } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [loadingImages, setLoadingImages] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [cartItemsWithImages, setCartItemsWithImages] = useState<CartItemWithImage[]>([]);
   const { cart, cartTotal, clearCart } = useCart();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -62,45 +50,7 @@ const Checkout: React.FC = () => {
     country: 'TN'
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery'); // Default to cash on delivery
-
-  // Fetch product images for cart items
-  useEffect(() => {
-    const fetchProductImages = async () => {
-      if (cart.length === 0) return;
-
-      setLoadingImages(true);
-      try {
-        const productPromises = cart.map(async (item) => {
-          try {
-            const response = await productApi.get(`/products/${item._id}`);
-            const product = response.data.product;
-            return {
-              ...item,
-              imageUrl: product.images?.[0] || null
-            };
-          } catch (error) {
-            console.error(`Error fetching product ${item._id}:`, error);
-            return {
-              ...item,
-              imageUrl: null
-            };
-          }
-        });
-
-        const itemsWithImages = await Promise.all(productPromises);
-        setCartItemsWithImages(itemsWithImages);
-      } catch (error) {
-        console.error('Error fetching product images:', error);
-      } finally {
-        setLoadingImages(false);
-      }
-    };
-
-    if (activeStep === 2) { // Only fetch images when reaching review step
-      fetchProductImages();
-    }
-  }, [activeStep, cart]);
+  const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
 
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setShippingInfo({
@@ -117,7 +67,6 @@ const Checkout: React.FC = () => {
   };
 
   const handleNext = () => {
-    // Validate shipping info on step 0
     if (activeStep === 0) {
       if (!shippingInfo.firstName || !shippingInfo.lastName || !shippingInfo.email || !shippingInfo.address || !shippingInfo.city || !shippingInfo.zipCode) {
         toast.error(t('checkout.fillShippingInfo'));
@@ -136,14 +85,25 @@ const Checkout: React.FC = () => {
     
     try {
       const orderId = generateOrderId();
+      
+      // IMPORTANT: Remove images from items before sending
+      const itemsWithoutImages = cart.map(item => ({
+        _id: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        category: item.category
+        // imageUrl and images are intentionally excluded
+      }));
+      
       const orderData = {
-        items: cartItemsWithImages.length > 0 ? cartItemsWithImages : cart,
+        items: itemsWithoutImages, // Send items WITHOUT images
         shippingInfo: {
           ...shippingInfo,
           paymentMethod
         },
-        cartTotal: totalWithDelivery, // Send total with delivery
-        subtotal: cartTotal, // Also send subtotal separately
+        cartTotal: totalWithDelivery,
+        subtotal: cartTotal,
         deliveryFee: DELIVERY_FEE,
         orderId,
         orderDate: new Date().toISOString()
@@ -314,52 +274,45 @@ const Checkout: React.FC = () => {
           <Box>
             <Typography variant="h6" gutterBottom>{t('checkout.reviewOrder')}</Typography>
             <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-              {loadingImages ? (
-                <Box display="flex" justifyContent="center" py={2}>
-                  <CircularProgress size={24} />
-                </Box>
-              ) : (
-                (cartItemsWithImages.length > 0 ? cartItemsWithImages : cart).map((item, index) => {
-                  const imageUrl = 'imageUrl' in item ? (item as CartItemWithImage).imageUrl : null;
-                  
-                  return (
-                    <Box key={item._id}>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={2}>
-                          <Card sx={{ height: 50, width: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {imageUrl ? (
-                              <CardMedia
-                                component="img"
-                                height="50"
-                                width="50"
-                                image={imageUrl}
-                                alt={item.name}
-                                sx={{ objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <Typography variant="caption" color="text.secondary">
-                                {t('product.noImage')}
-                              </Typography>
-                            )}
-                          </Card>
-                        </Grid>
-                        <Grid item xs={5}>
-                          <Typography variant="body2">{item.name}</Typography>
-                        </Grid>
-                        <Grid item xs={2}>
-                          <Typography variant="body2">{t('cart.quantity')} {item.quantity}</Typography>
-                        </Grid>
-                        <Grid item xs={3}>
-                          <Typography variant="body2" fontWeight={600}>
-                            {formatPrice(item.price * item.quantity)}
+              {cart.map((item, index) => (
+                <Box key={item._id}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={2}>
+                      <Card sx={{ height: 50, width: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {item.imageUrl ? (
+                          <CardMedia
+                            component="img"
+                            height="50"
+                            width="50"
+                            image={item.imageUrl}
+                            alt={item.name}
+                            sx={{ objectFit: 'cover' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            {t('product.noImage')}
                           </Typography>
-                        </Grid>
-                      </Grid>
-                      {index < cart.length - 1 && <Divider sx={{ my: 2 }} />}
-                    </Box>
-                  );
-                })
-              )}
+                        )}
+                      </Card>
+                    </Grid>
+                    <Grid item xs={5}>
+                      <Typography variant="body2">{item.name}</Typography>
+                    </Grid>
+                    <Grid item xs={2}>
+                      <Typography variant="body2">{t('cart.quantity')} {item.quantity}</Typography>
+                    </Grid>
+                    <Grid item xs={3}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {formatPrice(item.price * item.quantity)}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                  {index < cart.length - 1 && <Divider sx={{ my: 2 }} />}
+                </Box>
+              ))}
             </Paper>
             
             {/* Subtotal and Delivery */}
@@ -421,7 +374,7 @@ const Checkout: React.FC = () => {
           </Button>
           {activeStep === steps.length - 1 ? (
             <Button variant="contained" onClick={handlePlaceOrder} disabled={loading}>
-              {loading ? <CircularProgress size={24} /> : `${t('checkout.placeOrder')} (${formatPrice(totalWithDelivery)})`}
+              {loading ? 'Processing...' : `${t('checkout.placeOrder')} (${formatPrice(totalWithDelivery)})`}
             </Button>
           ) : (
             <Button variant="contained" onClick={handleNext}>

@@ -27,7 +27,7 @@ export const sendOrderEmails = async (req: Request, res: Response) => {
     await transporter.sendMail({
       from: '"Voidstone Studio" <voidstonestudio@gmail.com>',
       to: 'voidstonestone@gmail.com',
-      subject: ` New Order Received - ${orderId}`,
+      subject: `New Order Received - ${orderId}`,
       html: getStoreEmailTemplate({ items, shippingInfo, cartTotal, orderId })
     });
 
@@ -43,25 +43,74 @@ const getBuyerEmailTemplate = (data: any) => {
   
   const itemsList = items.map((item: any) => `
     <tr>
-      <td><img src="${item.images[0]}" width="50"/></td>
-      <td>${item.name}</td>
-      <td>${item.quantity}</td>
-      <td>$${item.price}</td>
-      <td>$${(item.price * item.quantity).toFixed(2)}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toFixed(2)}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
     </tr>
   `).join('');
 
   return `
-    <h1>Thank you for your order!</h1>
-    <p>Order ID: ${orderId}</p>
-    <h2>Items:</h2>
-    <table border="1" cellpadding="10">
-      <tr><th>Product</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-      ${itemsList}
-    </table>
-    <h3>Total: $${cartTotal.toFixed(2)}</h3>
-    <h3>Shipping to:</h3>
-    <p>${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.zipCode}, ${shippingInfo.country}</p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #000; color: #fff; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; }
+        .content { padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #f5f5f5; padding: 10px; text-align: left; }
+        td { padding: 10px; }
+        .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 20px; }
+        .footer { background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>VOIDSTONE STUDIO</h1>
+        </div>
+        <div class="content">
+          <h2>Thank you for your order, ${shippingInfo.firstName}!</h2>
+          <p><strong>Order ID:</strong> ${orderId}</p>
+          
+          <h3>Order Summary</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsList}
+            </tbody>
+          </table>
+          
+          <div class="total">
+            Total: $${cartTotal.toFixed(2)}
+          </div>
+          
+          <h3>Shipping Information</h3>
+          <p>${shippingInfo.firstName} ${shippingInfo.lastName}</p>
+          <p>${shippingInfo.address}</p>
+          <p>${shippingInfo.city}, ${shippingInfo.zipCode}</p>
+          <p>${shippingInfo.country}</p>
+          
+          <h3>Payment Method</h3>
+          <p>${shippingInfo.paymentMethod === 'cash_on_delivery' ? 'Cash on Delivery' : shippingInfo.paymentMethod}</p>
+        </div>
+        <div class="footer">
+          <p>If you have any questions, contact us at voidstonestudio@gmail.com</p>
+          <p>&copy; ${new Date().getFullYear()} Voidstone Studio. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
   `;
 };
 
@@ -70,26 +119,73 @@ const getStoreEmailTemplate = (data: any) => {
   
   const itemsList = items.map((item: any) => `
     <tr>
-      <td>${item.name}</td>
-      <td>${item.quantity}</td>
-      <td>$${item.price}</td>
-      <td>$${(item.price * item.quantity).toFixed(2)}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toFixed(2)}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
     </tr>
   `).join('');
 
   return `
-    <h1> NEW ORDER!</h1>
-    <p>Order ID: ${orderId}</p>
-    <h2>Items:</h2>
-    <table border="1" cellpadding="10">
-      <tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-      ${itemsList}
-    </table>
-    <h3>Total: $${cartTotal.toFixed(2)}</h3>
-    <h3>Customer:</h3>
-    <p>${shippingInfo.firstName} ${shippingInfo.lastName}</p>
-    <p>Email: ${shippingInfo.email}</p>
-    <p>Address: ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.zipCode}, ${shippingInfo.country}</p>
-    <p>Payment: ${shippingInfo.paymentMethod}</p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #000; color: #fff; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; }
+        .content { padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #f5f5f5; padding: 10px; text-align: left; }
+        td { padding: 10px; }
+        .highlight { background: #fff3cd; padding: 5px; border-radius: 4px; }
+        .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🛍️ NEW ORDER RECEIVED</h1>
+        </div>
+        <div class="content">
+          <h2>Order Details</h2>
+          <p><strong>Order ID:</strong> <span class="highlight">${orderId}</span></p>
+          
+          <h3>Customer Information</h3>
+          <p><strong>Name:</strong> ${shippingInfo.firstName} ${shippingInfo.lastName}</p>
+          <p><strong>Email:</strong> ${shippingInfo.email}</p>
+          <p><strong>Phone:</strong> ${shippingInfo.phone || 'Not provided'}</p>
+          
+          <h3>Shipping Address</h3>
+          <p>${shippingInfo.address}</p>
+          <p>${shippingInfo.city}, ${shippingInfo.zipCode}</p>
+          <p>${shippingInfo.country}</p>
+          
+          <h3>Payment Method</h3>
+          <p>${shippingInfo.paymentMethod === 'cash_on_delivery' ? 'Cash on Delivery' : shippingInfo.paymentMethod}</p>
+          
+          <h3>Order Items</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsList}
+            </tbody>
+          </table>
+          
+          <div class="total">
+            Total Amount: $${cartTotal.toFixed(2)}
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
   `;
 };

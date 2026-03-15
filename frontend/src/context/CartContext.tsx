@@ -3,11 +3,13 @@ import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext';
 import { formatCurrency } from '../utils/helpers';
 
-interface CartItem {
+// Updated interface - images is optional now
+export interface CartItem {
   _id: string;
   name: string;
   price: number;
-  images: string[];
+  images?: string[]; // Made optional
+  imageUrl?: string; // Added for URL-based images
   quantity: number;
   category?: string;
 }
@@ -86,14 +88,19 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             <small>Price: {formatCurrency(product.price)}</small>
           </span>
         );
-        return [...prevCart, {
+        
+        // Create cart item with image URL if available
+        const cartItem: CartItem = {
           _id: product._id,
           name: product.name,
           price: product.price,
-          images: product.images,
           quantity: quantity,
-          category: product.category
-        }];
+          category: product.category,
+          // Store imageUrl if product has images, otherwise use placeholder
+          imageUrl: product.images?.[0] || product.imageUrl || '/placeholder-image.jpg'
+        };
+        
+        return [...prevCart, cartItem];
       }
     });
   };
