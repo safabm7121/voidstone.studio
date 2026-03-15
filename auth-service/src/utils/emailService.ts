@@ -3,11 +3,11 @@ import nodemailer from 'nodemailer';
 // Configure your email transporter
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
+  port: 2525,
   secure: false,
   auth: {
     user: process.env.EMAIL_USER, // voidstonestudio@gmail.com
-    pass: process.env.EMAIL_PASS, // Your Gmail app password
+    pass: process.env.EMAIL_PASS, 
   },
 });
 
