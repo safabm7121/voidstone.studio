@@ -15,7 +15,8 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { authApi } from '../../services/api';
+import axios from 'axios';
+
 const ResetPassword: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -82,8 +83,7 @@ const ResetPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      // ✅ Use authApi with correct endpoint path
-      await authApi.post('/api/auth/reset-password', {
+      await axios.post('/auth/reset-password', {
         email: formData.email,
         code: formData.code,
         newPassword: formData.newPassword
