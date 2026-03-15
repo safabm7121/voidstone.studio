@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import { authApi } from '../../services/api'; // ✅ Import authApi instead of axios
 
 const ForgotPassword: React.FC = () => {
   const { t } = useTranslation();
@@ -29,7 +29,8 @@ const ForgotPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      await axios.post('/auth/forgot-password', { email });
+      // ✅ Use authApi with correct endpoint path
+      await authApi.post('/api/auth/forgot-password', { email });
       setSuccess(t('auth.resetCodeSent'));
       // Store email for the reset password page
       localStorage.setItem('resetPasswordEmail', email);
