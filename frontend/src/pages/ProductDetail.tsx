@@ -16,7 +16,6 @@ import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/helpers';
 import ImageSlider from '../components/products/ImageSlider';
 import { toast } from 'react-toastify';
-import { ProductImage } from '../types';
 
 interface Product {
   _id: string;
@@ -26,7 +25,7 @@ interface Product {
   category: string;
   designer?: string;
   stock_quantity: number;
-  images: ProductImage[];
+  images: string[];
   tags: string[];
   created_at?: string;
   updated_at?: string;
@@ -93,14 +92,14 @@ const ProductDetail: React.FC = () => {
   }, [fetchProduct]);
 
   // Handle image changes
-  const handleImagesChange = async (newImages: ProductImage[]) => {
+  const handleImagesChange = async (newImages: string[]) => {
     if (!isAdmin || !product) {
       toast.warning('You do not have permission to edit images');
       return;
     }
     
     // Validate images
-    const validImages = newImages.filter(img => img && img.url);
+    const validImages = newImages.filter(img => img && typeof img === 'string');
     
     if (validImages.length === 0) {
       toast.warning('No valid images to save');
@@ -296,7 +295,7 @@ const ProductDetail: React.FC = () => {
                     <CardMedia
                       component="img"
                       height="400"
-                      image={product.images[simpleSliderIndex]?.url}  
+                      image={product.images[simpleSliderIndex]}  
                       alt={product.name}
                       sx={{
                         objectFit: 'cover',
@@ -316,7 +315,7 @@ const ProductDetail: React.FC = () => {
                           borderRadius: 4,
                         }
                       }}>
-                        {product.images.map((img: ProductImage, idx: number) => (
+                        {product.images.map((img: string, idx: number) => (
                           <Box
                             key={idx}
                             onClick={() => setSimpleSliderIndex(idx)}  
@@ -327,7 +326,7 @@ const ProductDetail: React.FC = () => {
                               borderColor: idx === simpleSliderIndex ? 'primary.main' : 'transparent',  
                               borderRadius: 1,
                               cursor: 'pointer',
-                              backgroundImage: `url(${img.url})`,
+                              backgroundImage: `url(${img})`,
                               backgroundSize: 'cover',
                               backgroundPosition: 'center',
                               transition: 'transform 0.2s',

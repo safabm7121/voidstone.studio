@@ -99,10 +99,6 @@ services:
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
       - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-      # ADD THESE THREE LINES:
-      - CLOUDINARY_CLOUD_NAME=dto8o4tzy
-      - CLOUDINARY_API_KEY=669761815539214
-      - CLOUDINARY_API_SECRET=wVHEfq0ml9kCqw5GBTD3dOS_j70
     # volumes:
 #   - ./product-service:/app
 #   - /app/node_modules

@@ -121,7 +121,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {product.images?.length ? (
               <Box
                 component="img"
-                src={product.images[0]?.url || '/placeholder.jpg'}
+                src={product.images[0]}
                 alt={product.name}
                 className="product-card-image"
               />

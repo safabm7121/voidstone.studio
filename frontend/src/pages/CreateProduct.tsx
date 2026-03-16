@@ -11,7 +11,6 @@ import { useDropzone } from 'react-dropzone';
 import { productApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { ProductImage } from '../types';
 
 const CreateProduct: React.FC = () => {
   const { t } = useTranslation();
@@ -24,7 +23,7 @@ const CreateProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [error, setError] = useState('');
-  const [images, setImages] = useState<ProductImage[]>([]);
+  const [images, setImages] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [formData, setFormData] = useState({
@@ -107,12 +106,7 @@ const CreateProduct: React.FC = () => {
     acceptedFiles.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        // Create a temporary ProductImage object
-        const newImage: ProductImage = {
-          public_id: `temp_${Date.now()}`,
-          url: reader.result as string
-        };
-        setImages(prev => [...prev, newImage]);
+        setImages(prev => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(file);
     });
@@ -176,11 +170,6 @@ const CreateProduct: React.FC = () => {
       category = `${mainCategory} ${subCategory}`;
     }
     
-    // 🔥 FIX: Extract only base64 strings from new images
-    const base64Images = images
-      .filter(img => img.url.startsWith('data:image'))
-      .map(img => img.url);
-    
     const productData = {
       name: formData.name,
       description: formData.description,
@@ -188,7 +177,7 @@ const CreateProduct: React.FC = () => {
       category: category,
       designer: formData.designer || 'Voidstone Studio',
       stock_quantity: parseInt(formData.stock_quantity) || 0,
-      images: base64Images, // ← Send ONLY base64 strings!
+      images: images,
       tags: tags
     };
     
@@ -411,7 +400,7 @@ const CreateProduct: React.FC = () => {
                     <Box sx={{ position: 'relative' }}>
                       <Box 
                         component="img" 
-                        src={img.url} 
+                        src={img} 
                         alt={`Product ${idx}`} 
                         sx={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '4px' }} 
                       />

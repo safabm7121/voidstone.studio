@@ -15,12 +15,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReorderIcon from '@mui/icons-material/Reorder';
 import { toast } from 'react-toastify';
 import './ImageSlider.css';
-import { ProductImage } from '../../types';
 
 interface ImageSliderProps {
-  images: ProductImage[];
+  images: string[];
   productName: string;
-  onImagesChange?: (images: ProductImage[]) => void;
+  onImagesChange?: (images: string[]) => void;
   isEditable?: boolean;
 }
 
@@ -119,7 +118,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [showPlaceholders] = useState(false);
-  const [localImages, setLocalImages] = useState<ProductImage[]>(images);
+  const [localImages, setLocalImages] = useState<string[]>(images);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -155,23 +154,28 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
 
   const handleNext = useCallback(() => {
     if (localImages.length === 0) return;
+    console.log('Next clicked, current index:', currentIndex);
     setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % localImages.length);
-  }, [localImages.length]);
+  }, [localImages.length, currentIndex]);
 
   const handlePrev = useCallback(() => {
     if (localImages.length === 0) return;
+    console.log('Prev clicked, current index:', currentIndex);
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + localImages.length) % localImages.length);
-  }, [localImages.length]);
+  }, [localImages.length, currentIndex]);
 
+  // Simple direct handlers without preventDefault to avoid passive listener issues
   const handlePrevClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    console.log('Prev button touched/clicked');
     handlePrev();
   }, [handlePrev]);
 
   const handleNextClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    console.log('Next button touched/clicked');
     handleNext();
   }, [handleNext]);
 
@@ -198,6 +202,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
     setIsDragging(false);
   };
 
+  // Touch handlers for swipe - without preventDefault
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const isSwiping = useRef(false);
@@ -266,15 +271,10 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
           })
         );
         
-        const newImages: ProductImage[] = compressedImages.map((dataUrl) => ({
-          public_id: `temp_${Date.now()}_${Math.random()}`,
-          url: dataUrl
-        }));
-        
-        const updatedImages = [...localImages, ...newImages];
-        setLocalImages(updatedImages);
-        onImagesChange?.(updatedImages);
-        toast.success(`${newImages.length} image${newImages.length > 1 ? 's' : ''} added`);
+        const newImages = [...localImages, ...compressedImages];
+        setLocalImages(newImages);
+        onImagesChange?.(newImages);
+        toast.success(`${compressedImages.length} image${compressedImages.length > 1 ? 's' : ''} added`);
       } catch (error) {
         console.error('Error processing images:', error);
         toast.error('Failed to process images');
@@ -338,6 +338,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
 
   const placeholderCount = Math.max(0, 6 - localImages.length);
 
+  // Settings popover content
   const settingsContent = (
     <Paper className="slider-settings-paper">
       <Typography variant="h6" className="slider-settings-title">
@@ -406,13 +407,14 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
         </Box>
       )}
 
-      {/* Settings Button */}
+      {/* Settings Button - Left side */}
       <Box className="slider-settings-button slider-settings-left">
         <Tooltip title="Slider Settings">
           <IconButton onClick={(e) => setSettingsAnchor(e.currentTarget)}>
             <SettingsIcon />
           </IconButton>
         </Tooltip>
+        
         <Popover
           open={Boolean(settingsAnchor)}
           anchorEl={settingsAnchor}
@@ -464,6 +466,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
         onTouchEnd={handleTouchEnd}
         onTouchCancel={() => { isSwiping.current = false; }}
       >
+        {/* Main Image with Animation */}
         <AnimatePresence initial={false} custom={direction} mode="wait">
           {localImages.length > 0 ? (
             <motion.div
@@ -486,15 +489,19 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
                 style={{ borderRadius }}
               >
                 <img
-                  src={localImages[currentIndex].url}
+                  src={localImages[currentIndex]}
                   alt={`${productName} - Image ${currentIndex + 1}`}
                   className="slider-image-contain"
                 />
+                
+                {/* Image Index Badge */}
                 <Badge
                   badgeContent={`${currentIndex + 1}/${localImages.length}`}
                   color="primary"
                   className="slider-image-badge"
                 />
+
+                {/* Delete Button on Main Image - Bottom Right */}
                 {isEditable && (
                   <IconButton
                     size="small"
@@ -538,7 +545,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows - Always visible when > 1 image */}
         {localImages.length > 1 && (
           <>
             <IconButton
@@ -552,7 +559,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
                 transform: 'translateY(-50%)',
                 width: { xs: 48, sm: 48 },
                 height: { xs: 48, sm: 48 },
-                bgcolor: 'rgba(0,0,0,0.5)',
+                bgcolor: 'rgba(0,0,0,0.5)', 
                 color: 'white',
                 zIndex: 2000,
                 cursor: 'pointer',
@@ -565,12 +572,16 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
                 touchAction: 'manipulation',
                 WebkitTapHighlightColor: 'transparent',
                 transition: 'background-color 0.2s, transform 0.1s',
-                '&:focus': { outline: 'none' },
+                '&:focus': {
+                  outline: 'none'
+                },
+                // Add a subtle border to make it more visible
                 border: '1px solid rgba(255,255,255,0.2)',
               }}
             >
               <ChevronLeftIcon fontSize={isMobile ? "large" : "medium"} />
             </IconButton>
+
             <IconButton
               onClick={handleNextClick}
               onTouchEnd={handleNextClick}
@@ -595,7 +606,9 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
                 touchAction: 'manipulation',
                 WebkitTapHighlightColor: 'transparent',
                 transition: 'background-color 0.2s, transform 0.1s',
-                '&:focus': { outline: 'none' },
+                '&:focus': {
+                  outline: 'none'
+                },
                 border: '1px solid rgba(255,255,255,0.2)',
               }}
             >
@@ -604,7 +617,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
           </>
         )}
 
-        {/* Side Cards */}
+        {/* Side Cards for 3D Effect - Only when more than 2 images */}
         {localImages.length > 2 && (
           <>
             <motion.div
@@ -622,11 +635,12 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
               }}
             >
               <img
-                src={localImages[(currentIndex - 1 + localImages.length) % localImages.length].url}
+                src={localImages[(currentIndex - 1 + localImages.length) % localImages.length]}
                 alt="Previous"
                 className="slider-side-image"
               />
             </motion.div>
+
             <motion.div
               className="slider-side-card right"
               style={{
@@ -642,7 +656,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
               }}
             >
               <img
-                src={localImages[(currentIndex + 1) % localImages.length].url}
+                src={localImages[(currentIndex + 1) % localImages.length]}
                 alt="Next"
                 className="slider-side-image"
               />
@@ -667,7 +681,8 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
                 }}
                 className={`slider-thumbnail ${currentIndex === idx ? 'active' : 'inactive'}`}
               >
-                <img src={img.url} alt={`Thumbnail ${idx + 1}`} />
+                <img src={img} alt={`Thumbnail ${idx + 1}`} />
+                
                 {isEditable && (
                   <Tooltip title="Drag to reorder">
                     <IconButton
@@ -698,6 +713,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
               </Box>
             </motion.div>
           ))}
+
           {/* Placeholders */}
           {showPlaceholders && placeholderCount > 0 && Array(placeholderCount).fill(0).map((_, idx) => (
             <Box key={`placeholder-${idx}`} className="slider-placeholder">
