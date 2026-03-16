@@ -10,8 +10,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { Product } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
-import '../../styles/animation.css';
-import '../../styles/product-card.css'; // Import the new CSS file
+import '../../styles/animation.css'; // keep your existing animation
 import { useTranslation } from 'react-i18next';
 
 interface ProductCardProps {
@@ -74,19 +73,46 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const { main, sub } = splitCategory(product.category || '');
-  const isRtl = document.dir === 'rtl';
 
   return (
-    <div ref={elementRef} className={`fade-blur ${isVisible ? 'visible' : ''} product-card-wrapper`}>
-      <Card className="product-card">
+    <div ref={elementRef} className={`fade-blur ${isVisible ? 'visible' : ''}`}>
+      <Card
+        sx={{
+          position: 'relative',
+          transition: 'transform 0.3s, box-shadow 0.3s',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 2,
+          overflow: 'hidden',
+          boxShadow: 3,
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: 8,
+          },
+        }}
+      >
         {/* Admin actions – positioned according to direction */}
         {isAdmin && (
-          <Box className={`product-card-admin-actions ${isRtl ? 'rtl' : 'ltr'}`}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 8,
+              zIndex: 10,
+              display: 'flex',
+              gap: 1,
+              ...(document.dir === 'ltr' ? { right: 8 } : { left: 8 }),
+            }}
+          >
             <Tooltip title="View History">
               <IconButton
                 size="small"
                 onClick={handleViewHistory}
-                className="product-card-admin-btn"
+                sx={{
+                  bgcolor: 'background.paper',
+                  color: 'text.primary', // added for dark mode
+                  '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
+                }}
               >
                 <HistoryIcon fontSize="small" />
               </IconButton>
@@ -95,7 +121,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <IconButton
                 size="small"
                 onClick={handleEdit}
-                className="product-card-admin-btn"
+                sx={{
+                  bgcolor: 'background.paper',
+                  color: 'text.primary', // added for dark mode
+                  '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
+                }}
               >
                 <EditIcon fontSize="small" />
               </IconButton>
@@ -104,7 +134,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <IconButton
                 size="small"
                 onClick={handleDelete}
-                className="product-card-admin-btn delete"
+                sx={{
+                  bgcolor: 'background.paper',
+                  color: 'text.primary', // added for dark mode
+                  '&:hover': { bgcolor: 'error.main', color: 'error.contrastText' },
+                }}
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>
@@ -114,41 +148,80 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         <Link
           to={`/products/${product._id}`}
-          className="product-card-link"
+          style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}
         >
           {/* Image container */}
-          <Box className="product-card-image-container">
+          <Box
+            sx={{
+              position: 'relative',
+              width: '100%',
+              aspectRatio: '1/1',
+              overflow: 'hidden',
+              bgcolor: 'grey.100',
+            }}
+          >
             {product.images?.length ? (
               <Box
                 component="img"
                 src={product.images[0]}
                 alt={product.name}
-                className="product-card-image"
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transition: 'transform 0.5s',
+                  '.product-card:hover &': { transform: 'scale(1.05)' },
+                }}
               />
             ) : (
-              <Box className="product-card-no-image">
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: 'text.disabled',
+                }}
+              >
                 No image
               </Box>
             )}
           </Box>
 
-          <CardContent className="product-card-content">
+          <CardContent sx={{ flex: 1, p: 2 }}>
             <Typography
               variant="subtitle1"
-              className="product-card-title"
+              sx={{
+                fontWeight: 600,
+                mb: 0.5,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+              }}
             >
               {product.name}
             </Typography>
             <Typography
               variant="body2"
-              className="product-card-description"
+              color="text.secondary"
+              sx={{
+                mb: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+              }}
             >
               {product.description}
             </Typography>
 
             {/* Category chips – main and sub (translated) */}
             {product.category && (
-              <Box className="product-card-categories">
+              <Box sx={{ display: 'flex', gap: 0.5, mb: 1, flexWrap: 'wrap' }}>
                 <Chip
                   label={t(`products.categories.${main.toLowerCase()}`)}
                   size="small"
@@ -165,13 +238,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </Box>
             )}
 
-            <Typography variant="h6" className="product-card-price">
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
               {formatCurrency(product.price)}
             </Typography>
 
             {/* Tags – justified based on direction */}
             {product.tags?.length > 0 && (
-              <Box className={`product-card-tags ${isRtl ? 'rtl' : 'ltr'}`}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 0.5,
+                  flexWrap: 'wrap',
+                  justifyContent: document.dir === 'rtl' ? 'flex-end' : 'flex-start',
+                }}
+              >
                 {product.tags.slice(0, 3).map(tag => (
                   <Chip
                     key={tag}
@@ -192,23 +272,37 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </CardContent>
         </Link>
 
-        <CardActions className="product-card-actions">
+        <CardActions sx={{ display: 'flex', alignItems: 'center', p: 2, pt: 0, borderTop: 1, borderColor: 'divider' }}>
           <Button
             component={Link}
             to={`/products/${product._id}`}
-            className="product-card-view-details-btn"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              textTransform: 'none',
+              '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
+            }}
           >
             View Details
           </Button>
-          <Box className="product-card-spacer" />
-          <IconButton
-            onClick={handleAddToCart}
-            disabled={!isAuthenticated}
-            className="product-card-add-to-cart-btn"
-            title={!isAuthenticated ? 'Login to add' : 'Add to cart'}
-          >
-            <AddShoppingCartIcon />
-          </IconButton>
+          <Box sx={{ flex: 1 }} />
+        <IconButton
+  onClick={handleAddToCart}
+  disabled={!isAuthenticated}
+  sx={{
+    bgcolor: 'action.hover',
+    color: 'text.primary',              
+    '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
+    '&.Mui-disabled': {                
+      bgcolor: 'action.disabledBackground',
+      color: 'text.disabled'
+    }
+  }}
+  title={!isAuthenticated ? 'Login to add' : 'Add to cart'}
+>
+  <AddShoppingCartIcon />
+</IconButton>
         </CardActions>
       </Card>
     </div>
