@@ -10,7 +10,10 @@ import { ImageProcessor } from '../utils/imageProcessor';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001/api';
 
 export class ProductController {
+    
     async createProduct(req: AuthRequest, res: Response) {
+         console.log('🚀🚀🚀 NEW CREATE PRODUCT FUNCTION RUNNING!');
+    console.log('This should appear if new code is deployed!');
         try {
             const { error } = productSchema.validate(req.body);
             if (error) {
