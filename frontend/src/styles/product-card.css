@@ -1,0 +1,229 @@
+/* Product Card Styles */
+.product-card-wrapper {
+  height: 100%;
+  display: flex;
+}
+
+.product-card {
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  width: 100%;
+  background-color: var(--color-background-paper);
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
+
+.product-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Admin actions positioning */
+.product-card-admin-actions {
+  position: absolute;
+  top: 8px;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.product-card-admin-actions.ltr {
+  right: 8px;
+}
+
+.product-card-admin-actions.rtl {
+  left: 8px;
+}
+
+/* Admin action buttons */
+.product-card-admin-btn {
+  background-color: var(--color-background-paper) !important;
+  color: var(--color-text-primary) !important;
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease !important;
+}
+
+.product-card-admin-btn:hover {
+  background-color: var(--color-primary) !important;
+  color: var(--color-primary-contrast-text) !important;
+}
+
+.product-card-admin-btn.delete:hover {
+  background-color: var(--color-error) !important;
+  color: var(--color-error-contrast-text) !important;
+}
+
+/* Image container */
+.product-card-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.product-card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.product-card:hover .product-card-image {
+  transform: scale(1.05);
+}
+
+.product-card-no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-disabled);
+}
+
+/* Content area - fixed height with flex column */
+.product-card-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px; /* Fixed minimum height for content area */
+}
+
+/* Fixed height sections to ensure consistency */
+.product-card-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  min-height: 48px; /* 2 lines * line-height */
+  line-height: 1.5;
+}
+
+.product-card-description {
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  min-height: 42px; /* 2 lines * line-height */
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+/* Category chips container - fixed space */
+.product-card-categories {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  min-height: 28px;
+}
+
+/* Price - fixed */
+.product-card-price {
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  min-height: 32px;
+}
+
+/* Tags container - with fixed height and flex-wrap */
+.product-card-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-height: 24px;
+}
+
+.product-card-tags.ltr {
+  justify-content: flex-start;
+}
+
+.product-card-tags.rtl {
+  justify-content: flex-end;
+}
+
+/* Card actions (footer) */
+.product-card-actions {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  padding-top: 0;
+  border-top: 1px solid var(--color-divider);
+  margin-top: auto; /* Push to bottom */
+  min-height: 64px;
+}
+
+.product-card-view-details-btn {
+  color: var(--color-text-secondary) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  min-width: auto !important;
+  padding: 6px 8px !important;
+}
+
+.product-card-view-details-btn:hover {
+  color: var(--color-text-primary) !important;
+  background-color: transparent !important;
+}
+
+.product-card-add-to-cart-btn {
+  background-color: var(--color-action-hover) !important;
+  color: var(--color-text-primary) !important;
+  width: 40px;
+  height: 40px;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0;
+}
+
+.product-card-add-to-cart-btn:hover:not(.Mui-disabled) {
+  background-color: var(--color-primary) !important;
+  color: var(--color-primary-contrast-text) !important;
+}
+
+.product-card-add-to-cart-btn.Mui-disabled {
+  background-color: var(--color-action-disabled-background) !important;
+  color: var(--color-text-disabled) !important;
+}
+
+/* Spacer */
+.product-card-spacer {
+  flex: 1;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .product-card {
+  background-color: var(--color-background-paper-dark, #1e1e1e);
+}
+
+[data-theme="dark"] .product-card-admin-btn {
+  background-color: #2d2d2d !important;
+  color: #fff !important;
+}
