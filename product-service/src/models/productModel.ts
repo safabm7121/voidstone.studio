@@ -1,5 +1,16 @@
 import mongoose from 'mongoose';
 
+// Define the ProductImage interface FIRST
+export interface ProductImage {
+    public_id: string;
+    url: string;
+    format?: string;
+    width?: number;
+    height?: number;
+    size?: number;
+}
+
+// Then define IProduct using ProductImage[]
 export interface IProduct extends mongoose.Document {
     name: string;
     description: string;
@@ -7,7 +18,7 @@ export interface IProduct extends mongoose.Document {
     category: string;
     designer?: string;
     stock_quantity: number;
-    images: string[];
+    images: ProductImage[];  // This is the ONLY images field
     tags: string[];
     is_active: boolean;
     created_by?: mongoose.Types.ObjectId;
@@ -47,10 +58,14 @@ const productSchema = new mongoose.Schema({
         default: 0,
         min: [0, 'Stock quantity cannot be negative']
     },
-    images: { 
-        type: [String], 
-        default: [] 
-    },
+    images: [{
+        public_id: { type: String },
+        url: { type: String, required: true },
+        format: String,
+        width: Number,
+        height: Number,
+        size: Number
+    }],
     tags: { 
         type: [String], 
         default: [] 

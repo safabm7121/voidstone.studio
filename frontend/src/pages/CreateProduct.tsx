@@ -11,6 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { productApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import { ProductImage } from '../types';
 
 const CreateProduct: React.FC = () => {
   const { t } = useTranslation();
@@ -23,7 +24,7 @@ const CreateProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [error, setError] = useState('');
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<ProductImage[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [formData, setFormData] = useState({
@@ -106,7 +107,12 @@ const CreateProduct: React.FC = () => {
     acceptedFiles.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImages(prev => [...prev, reader.result as string]);
+        // Create a temporary ProductImage object
+        const newImage: ProductImage = {
+          public_id: `temp_${Date.now()}`,
+          url: reader.result as string
+        };
+        setImages(prev => [...prev, newImage]);
       };
       reader.readAsDataURL(file);
     });
@@ -400,7 +406,7 @@ const CreateProduct: React.FC = () => {
                     <Box sx={{ position: 'relative' }}>
                       <Box 
                         component="img" 
-                        src={img} 
+                        src={img.url} 
                         alt={`Product ${idx}`} 
                         sx={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '4px' }} 
                       />

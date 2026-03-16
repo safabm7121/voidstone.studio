@@ -6,6 +6,15 @@ export interface User {
   role: string;
 }
 
+export interface ProductImage {
+  public_id: string;
+  url: string;
+  format?: string;
+  width?: number;
+  height?: number;
+  size?: number;
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -14,7 +23,7 @@ export interface Product {
   category: string;
   designer?: string;
   stock_quantity: number;
-  images: string[];
+  images: ProductImage[];
   tags: string[];
   is_active: boolean;
   created_at: string;
