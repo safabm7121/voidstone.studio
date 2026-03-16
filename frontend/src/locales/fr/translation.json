@@ -301,7 +301,8 @@
       "confirmSuccess": "Rendez-vous confirmé avec succès",
       "confirmError": "Échec de confirmation du rendez-vous",
       "cancelSuccess": "Rendez-vous annulé avec succès",
-      "cancelError": "Échec d'annulation du rendez-vous"
+      "cancelError": "Échec d'annulation du rendez-vous",
+      "notesPlaceholder": "Ajoutez des notes ou demandes supplémentaires..."
     }
   },
   "profile": {

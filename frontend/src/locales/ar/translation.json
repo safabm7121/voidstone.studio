@@ -125,7 +125,8 @@
   "bookedOn": "تم الحجز في",
   "appointmentDetails": "تفاصيل الموعد",
   "cancelReasonPlaceholder": "يرجى تقديم سبب للإلغاء...",
-  "noAvailabilityMonth": "لا توجد مواعيد متاحة لهذا الشهر"
+  "noAvailabilityMonth": "لا توجد مواعيد متاحة لهذا الشهر",
+  "notesPlaceholder": "أضف ملاحظات أو طلبات إضافية..."
 },
   "cart": {
     "title": "سلة التسوق",
@@ -300,7 +301,8 @@
       "confirmSuccess": "تم تأكيد الموعد بنجاح",
       "confirmError": "فشل تأكيد الموعد",
       "cancelSuccess": "تم إلغاء الموعد بنجاح",
-      "cancelError": "فشل إلغاء الموعد"
+      "cancelError": "فشل إلغاء الموعد",
+      "notesPlaceholder": "أضف ملاحظات أو طلبات إضافية..."
     }
   },
   "profile": {
@@ -384,7 +386,8 @@
     "all": "الكل",
     "filter": "تصفية",
     "search": "بحث",
-    "next": "التالي"
+    "next": "التالي",
+    "create": "إنشاء"
   },
     "history": {
     "title": "السجل: {{productName}}",

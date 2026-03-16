@@ -310,7 +310,8 @@
       "confirmSuccess": "Appointment confirmed successfully",
       "confirmError": "Failed to confirm appointment",
       "cancelSuccess": "Appointment cancelled successfully",
-      "cancelError": "Failed to cancel appointment"
+      "cancelError": "Failed to cancel appointment",
+      "notesPlaceholder": "Add any additional notes or requests..."
     }
   },
   "profile": {
@@ -395,7 +396,9 @@
     "all": "All",
     "filter": "Filter",
     "search": "Search",
-    "next": "Next"
+    "next": "Next",
+    "create": "Create",           
+    "previous": "Previous"  
   },
   "history": {
     "title": "History: {{productName}}",

@@ -125,7 +125,8 @@
   "bookedOn": "예약일",
   "appointmentDetails": "예약 상세 정보",
   "cancelReasonPlaceholder": "취소 사유를 입력해주세요...",
-  "noAvailabilityMonth": "이번 달 예약 가능 시간이 없습니다"  
+  "noAvailabilityMonth": "이번 달 예약 가능 시간이 없습니다",
+   "notesPlaceholder": "추가 메모나 요청사항을 입력하세요..."  
 },
   "cart": {
     "title": "장바구니",
@@ -384,7 +385,8 @@
     "all": "전체",
     "filter": "필터",
     "search": "검색",
-    "next": "다음"
+    "next": "다음",
+    "create": "만들기"
   },
     "history": {
     "title": "히스토리: {{productName}}",
