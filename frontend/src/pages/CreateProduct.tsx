@@ -176,6 +176,11 @@ const CreateProduct: React.FC = () => {
       category = `${mainCategory} ${subCategory}`;
     }
     
+    // 🔥 FIX: Extract only base64 strings from new images
+    const base64Images = images
+      .filter(img => img.url.startsWith('data:image'))
+      .map(img => img.url);
+    
     const productData = {
       name: formData.name,
       description: formData.description,
@@ -183,7 +188,7 @@ const CreateProduct: React.FC = () => {
       category: category,
       designer: formData.designer || 'Voidstone Studio',
       stock_quantity: parseInt(formData.stock_quantity) || 0,
-      images: images,
+      images: base64Images, // ← Send ONLY base64 strings!
       tags: tags
     };
     
