@@ -19,14 +19,24 @@ export class ProductController {
 
         let { name, description, price, category, designer, stock_quantity, images, tags } = req.body;
 
-        let cloudinaryImages: CloudinaryResult[] = [];
+        let cloudinaryImages: any[] = [];
 
         // Upload to Cloudinary if images exist
         if (images && images.length > 0) {
             try {
                 console.log('☁️ Uploading images to Cloudinary...');
-                cloudinaryImages = await CloudinaryService.uploadMultiple(images);
-                console.log(`✅ Uploaded ${cloudinaryImages.length} images`);
+                const uploadResults = await CloudinaryService.uploadMultiple(images);
+                console.log(`✅ Uploaded ${uploadResults.length} images`);
+                
+                // 🔥 FIX: Transform Cloudinary results to match schema
+                cloudinaryImages = uploadResults.map(result => ({
+                    public_id: result.public_id,
+                    url: result.secure_url,
+                    format: result.format,
+                    width: result.width,
+                    height: result.height,
+                    size: result.bytes
+                }));
             } catch (uploadError) {
                 console.error('❌ Image upload failed:', uploadError);
                 return res.status(500).json({ error: 'Failed to upload images' });
@@ -46,7 +56,7 @@ export class ProductController {
             category,
             designer,
             stock_quantity: stock_quantity || 0,
-            images: cloudinaryImages, // Store Cloudinary objects, not base64!
+            images: cloudinaryImages, // Store transformed Cloudinary objects
             tags: tags || [],
             created_by: userId ? new mongoose.Types.ObjectId(userId) : undefined
         });
@@ -132,23 +142,33 @@ export class ProductController {
         }
 
         // Handle image updates
-if (req.body.images) {
-    // Upload new images to Cloudinary
-    const newCloudinaryImages = await CloudinaryService.uploadMultiple(req.body.images);
-    req.body.images = newCloudinaryImages;
+        if (req.body.images) {
+            // Upload new images to Cloudinary
+            const uploadResults = await CloudinaryService.uploadMultiple(req.body.images);
+            
+            // 🔥 FIX: Transform new images to match schema
+            const transformedImages = uploadResults.map(result => ({
+                public_id: result.public_id,
+                url: result.secure_url,
+                format: result.format,
+                width: result.width,
+                height: result.height,
+                size: result.bytes
+            }));
+            
+            req.body.images = transformedImages;
 
-    // Delete old images from Cloudinary - FIX HERE
-    if (product.images && product.images.length > 0) {
-        // Type guard: check if images are objects with public_id
-        const oldPublicIds = product.images
-            .filter(img => typeof img === 'object' && img !== null && 'public_id' in img)
-            .map(img => (img as any).public_id);
-        
-        if (oldPublicIds.length > 0) {
-            await CloudinaryService.deleteMultipleImages(oldPublicIds);
+            // Delete old images from Cloudinary
+            if (product.images && product.images.length > 0) {
+                const oldPublicIds = product.images
+                    .filter(img => typeof img === 'object' && img !== null && 'public_id' in img)
+                    .map(img => (img as any).public_id);
+                
+                if (oldPublicIds.length > 0) {
+                    await CloudinaryService.deleteMultipleImages(oldPublicIds);
+                }
+            }
         }
-    }
-}
 
         // Get user info from auth middleware
         const userId = req.user?.userId;
@@ -215,18 +235,16 @@ if (req.body.images) {
         }
 
         // Delete images from Cloudinary
-       // Delete images from Cloudinary
-if (product.images && product.images.length > 0) {
-    // Type guard: filter only objects with public_id
-    const publicIds = product.images
-        .filter(img => typeof img === 'object' && img !== null && 'public_id' in img)
-        .map(img => (img as any).public_id);
-    
-    if (publicIds.length > 0) {
-        await CloudinaryService.deleteMultipleImages(publicIds);
-        console.log(`🗑️ Deleted ${publicIds.length} images from Cloudinary`);
-    }
-}
+        if (product.images && product.images.length > 0) {
+            const publicIds = product.images
+                .filter(img => typeof img === 'object' && img !== null && 'public_id' in img)
+                .map(img => (img as any).public_id);
+            
+            if (publicIds.length > 0) {
+                await CloudinaryService.deleteMultipleImages(publicIds);
+                console.log(`🗑️ Deleted ${publicIds.length} images from Cloudinary`);
+            }
+        }
 
         // Get user info from auth middleware
         const userId = req.user?.userId;
