@@ -29,7 +29,7 @@ export class ProductController {
                     }
                 }
                 // Clean images with Sharp
-                console.log('🖼️ Processing images with Sharp...');
+                console.log(' Processing images with Sharp...');
                 images = await ImageProcessor.cleanMultipleImages(images);
             }
 
