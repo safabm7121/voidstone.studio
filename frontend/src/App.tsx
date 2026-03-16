@@ -40,7 +40,7 @@ import './styles/home.css';
 import './styles/profile.css';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';  
-import './styles/product-card.css';
+
 function App() {
   const { i18n } = useTranslation();
   const [direction, setDirection] = useState<'ltr' | 'rtl'>(
