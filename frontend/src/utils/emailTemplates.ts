@@ -6,7 +6,7 @@ export const getBuyerEmailTemplate = (orderData: any) => {
   const itemsList = items.map((item: any) => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">
-        <img src="${item.images[0] || 'https://via.placeholder.com/50'}" width="50" height="50" style="border-radius: 4px;">
+        <img src="${item.images?.[0] || 'https://via.placeholder.com/50'}" width="50" height="50" style="border-radius: 4px;">
       </td>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">x${item.quantity}</td>

@@ -30,7 +30,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const [rotation, setRotation] = useState(0);
   
-  // Settings - Portrait orientation & smaller hoop
+  // Settings
   const [rotationSpeed, setRotationSpeed] = useState(8);
   const [orbitRadius, setOrbitRadius] = useState(500);
   const [imageWidth, setImageWidth] = useState(200);
@@ -38,11 +38,21 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   const [borderRadius, setBorderRadius] = useState(16);
   const [pauseOnHover, setPauseOnHover] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  // New: Control depth intensity
-  const [depthIntensity, setDepthIntensity] = useState(0.3); // 0 = flat, 1 = dramatic
+  const [depthIntensity, setDepthIntensity] = useState(0.3);
 
   const orbitRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
+
+  // Safe check - if no products, don't render
+  if (!products || products.length === 0) {
+    return (
+      <Box className="carousel-container" sx={{ py: 4, textAlign: 'center' }}>
+        <Typography variant="body1" color="text.secondary">
+          No products to display
+        </Typography>
+      </Box>
+    );
+  }
 
   const itemCount = Math.min(products.length, 12);
   const placeholderCount = Math.max(0, 12 - products.length);
@@ -93,29 +103,19 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     }).format(price).replace('TND', 'DT').trim();
   };
 
-  // --- CRITICAL FIX: Dynamic scaling based on Z-position ---
   const getItemStyle = (index: number) => {
     const totalItems = displayItems.length;
     const angleStep = 360 / totalItems;
     const angle = angleStep * index - rotation;
     
-    // Convert to radians for math
     const radian = (angle * Math.PI) / 180;
-    
-    // Calculate Z-position relative to viewer (ranges from -radius to +radius)
     const zPosition = Math.cos(radian) * orbitRadius;
     
-    // Scale factor: front cards (positive Z) get larger, back cards (negative Z) get smaller
-    // Map zPosition from [-radius, radius] to a scale range
-    // Using depthIntensity to control the effect (0.3 = 30% size difference)
     const minScale = 1 - depthIntensity;
     const maxScale = 1 + depthIntensity;
-    // Normalize zPosition from -1 to 1, then map to scale range
-    const normalizedZ = zPosition / orbitRadius; // Now from -1 to 1
-    // Map from [-1, 1] to [minScale, maxScale]
+    const normalizedZ = zPosition / orbitRadius;
     const scale = ((normalizedZ + 1) / 2) * (maxScale - minScale) + minScale;
     
-    // Slight vertical offset for dynamic feel (optional, can be removed)
     const yOffset = Math.sin(radian) * 10;
     
     return {
@@ -127,7 +127,6 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
       position: 'absolute' as const,
       opacity: 1,
       filter: 'none',
-      // Ensure proper stacking
       zIndex: Math.floor((zPosition + orbitRadius) / 10),
     };
   };
@@ -136,54 +135,65 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     <Box className="carousel-container">
       <Box 
         className="carousel-3d-stage" 
-        style={{ 
-          perspective: '1200px', // Tighter perspective for more drama
-        }}
+        style={{ perspective: '1200px' }}
       >
         <Box
           ref={orbitRef}
           className="carousel-orbit"
-          style={{
-            transform: `rotateX(0deg)`, // More tilt for better visibility
-          }}
+          style={{ transform: `rotateX(0deg)` }}
           onMouseEnter={() => pauseOnHover && setIsHovered(true)}
           onMouseLeave={() => pauseOnHover && setIsHovered(false)}
         >
           {displayItems.map((item, index) => {
             const style = getItemStyle(index);
             const isCenter = index === currentIndex;
-            return (
-              <Box
-                key={item?._id || `placeholder-${index}`}
-                className={`carousel-item ${isCenter ? 'center' : ''}`}
-                style={style}
-                onClick={() => item && handleProductClick(item._id)}
-              >
-                {item ? (
-                  <Box
-                    className="carousel-card"
-                    style={{ borderRadius: `${borderRadius}px` }}
-                  >
-                    <img
-                      src={item.images[0] || 'https://via.placeholder.com/400x300'}
-                      alt={item.name}
-                      className="carousel-image"
-                      loading="lazy"
-                    />
-                    <Box className="carousel-overlay">
-                      <Typography className="product-name">{item.name}</Typography>
-                      <Typography className="product-category">{item.category}</Typography>
-                      <Typography className="product-price">{formatPrice(item.price)}</Typography>
-                    </Box>
-                  </Box>
-                ) : (
+            
+            // SAFE: Check if item exists before rendering
+            if (!item) {
+              return (
+                <Box
+                  key={`placeholder-${index}`}
+                  className={`carousel-item ${isCenter ? 'center' : ''}`}
+                  style={style}
+                >
                   <Box
                     className="carousel-card carousel-placeholder"
                     style={{ borderRadius: `${borderRadius}px` }}
                   >
                     <Typography>Coming Soon</Typography>
                   </Box>
-                )}
+                </Box>
+              );
+            }
+
+            // SAFE: Check if images array exists before accessing [0]
+            const imageUrl = item.images && item.images.length > 0 
+              ? item.images[0] 
+              : 'https://via.placeholder.com/400x300';
+
+            return (
+              <Box
+                key={item._id}
+                className={`carousel-item ${isCenter ? 'center' : ''}`}
+                style={style}
+                onClick={() => handleProductClick(item._id)}
+              >
+                <Box
+                  className="carousel-card"
+                  style={{ borderRadius: `${borderRadius}px` }}
+                >
+                  <img
+                    src={imageUrl}
+                    alt={item.name || 'Product image'}
+                    className="carousel-image"
+                    loading="lazy"
+                  />
+                  <Box className="carousel-overlay">
+                    <Typography className="product-name">{item.name}</Typography>
+                    <Typography className="product-category">{item.category}</Typography>
+                    <Typography className="product-price">{formatPrice(item.price)}</Typography>
+                  </Box>
+                </Box>
               </Box>
             );
           })}
@@ -191,8 +201,12 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
       </Box>
 
       {/* Navigation Buttons */}
-      <IconButton onClick={handlePrev} className="carousel-nav-btn left"><ChevronLeftIcon /></IconButton>
-      <IconButton onClick={handleNext} className="carousel-nav-btn right"><ChevronRightIcon /></IconButton>
+      <IconButton onClick={handlePrev} className="carousel-nav-btn left">
+        <ChevronLeftIcon />
+      </IconButton>
+      <IconButton onClick={handleNext} className="carousel-nav-btn right">
+        <ChevronRightIcon />
+      </IconButton>
 
       {/* Controls */}
       <Box className="carousel-controls">
@@ -204,7 +218,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
         </IconButton>
       </Box>
 
-      {/* Settings Panel - Added Depth Control */}
+      {/* Settings Panel */}
       <Popover
         open={Boolean(settingsAnchor)}
         anchorEl={settingsAnchor}
@@ -225,7 +239,6 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
             <Slider value={orbitRadius} onChange={(_, val) => setOrbitRadius(val as number)} min={380} max={620} step={10} size="small" />
           </Box>
 
-          {/* NEW: Depth Intensity Slider */}
           <Box className="settings-item">
             <Box className="settings-label"><span>Depth</span><span>{Math.round(depthIntensity * 100)}%</span></Box>
             <Slider 

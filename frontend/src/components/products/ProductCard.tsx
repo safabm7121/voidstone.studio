@@ -160,35 +160,35 @@ const ProductCard: React.FC<ProductCardProps> = ({
               bgcolor: 'grey.100',
             }}
           >
-            {product.images?.length ? (
-              <Box
-                component="img"
-                src={product.images[0]}
-                alt={product.name}
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  transition: 'transform 0.5s',
-                  '.product-card:hover &': { transform: 'scale(1.05)' },
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  color: 'text.disabled',
-                }}
-              >
-                No image
-              </Box>
-            )}
+          {product.images?.length ? (
+  <Box
+    component="img"
+    src={product.images?.[0] || ''}
+    alt={product.name}
+    sx={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      transition: 'transform 0.5s',
+      '.product-card:hover &': { transform: 'scale(1.05)' },
+    }}
+  />
+) : (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      color: 'text.disabled',
+    }}
+  >
+    No image
+  </Box>
+)}
           </Box>
 
           <CardContent sx={{ flex: 1, p: 2 }}>

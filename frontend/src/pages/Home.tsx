@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Container, Typography, Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +47,11 @@ const Home: React.FC = () => {
   useEffect(() => {
     fetchFeaturedProducts();
     fetchHeroMedia();
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      setFeaturedProducts([]);
+    };
   }, []);
 
   const fetchHeroMedia = async () => {
@@ -69,11 +74,14 @@ const Home: React.FC = () => {
 
   const fetchFeaturedProducts = async () => {
     try {
+      setLoading(true);
       const response = await productApi.get('/products');
-      const products = response.data.products || response.data;
-      setFeaturedProducts(products.slice(0, 6));
+      const products = response.data.products || response.data || [];
+      // Safe check before slicing
+      setFeaturedProducts(Array.isArray(products) ? products.slice(0, 6) : []);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setFeaturedProducts([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -98,6 +106,15 @@ const Home: React.FC = () => {
   };
 
   const mediaUrl = getMediaUrl();
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress size={60} thickness={4} />
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -156,11 +173,11 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.8 }}
               >
                 <Typography variant="h1" className="hero-title">
-  {t('home.title')}
-</Typography>
-               <Typography variant="h2" className="hero-subtitle">
-  {t('home.subtitle')}
-</Typography>
+                  {t('home.title')}
+                </Typography>
+                <Typography variant="h2" className="hero-subtitle">
+                  {t('home.subtitle')}
+                </Typography>
                 <Button
                   component={Link}
                   to="/products"
@@ -191,8 +208,19 @@ const Home: React.FC = () => {
           </Typography>
         </motion.div>
         
-        {!loading && featuredProducts.length > 0 && (
-          <ThreeDCarousel products={featuredProducts} />
+        {/* FIXED: Safe check for featured products */}
+        {!loading ? (
+          featuredProducts && featuredProducts.length > 0 ? (
+            <ThreeDCarousel products={featuredProducts} />
+          ) : (
+            <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+              No featured products available
+            </Typography>
+          )
+        ) : (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
         )}
       </Container>
 
