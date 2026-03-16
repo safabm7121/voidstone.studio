@@ -5,24 +5,20 @@ import { ProductHistory } from '../models/ProductHistory';
 import { AuthRequest } from '../middleware/auth';
 import { productSchema, productUpdateSchema } from '../utils/validation';
 import axios from 'axios';
-import { ImageProcessor } from '../utils/imageProcessor'; 
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001/api';
 
 export class ProductController {
-    
     async createProduct(req: AuthRequest, res: Response) {
-         console.log('🚀🚀🚀 NEW CREATE PRODUCT FUNCTION RUNNING!');
-    console.log('This should appear if new code is deployed!');
         try {
             const { error } = productSchema.validate(req.body);
             if (error) {
                 return res.status(400).json({ error: error.details[0].message });
             }
 
-            let { name, description, price, category, designer, stock_quantity, images, tags } = req.body; // CHANGED: added 'let'
+            const { name, description, price, category, designer, stock_quantity, images, tags } = req.body;
 
-            // Validate and clean base64 images - MODIFIED SECTION
+            // Validate base64 images
             if (images && images.length > 0) {
                 for (const image of images) {
                     if (!image.startsWith('data:image')) {
@@ -31,9 +27,6 @@ export class ProductController {
                         });
                     }
                 }
-                // Clean images with Sharp
-                console.log(' Processing images with Sharp...');
-                images = await ImageProcessor.cleanMultipleImages(images);
             }
 
             // Get user info from auth middleware
@@ -143,12 +136,6 @@ export class ProductController {
             const product = await Product.findOne({ _id: id, is_active: true });
             if (!product) {
                 return res.status(404).json({ error: 'Product not found' });
-            }
-
-            // Clean images if being updated - ADDED SECTION
-            if (req.body.images) {
-                console.log('🖼️ Processing updated images with Sharp...');
-                req.body.images = await ImageProcessor.cleanMultipleImages(req.body.images);
             }
 
             // Get user info from auth middleware
