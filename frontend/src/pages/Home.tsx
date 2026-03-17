@@ -96,11 +96,16 @@ const Home: React.FC = () => {
     setIsMuted(!isMuted);
   };
 
-  // Helper function to get the media URL
+  // 🔥 FIX: Helper function to get the media URL (handles both base64 and direct URLs)
   const getMediaUrl = (): string | undefined => {
     if (!heroMedia || !heroMedia.imageData) return undefined;
     
-    // Use imageType if available, otherwise default to image/jpeg
+    // If it's a URL (starts with http), use it directly
+    if (heroMedia.imageData.startsWith('http')) {
+      return heroMedia.imageData;
+    }
+    
+    // Otherwise, it's base64 - construct data URL
     const type = heroMedia.imageType || 'image/jpeg';
     return `data:${type};base64,${heroMedia.imageData}`;
   };

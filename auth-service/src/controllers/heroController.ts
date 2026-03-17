@@ -1,4 +1,3 @@
-
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { Hero } from '../models/Hero';
@@ -8,15 +7,6 @@ import { AuthRequest } from '../middleware/auth';
 // Maximum file size in bytes (200MB for videos, 50MB for images)
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
 const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
-
-// Valid file types - expanded to include more video formats
-const VALID_MIME_TYPES = [
-  // Images
-  'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff',
-  // Videos - expanded list
-  'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 
-  'video/3gpp', 'video/mpeg', 'video/x-ms-wmv', 'video/x-flv'
-];
 
 // Admin email (only this specific admin can change hero media)
 const ADMIN_EMAIL = 'voidstonestudio@gmail.com';
@@ -56,7 +46,7 @@ export class HeroController {
     }
   }
 
-  //  UPLOAD HERO MEDIA (Image or Video)
+  //  UPLOAD HERO MEDIA (Image or Video) - HYBRID APPROACH
   async uploadHeroImage(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const userId = req.user?.userId;
@@ -72,26 +62,64 @@ export class HeroController {
         });
       }
 
-      const { imageData, imageType, fileSize } = req.body;
+      const { imageData, imageType, fileSize, mediaUrl } = req.body;
 
-      // Validate required fields
-      if (!imageData || !imageType || !fileSize) {
-        return res.status(400).json({ 
-          error: 'Missing required fields: imageData, imageType, and fileSize are required' 
+      // CASE 1: URL PROVIDED - store directly
+      if (mediaUrl) {
+        // Validate URL
+        if (!mediaUrl.startsWith('http://') && !mediaUrl.startsWith('https://')) {
+          return res.status(400).json({ 
+            error: 'Invalid URL format. Must start with http:// or https://' 
+          });
+        }
+
+        // Determine media category from URL (check extension)
+        const isVideoUrl = /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(mediaUrl);
+        const mediaCategory = isVideoUrl ? 'video' : 'image';
+        
+        // Use provided imageType or default based on extension
+        const mediaType = imageType || (isVideoUrl ? 'video/mp4' : 'image/jpeg');
+
+        // Deactivate all existing hero media and delete them
+        await Hero.deleteMany({});
+
+        // Create new hero media record with URL
+        const hero = new Hero({
+          mediaData: mediaUrl, // Store URL directly, NOT base64
+          mediaType: mediaType,
+          mediaCategory,
+          uploadedBy: new mongoose.Types.ObjectId(userId),
+          fileSize: 0, // Size unknown for URLs
+          isActive: true,
+          isUrl: true // Add this field to Hero model
+        });
+
+        await hero.save();
+
+        console.log(` Hero ${mediaCategory} URL saved by admin: ${ADMIN_EMAIL}`);
+        return res.json({ 
+          hero,
+          message: `Hero ${mediaCategory} URL saved successfully` 
         });
       }
 
-      // Validate file type - check if it starts with image/ or video/
+      // CASE 2: FILE UPLOAD (base64) - existing code
+      // Validate required fields
+      if (!imageData || !imageType || !fileSize) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: imageData, imageType, and fileSize are required for file upload' 
+        });
+      }
+
+      // Validate file type
       if (!imageType.startsWith('image/') && !imageType.startsWith('video/')) {
         return res.status(400).json({ 
           error: 'Invalid file type. Only image and video files are allowed.' 
         });
       }
 
-      // Get max file size based on media type
+      // Check file size
       const maxSize = this.getMaxFileSize(imageType);
-      
-      // Validate file size
       if (fileSize > maxSize) {
         const maxSizeMB = maxSize / (1024 * 1024);
         return res.status(413).json({ 
@@ -99,20 +127,20 @@ export class HeroController {
         });
       }
 
-      // Determine media category
       const mediaCategory = this.getMediaCategory(imageType);
 
       // Deactivate all existing hero media and delete them
       await Hero.deleteMany({});
 
-      // Create new hero media record
+      // Create new hero media record with base64
       const hero = new Hero({
         mediaData: imageData,
         mediaType: imageType,
         mediaCategory,
         uploadedBy: new mongoose.Types.ObjectId(userId),
         fileSize,
-        isActive: true
+        isActive: true,
+        isUrl: false
       });
 
       await hero.save();
@@ -122,6 +150,7 @@ export class HeroController {
         hero,
         message: `Hero ${mediaCategory} uploaded successfully` 
       });
+
     } catch (error) {
       console.error(' Error uploading hero media:', error);
       return res.status(500).json({ error: 'Failed to upload hero media' });

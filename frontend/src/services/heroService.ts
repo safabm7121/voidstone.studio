@@ -1,4 +1,3 @@
-
 import { heroApi } from './heroApi';
 
 export interface HeroMedia {
@@ -12,6 +11,7 @@ export interface HeroMedia {
   isActive: boolean;
   uploadedBy: string;
   fileSize: number;
+  isUrl: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +27,7 @@ export interface HeroImage {
   isActive: boolean;
   uploadedBy: string;
   fileSize: number;
+  isUrl: boolean;
   createdAt: string;
   updatedAt: string;
   mediaCategory?: 'image' | 'video'; 
@@ -62,6 +63,7 @@ class HeroService {
         isActive: media.isActive,
         uploadedBy: media.uploadedBy,
         fileSize: media.fileSize,
+        isUrl: media.isUrl,
         createdAt: media.createdAt,
         updatedAt: media.updatedAt,
         mediaCategory: media.mediaCategory
@@ -102,6 +104,16 @@ class HeroService {
     });
   }
 
+  // NEW METHOD: Update hero from URL (stores URL directly)
+  async updateHeroFromUrl(url: string, mediaType: string): Promise<HeroImage> {
+    const response = await heroApi.post(`${this.baseUrl}/upload`, {
+      mediaUrl: url,
+      imageType: mediaType,
+      fileSize: 0
+    });
+    return response.data.hero;
+  }
+
   // Keep for backward compatibility
   async updateHeroImage(file: File): Promise<HeroImage> {
     const media = await this.updateHeroMedia(file);
@@ -117,6 +129,7 @@ class HeroService {
       isActive: media.isActive,
       uploadedBy: media.uploadedBy,
       fileSize: media.fileSize,
+      isUrl: media.isUrl,
       createdAt: media.createdAt,
       updatedAt: media.updatedAt,
       mediaCategory: media.mediaCategory

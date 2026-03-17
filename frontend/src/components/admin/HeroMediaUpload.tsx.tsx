@@ -165,11 +165,9 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
         // Upload file
         result = await heroService.updateHeroImage(selectedFile);
       } else if (tabValue === 1 && preview) {
-        // For URL, we need to fetch the file first
-        const response = await fetch(preview);
-        const blob = await response.blob();
-        const file = new File([blob], 'hero-media', { type: blob.type });
-        result = await heroService.updateHeroImage(file);
+        // 🔥 FIX: For URL, send the URL directly - DO NOT FETCH THE FILE
+        const mediaType = isVideo ? 'video/mp4' : 'image/jpeg';
+        result = await heroService.updateHeroFromUrl(preview, mediaType);
       } else {
         throw new Error('No media selected');
       }

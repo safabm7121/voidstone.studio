@@ -1,8 +1,7 @@
-// models/Hero.ts
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IHero extends Document {
-  mediaData: string;  // Base64 media data (image or video)
+  mediaData: string;  // Base64 media data OR URL string
   mediaType: string;  // MIME type
   mediaCategory: 'image' | 'video';  // To distinguish between image and video
   title: string;
@@ -11,6 +10,7 @@ export interface IHero extends Document {
   isActive: boolean;
   uploadedBy: mongoose.Types.ObjectId;
   fileSize: number;
+  isUrl: boolean;  // Flag to indicate if mediaData is a URL or base64
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +53,11 @@ const heroSchema = new Schema<IHero>({
   fileSize: {
     type: Number,
     required: [true, 'File size is required']
+  },
+  isUrl: {
+    type: Boolean,
+    default: false,
+    required: [true, 'isUrl flag is required']
   }
 }, {
   timestamps: true
