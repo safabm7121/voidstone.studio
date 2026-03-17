@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LinkIcon from '@mui/icons-material/Link';
 import { useDropzone } from 'react-dropzone';
 import { productApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +25,7 @@ const CreateProduct: React.FC = () => {
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [error, setError] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [imageLinks, setImageLinks] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [formData, setFormData] = useState({
@@ -118,6 +120,20 @@ const CreateProduct: React.FC = () => {
     multiple: true,
     maxSize: 5 * 1024 * 1024 // 5MB
   });
+
+  const addImageLinks = () => {
+    if (imageLinks.trim()) {
+      // Split by new line, filter empty lines, and add to images
+      const links = imageLinks
+        .split('\n')
+        .map(link => link.trim())
+        .filter(link => link.startsWith('http'));
+      
+      setImages([...images, ...links]);
+      setImageLinks('');
+      toast.success(`${links.length} URL(s) added`);
+    }
+  };
 
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
@@ -367,6 +383,7 @@ const CreateProduct: React.FC = () => {
               />
             </Grid>
             
+            {/* Image Upload Section */}
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>{t('createProduct.images')}</Typography>
               
@@ -393,29 +410,60 @@ const CreateProduct: React.FC = () => {
                   (JPG, PNG, WebP up to 5MB each)
                 </Typography>
               </Box>
+
+              {/* Image URLs Input */}
+              <Box sx={{ mt: 2, mb: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>Or Add Image URLs</Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.png"
+                  value={imageLinks}
+                  onChange={(e) => setImageLinks(e.target.value)}
+                  disabled={loading}
+                />
+                <Button
+                  onClick={addImageLinks}
+                  variant="outlined"
+                  startIcon={<LinkIcon />}
+                  sx={{ mt: 1 }}
+                  disabled={loading || !imageLinks.trim()}
+                >
+                  Add URLs
+                </Button>
+              </Box>
               
-              <Grid container spacing={2}>
-                {images.map((img, idx) => (
-                  <Grid item key={idx} xs={6} sm={4} md={3}>
-                    <Box sx={{ position: 'relative' }}>
-                      <Box 
-                        component="img" 
-                        src={img} 
-                        alt={`Product ${idx}`} 
-                        sx={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '4px' }} 
-                      />
-                      <IconButton 
-                        size="small" 
-                        sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'rgba(255,255,255,0.8)' }} 
-                        onClick={() => removeImage(idx)}
-                        disabled={loading}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
+              {/* Image Previews */}
+              {images.length > 0 && (
+                <>
+                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                    Selected Images ({images.length})
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {images.map((img, idx) => (
+                      <Grid item key={idx} xs={6} sm={4} md={3}>
+                        <Box sx={{ position: 'relative' }}>
+                          <Box 
+                            component="img" 
+                            src={img} 
+                            alt={`Product ${idx}`} 
+                            sx={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '4px' }} 
+                          />
+                          <IconButton 
+                            size="small" 
+                            sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'rgba(255,255,255,0.8)' }} 
+                            onClick={() => removeImage(idx)}
+                            disabled={loading}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </Grid>
+                    ))}
                   </Grid>
-                ))}
-              </Grid>
+                </>
+              )}
             </Grid>
             
             <Grid item xs={12}>
