@@ -1140,3 +1140,28 @@ img[src*="cloudinary"] {
 img {
   transition: filter 0.2s ease;
 }
+/* Boost color for external images AND videos */
+img[src*="http"],
+video[src*="http"],
+video source[src*="http"],
+iframe[src*="streamable"],
+iframe[src*="videy"] {
+  
+  -webkit-filter: contrast(1.05) saturate(1.1);
+  filter: contrast(1.05) saturate(1.1);
+}
+
+/* Extra boost for specific hosts */
+img[src*="postimg"],
+img[src*="imgur"],
+video[src*="yourimageshare"],
+video[src*="streamable"] {
+  
+  -webkit-filter: contrast(1.08) saturate(1.15);
+  filter: contrast(1.08) saturate(1.15);
+}
+
+/* Smooth transition for all media */
+img, video {
+  transition: filter 0.2s ease;
+}

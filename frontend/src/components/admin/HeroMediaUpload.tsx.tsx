@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
@@ -11,9 +10,13 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  LinearProgress
+  LinearProgress,
+  TextField,
+  Tab,
+  Tabs
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import LinkIcon from '@mui/icons-material/Link';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -43,8 +46,10 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
   currentMediaType,
   onUploadSuccess
 }) => {
+  const [tabValue, setTabValue] = useState(0); // 0 = upload, 1 = URL
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [mediaUrl, setMediaUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +65,6 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
   }, [preview, isVideo, isMuted]);
 
   const onDrop = (acceptedFiles: File[], rejectedFiles: any[]) => {
-    // Handle rejected files
     if (rejectedFiles.length > 0) {
       const rejection = rejectedFiles[0];
       if (rejection.errors[0].code === 'file-too-large') {
@@ -76,7 +80,6 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
 
     const file = acceptedFiles[0];
     if (file) {
-      // Validate file type
       const isValidImage = file.type.startsWith('image/');
       const isValidVideo = file.type.startsWith('video/');
       
@@ -85,7 +88,6 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
         return;
       }
       
-      // Check file size based on type
       const maxSize = file.type.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
       if (file.size > maxSize) {
         const sizeLimit = file.type.startsWith('video/') ? RECOMMENDED_VIDEO_SIZE : RECOMMENDED_IMAGE_SIZE;
@@ -97,6 +99,7 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
       setError(null);
       setUploadProgress(0);
       setIsVideo(file.type.startsWith('video/'));
+      setMediaUrl('');
       
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -104,6 +107,29 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleUrlSubmit = () => {
+    if (!mediaUrl.trim()) {
+      setError('Please enter a URL');
+      return;
+    }
+
+    // Simple URL validation
+    const isValidUrl = mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://');
+    if (!isValidUrl) {
+      setError('Please enter a valid URL starting with http:// or https://');
+      return;
+    }
+
+    // Try to determine if it's a video based on file extension
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+    const isVideoUrl = videoExtensions.some(ext => mediaUrl.toLowerCase().endsWith(ext));
+    
+    setPreview(mediaUrl);
+    setIsVideo(isVideoUrl);
+    setSelectedFile(null);
+    setError(null);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -114,12 +140,11 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
     },
     maxFiles: 1,
     multiple: false,
-    maxSize: MAX_VIDEO_SIZE
+    maxSize: MAX_VIDEO_SIZE,
+    disabled: tabValue !== 0 // Disable dropzone when on URL tab
   });
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
-
     setUploading(true);
     setUploadProgress(0);
     
@@ -134,13 +159,25 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
         });
       }, 500);
 
-      const result = await heroService.updateHeroImage(selectedFile);
+      let result;
+      
+      if (tabValue === 0 && selectedFile) {
+        // Upload file
+        result = await heroService.updateHeroImage(selectedFile);
+      } else if (tabValue === 1 && preview) {
+        // For URL, we need to fetch the file first
+        const response = await fetch(preview);
+        const blob = await response.blob();
+        const file = new File([blob], 'hero-media', { type: blob.type });
+        result = await heroService.updateHeroImage(file);
+      } else {
+        throw new Error('No media selected');
+      }
       
       clearInterval(progressInterval);
       setUploadProgress(100);
       
       setTimeout(() => {
-        // Use imageData and imageType from the result (HeroImage type)
         onUploadSuccess(result.imageData, result.imageType);
         toast.success(`Hero ${isVideo ? 'video' : 'image'} updated successfully`);
         handleClose();
@@ -183,8 +220,10 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
   };
 
   const handleClose = () => {
+    setTabValue(0);
     setPreview(null);
     setSelectedFile(null);
+    setMediaUrl('');
     setError(null);
     setUploadProgress(0);
     setIsMuted(true);
@@ -194,6 +233,7 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
   const handleRemoveSelected = () => {
     setPreview(null);
     setSelectedFile(null);
+    setMediaUrl('');
     setError(null);
     setUploadProgress(0);
     setIsMuted(true);
@@ -280,89 +320,171 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
             </Box>
           )}
 
-          <Box
-            {...getRootProps()}
-            className={dropzoneClasses}
-          >
-            <input {...getInputProps()} />
-            {preview ? (
-              <Box className="dropzone-content">
-                <Box className="preview-header">
-                  <Box>
-                    <Typography variant="body2" className="preview-title">
-                      Preview (new {isVideo ? 'video' : 'image'}):
-                    </Typography>
-                    {selectedFile && (
-                      <Typography variant="caption" className="file-size">
-                        Size: {formatFileSize(selectedFile.size)}
+          <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)} className="media-tabs">
+            <Tab icon={<CloudUploadIcon />} label="Upload File" />
+            <Tab icon={<LinkIcon />} label="Enter URL" />
+          </Tabs>
+
+          {tabValue === 0 ? (
+            // File Upload Tab
+            <Box
+              {...getRootProps()}
+              className={dropzoneClasses}
+            >
+              <input {...getInputProps()} />
+              {preview && !selectedFile ? (
+                // This handles the case where we have a URL preview but switched back to upload tab
+                <Box className="dropzone-content">
+                  <Typography>Click or drag to select a file</Typography>
+                </Box>
+              ) : preview && selectedFile ? (
+                <Box className="dropzone-content">
+                  <Box className="preview-header">
+                    <Box>
+                      <Typography variant="body2" className="preview-title">
+                        Preview (new {isVideo ? 'video' : 'image'}):
                       </Typography>
+                      {selectedFile && (
+                        <Typography variant="caption" className="file-size">
+                          Size: {formatFileSize(selectedFile.size)}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Box>
+                      {isVideo && (
+                        <IconButton 
+                          size="small" 
+                          onClick={toggleMute}
+                          className="mute-button"
+                        >
+                          {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                        </IconButton>
+                      )}
+                      <Button 
+                        size="small" 
+                        color="error" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveSelected();
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </Box>
+                  </Box>
+                  <Box className="preview-box">
+                    {isVideo ? (
+                      <video
+                        ref={videoRef}
+                        src={preview}
+                        autoPlay
+                        loop
+                        muted={isMuted}
+                        playsInline
+                        className="preview-media-video"
+                      />
+                    ) : (
+                      <Box
+                        component="img"
+                        src={preview}
+                        alt="Preview"
+                        className="preview-media-image"
+                      />
                     )}
                   </Box>
-                  <Box>
-                    {isVideo && (
-                      <IconButton 
-                        size="small" 
-                        onClick={toggleMute}
-                        className="mute-button"
-                      >
-                        {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-                      </IconButton>
-                    )}
+                  <Typography variant="caption" className="preview-caption">
+                    Click or drag to change media
+                  </Typography>
+                </Box>
+              ) : (
+                <Box>
+                  <CloudUploadIcon className="upload-icon" />
+                  <Typography variant="body1" gutterBottom>
+                    {isDragActive ? 'Drop media here...' : 'Drag & drop an image or video or click to select'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Supports: Images (JPG, PNG, WebP, GIF) - Max {RECOMMENDED_IMAGE_SIZE}<br />
+                    Videos (MP4, WebM, OGG, MOV) - Max {RECOMMENDED_VIDEO_SIZE}
+                  </Typography>
+                  <Typography variant="caption" className="warning-text">
+                    ⚠️ Videos will auto-play on mute with mute/unmute toggle
+                  </Typography>
+                  <Typography variant="caption" className="warning-text-block">
+                    ⚠️ Only Voidstone Studio admin can upload media
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          ) : (
+            // URL Input Tab
+            <Box className="url-tab">
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="https://example.com/video.mp4"
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                disabled={uploading}
+                helperText="Enter direct URL to image or video (MP4, WebM, MOV, JPG, PNG, etc.)"
+              />
+              <Button
+                variant="contained"
+                onClick={handleUrlSubmit}
+                disabled={!mediaUrl.trim() || uploading}
+                startIcon={<LinkIcon />}
+                sx={{ mt: 2 }}
+              >
+                Preview URL
+              </Button>
+
+              {preview && !selectedFile && (
+                <Box className="url-preview">
+                  <Box className="preview-header">
+                    <Typography variant="body2" className="preview-title">
+                      Preview from URL:
+                    </Typography>
                     <Button 
                       size="small" 
                       color="error" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveSelected();
-                      }}
+                      onClick={handleRemoveSelected}
                     >
                       Remove
                     </Button>
                   </Box>
-                </Box>
-                <Box className="preview-box">
-                  {isVideo ? (
-                    <video
-                      ref={videoRef}
-                      src={preview}
-                      autoPlay
-                      loop
-                      muted={isMuted}
-                      playsInline
-                      className="preview-media-video"
-                    />
-                  ) : (
-                    <Box
-                      component="img"
-                      src={preview}
-                      alt="Preview"
-                      className="preview-media-image"
-                    />
+                  <Box className="preview-box">
+                    {isVideo ? (
+                      <video
+                        ref={videoRef}
+                        src={preview}
+                        autoPlay
+                        loop
+                        muted={isMuted}
+                        playsInline
+                        controls
+                        className="preview-media-video"
+                      />
+                    ) : (
+                      <Box
+                        component="img"
+                        src={preview}
+                        alt="Preview"
+                        className="preview-media-image"
+                      />
+                    )}
+                  </Box>
+                  {isVideo && (
+                    <IconButton 
+                      size="small" 
+                      onClick={toggleMute}
+                      className="mute-button-url"
+                    >
+                      {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                    </IconButton>
                   )}
                 </Box>
-                <Typography variant="caption" className="preview-caption">
-                  Click or drag to change media
-                </Typography>
-              </Box>
-            ) : (
-              <Box>
-                <CloudUploadIcon className="upload-icon" />
-                <Typography variant="body1" gutterBottom>
-                  {isDragActive ? 'Drop media here...' : 'Drag & drop an image or video or click to select'}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Supports: Images (JPG, PNG, WebP, GIF) - Max {RECOMMENDED_IMAGE_SIZE}<br />
-                  Videos (MP4, WebM, OGG, MOV) - Max {RECOMMENDED_VIDEO_SIZE}
-                </Typography>
-                <Typography variant="caption" className="warning-text">
-                  ⚠️ Videos will auto-play on mute with mute/unmute toggle
-                </Typography>
-                <Typography variant="caption" className="warning-text-block">
-                  ⚠️ Only Voidstone Studio admin can upload media
-                </Typography>
-              </Box>
-            )}
-          </Box>
+              )}
+            </Box>
+          )}
 
           {uploading && (
             <Box className="progress-container">
@@ -417,7 +539,7 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
         <Button
           variant="contained"
           onClick={handleUpload}
-          disabled={!selectedFile || uploading}
+          disabled={(!selectedFile && !preview) || uploading || (tabValue === 1 && !preview)}
           className="upload-button"
         >
           {uploading ? (

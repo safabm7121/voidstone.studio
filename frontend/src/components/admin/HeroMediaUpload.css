@@ -207,3 +207,34 @@
 .hero-media-dialog .alert {
   margin-bottom: 24px;
 }
+.media-tabs {
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.media-tabs .MuiTab-root {
+  text-transform: none;
+  font-weight: 500;
+}
+
+.url-tab {
+  padding: 20px 0;
+}
+
+.url-preview {
+  margin-top: 20px;
+  position: relative;
+}
+
+.mute-button-url {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  background-color: rgba(0,0,0,0.5) !important;
+  color: white !important;
+  z-index: 10;
+}
+
+.mute-button-url:hover {
+  background-color: rgba(0,0,0,0.7) !important;
+}
