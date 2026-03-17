@@ -110,27 +110,28 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
   };
 
   const handleUrlSubmit = () => {
-    if (!mediaUrl.trim()) {
-      setError('Please enter a URL');
-      return;
-    }
+  if (!mediaUrl.trim()) {
+    setError('Please enter a URL');
+    return;
+  }
 
-    // Simple URL validation
-    const isValidUrl = mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://');
-    if (!isValidUrl) {
-      setError('Please enter a valid URL starting with http:// or https://');
-      return;
-    }
+  const isValidUrl = mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://');
+  if (!isValidUrl) {
+    setError('Please enter a valid URL starting with http:// or https://');
+    return;
+  }
 
-    // Try to determine if it's a video based on file extension
-    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
-    const isVideoUrl = videoExtensions.some(ext => mediaUrl.toLowerCase().endsWith(ext));
-    
-    setPreview(mediaUrl);
-    setIsVideo(isVideoUrl);
-    setSelectedFile(null);
-    setError(null);
-  };
+  //  CRITICAL: Clear ALL file-related state
+  setSelectedFile(null);  // This is KEY
+  setPreview(mediaUrl);
+  
+  // Detect video by extension
+  const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv'];
+  const isVideoUrl = videoExtensions.some(ext => mediaUrl.toLowerCase().endsWith(ext));
+  setIsVideo(isVideoUrl);
+  
+  setError(null);
+};
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -144,79 +145,102 @@ const HeroMediaUpload: React.FC<HeroMediaUploadProps> = ({
     disabled: tabValue !== 0 // Disable dropzone when on URL tab
   });
 
-  const handleUpload = async () => {
-    setUploading(true);
-    setUploadProgress(0);
-    
-    try {
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 500);
+ const handleUpload = async () => {
+  setUploading(true);
+  setUploadProgress(0);
+  
+  try {
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 500);
 
-      let result;
+    let result;
+    
+    if (tabValue === 0 && selectedFile) {
+      // Upload file
+      console.log('📁 Uploading file:', selectedFile.name);
+      result = await heroService.updateHeroImage(selectedFile);
+    } else if (tabValue === 1 && preview) {
+      // 🔥 CRITICAL FIX: Force clear any file data
+      setSelectedFile(null); // Double ensure it's null
       
-      if (tabValue === 0 && selectedFile) {
-        // Upload file
-        result = await heroService.updateHeroImage(selectedFile);
-      } else if (tabValue === 1 && preview) {
-        // 🔥 FIX: For URL, send the URL directly - DO NOT FETCH THE FILE
-        const mediaType = isVideo ? 'video/mp4' : 'image/jpeg';
-        result = await heroService.updateHeroFromUrl(preview, mediaType);
-      } else {
-        throw new Error('No media selected');
+      // Make sure preview is a URL, not base64
+      if (preview.startsWith('data:')) {
+        throw new Error('Invalid preview - should be URL');
       }
       
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      // Extra safety: clear any lingering file data
+      setSelectedFile(null);
       
-      setTimeout(() => {
-        onUploadSuccess(result.imageData, result.imageType);
-        toast.success(`Hero ${isVideo ? 'video' : 'image'} updated successfully`);
-        handleClose();
-      }, 500);
+      const mediaType = isVideo ? 'video/mp4' : 'image/jpeg';
+      console.log('🚀 Uploading URL:', preview);
+      console.log('📁 Selected file is null:', selectedFile === null);
+      console.log('🎥 Is video:', isVideo);
       
+      result = await heroService.updateHeroFromUrl(preview, mediaType);
+    } else {
+      throw new Error('No media selected');
+    }
+    
+    clearInterval(progressInterval);
+    setUploadProgress(100);
+    
+    setTimeout(() => {
+      onUploadSuccess(result.imageData, result.imageType);
+      toast.success(`Hero ${isVideo ? 'video' : 'image'} updated successfully`);
+      handleClose();
+    }, 500);
+    
+  } catch (error: any) {
+    console.error('❌ Upload error:', error);
+    
+    if (error.response?.status === 403) {
+      toast.error('Only Voidstone Studio admin can change the hero media');
+    } else if (error.response?.status === 413) {
+      toast.error('File too large. Maximum size for videos is 200MB, for images is 50MB.');
+    } else {
+      // Log the full error details
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      toast.error(error.response?.data?.error || 'Failed to upload media');
+    }
+  } finally {
+    setUploading(false);
+    setUploadProgress(0);
+  }
+};
+
+const handleDelete = async () => {
+  if (!currentMedia) return;
+  
+  if (window.confirm('Are you sure you want to delete the hero media? The default background will be used.')) {
+    try {
+      setUploading(true); // Show loading state
+      await heroService.deleteHeroImage();
+      onUploadSuccess('');
+      toast.success('Hero media deleted successfully');
+      handleClose();
     } catch (error: any) {
-      console.error('Upload error:', error);
-      
+      console.error(' Delete error:', error);
       if (error.response?.status === 403) {
-        toast.error('Only Voidstone Studio admin can change the hero media');
-      } else if (error.response?.status === 413) {
-        toast.error('File too large. Maximum size for videos is 200MB, for images is 50MB.');
+        toast.error('Only Voidstone Studio admin can delete the hero media');
       } else {
-        toast.error(error.response?.data?.error || 'Failed to upload media');
+        toast.error(error.response?.data?.error || 'Failed to delete media');
       }
     } finally {
       setUploading(false);
-      setUploadProgress(0);
     }
-  };
-
-  const handleDelete = async () => {
-    if (!currentMedia) return;
-    
-    if (window.confirm('Are you sure you want to delete the hero media? The default background will be used.')) {
-      try {
-        await heroService.deleteHeroImage();
-        onUploadSuccess('');
-        toast.success('Hero media deleted');
-        handleClose();
-      } catch (error: any) {
-        console.error('Delete error:', error);
-        if (error.response?.status === 403) {
-          toast.error('Only Voidstone Studio admin can delete the hero media');
-        } else {
-          toast.error(error.response?.data?.error || 'Failed to delete media');
-        }
-      }
-    }
-  };
-
+  }
+};
   const handleClose = () => {
     setTabValue(0);
     setPreview(null);

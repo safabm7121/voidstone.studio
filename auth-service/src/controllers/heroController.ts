@@ -48,6 +48,11 @@ export class HeroController {
 
   //  UPLOAD HERO MEDIA (Image or Video) - HYBRID APPROACH
   async uploadHeroImage(req: AuthRequest, res: Response): Promise<Response> {
+      console.log('📥 FULL REQUEST BODY:', JSON.stringify(req.body, null, 2));
+  console.log('🔍 Fields present:', Object.keys(req.body));
+  console.log('📌 mediaUrl exists:', !!req.body.mediaUrl);
+  console.log('📌 imageData exists:', !!req.body.imageData);
+  console.log('📌 imageData length:', req.body.imageData?.length);
     try {
       const userId = req.user?.userId;
       if (!userId) {
