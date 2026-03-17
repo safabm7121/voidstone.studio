@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Product } from '../types';
 import {
-  Container, Typography, CircularProgress, Box, ToggleButtonGroup, ToggleButton,
+  Container, Typography, Box, ToggleButtonGroup, ToggleButton,
   TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem,
   Slider, Grid, Paper, Divider, Pagination, Button, Dialog,
-  DialogTitle, DialogContent, DialogActions, DialogContentText
+  DialogTitle, DialogContent, DialogActions, DialogContentText,
+  Skeleton
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -17,21 +18,40 @@ import { productApi } from '../services/api';
 import ProductGrid from '../components/products/ProductGrid';
 import CapsuleSlider from '../components/products/CapsuleSlider';
 import ProductModal from '../components/products/ProductModal';
+import ProductSkeleton from '../components/products/ProductSkeleton';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { formatCurrency } from '../utils/helpers';
 
+const CACHE_KEY = 'products_cache';
+const CACHE_TIME_KEY = 'products_cache_time';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const Products: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>([]);
+  
+  // Initialize with cached data if available
+  const [products, setProducts] = useState<Product[]>(() => {
+    const cached = localStorage.getItem(CACHE_KEY);
+    const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+    
+    if (cached && cachedTime) {
+      const age = Date.now() - parseInt(cachedTime);
+      if (age < CACHE_DURATION) {
+        return JSON.parse(cached);
+      }
+    }
+    return [];
+  });
+  
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'slider'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  // New hierarchical category state
   const [mainCategory, setMainCategory] = useState('All');
   const [subCategory, setSubCategory] = useState('');
   const [priceRange, setPriceRange] = useState<number[]>([0, 500]);
@@ -41,41 +61,83 @@ const Products: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   
-  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
   const itemsPerPage = 9;
   const { elementRef, isVisible } = useIntersectionObserver({ threshold: 0.1 });
 
-  // Main category options (All is not a product category)
   const mainCategories = ['All', 'Men', 'Women', 'Art'];
 
-  // Subcategories for Men and Women
   const subCategoriesByGender: Record<string, string[]> = {
     Men: ['Accessories', 'Shirts', 'T-Shirts', 'Pants', 'Jeans', 'Jackets', 'Coats', 'Dresses', 'Skirts', 'Bags', 'Shoes', 'Hats'],
     Women: ['Accessories', 'Shirts', 'T-Shirts', 'Pants', 'Jeans', 'Jackets', 'Coats', 'Dresses', 'Skirts', 'Bags', 'Shoes', 'Hats']
   };
 
   useEffect(() => {
+    // Show cached products immediately, then fetch fresh data
+    if (products.length > 0) {
+      setFilteredProducts(products);
+      setLoading(false);
+      setInitialLoad(false);
+    }
+    
     fetchProducts();
   }, []);
 
   useEffect(() => {
-    filterAndSortProducts();
+    if (products.length > 0) {
+      filterAndSortProducts();
+    }
   }, [products, searchTerm, mainCategory, subCategory, priceRange, sortBy]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (forceRefresh = false) => {
     try {
+      // Check cache unless force refresh
+      if (!forceRefresh) {
+        const cached = localStorage.getItem(CACHE_KEY);
+        const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+        
+        if (cached && cachedTime) {
+          const age = Date.now() - parseInt(cachedTime);
+          if (age < CACHE_DURATION) {
+            const cachedProducts = JSON.parse(cached);
+            setProducts(cachedProducts);
+            setFilteredProducts(cachedProducts);
+            setLoading(false);
+            setInitialLoad(false);
+            return;
+          }
+        }
+      }
+      
+      // Show loading only if no cached data
+      if (products.length === 0) {
+        setLoading(true);
+      }
+      
       const response = await productApi.get('/products');
-      setProducts(response.data.products);
-      setFilteredProducts(response.data.products);
+      const productsData = response.data.products;
+      
+      setProducts(productsData);
+      setFilteredProducts(productsData);
+      
+      // Update cache
+      localStorage.setItem(CACHE_KEY, JSON.stringify(productsData));
+      localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchProducts(true);
+    toast.info('Refreshing products...');
   };
 
   const handleDeleteClick = (product: Product) => {
@@ -89,7 +151,11 @@ const Products: React.FC = () => {
     try {
       await productApi.delete(`/products/${productToDelete._id}`);
       toast.success(`"${productToDelete.name}" deleted successfully`);
-      fetchProducts();
+      
+      // Clear cache and refresh
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(CACHE_TIME_KEY);
+      fetchProducts(true);
     } catch (error: any) {
       console.error('Error deleting product:', error);
       toast.error(error.response?.data?.error || 'Failed to delete product');
@@ -104,7 +170,6 @@ const Products: React.FC = () => {
     setProductToDelete(null);
   };
 
-  // MODAL EDIT HANDLER
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setModalOpen(true);
@@ -119,9 +184,13 @@ const Products: React.FC = () => {
         await productApi.post('/products', productData);
         toast.success('Product created successfully!');
       }
+      
+      // Clear cache and refresh
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(CACHE_TIME_KEY);
       setModalOpen(false);
       setEditingProduct(null);
-      fetchProducts();
+      fetchProducts(true);
     } catch (error: any) {
       console.error('Error saving product:', error);
       toast.error(error.response?.data?.error || 'Failed to save product');
@@ -143,16 +212,13 @@ const Products: React.FC = () => {
       );
     }
     
-    // Apply hierarchical category filter
     if (mainCategory !== 'All') {
       if (mainCategory === 'Art') {
         filtered = filtered.filter(product => product.category === 'Art');
       } else if (subCategory) {
-        // Gender + specific subcategory
         const fullCategory = `${mainCategory} ${subCategory}`;
         filtered = filtered.filter(product => product.category === fullCategory);
       } else {
-        // Gender selected, no subcategory → show all products of that gender
         filtered = filtered.filter(product =>
           product.category.startsWith(mainCategory + ' ')
         );
@@ -179,21 +245,54 @@ const Products: React.FC = () => {
   const paginatedProducts = filteredProducts.slice((page - 1) * itemsPerPage, page * itemsPerPage);
   const pageCount = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // Debug: Log user role to console
-  console.log('Current user:', user);
-  console.log('Is admin?', user?.role === 'admin');
-  
-  // Check if user is admin (case insensitive)
   const isAdmin = user?.role?.toLowerCase() === 'admin';
 
-  if (loading) return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
+  // Show skeletons on initial load
+  if (initialLoad && loading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Skeleton variant="text" height={60} sx={{ mb: 4 }} />
+        <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <Skeleton variant="rectangular" height={56} />
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <Skeleton variant="rectangular" height={56} />
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <Skeleton variant="rectangular" height={56} />
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <Skeleton variant="rectangular" height={56} />
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <Skeleton variant="rectangular" height={56} />
+            </Grid>
+          </Grid>
+        </Paper>
+        <Grid container spacing={4}>
+          {[...Array(6)].map((_, i) => (
+            <Grid item key={i} xs={12} sm={6} md={4}>
+              <ProductSkeleton />
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <motion.div ref={elementRef} initial={{ opacity: 0, y: 20 }} animate={isVisible ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }}>
-        <Typography variant="h2" gutterBottom align="center" sx={{ fontWeight: 600, mb: 4 }}>
-          {t('products.title')}
-        </Typography>
+        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+          <Typography variant="h2" sx={{ fontWeight: 600 }}>
+            {t('products.title')}
+          </Typography>
+          <Button variant="outlined" onClick={handleRefresh} size="small">
+            Refresh
+          </Button>
+        </Box>
       </motion.div>
 
       <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
@@ -207,54 +306,53 @@ const Products: React.FC = () => {
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} 
             />
           </Grid>
-          {/* Main category dropdown */}
          
-<Grid item xs={6} md={2}>
-  <FormControl fullWidth>
-    <InputLabel>{t('products.category')}</InputLabel>
-    <Select 
-      value={mainCategory} 
-      label={t('products.category')} 
-      onChange={(e) => {
-        setMainCategory(e.target.value);
-        setSubCategory('');
-      }}
-    >
-      {mainCategories.map((cat) => {
-        if (cat === 'All') {
-          return <MenuItem key="All" value="All">{t('common.all')}</MenuItem>;
-        }
-        return (
-          <MenuItem key={cat} value={cat}>
-            {t(`products.categories.${cat.toLowerCase()}`)}
-          </MenuItem>
-        );
-      })}
-    </Select>
-  </FormControl>
-</Grid>
+          <Grid item xs={6} md={2}>
+            <FormControl fullWidth>
+              <InputLabel>{t('products.category')}</InputLabel>
+              <Select 
+                value={mainCategory} 
+                label={t('products.category')} 
+                onChange={(e) => {
+                  setMainCategory(e.target.value);
+                  setSubCategory('');
+                }}
+              >
+                {mainCategories.map((cat) => {
+                  if (cat === 'All') {
+                    return <MenuItem key="All" value="All">{t('common.all')}</MenuItem>;
+                  }
+                  return (
+                    <MenuItem key={cat} value={cat}>
+                      {t(`products.categories.${cat.toLowerCase()}`)}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          </Grid>
 
-{(mainCategory === 'Men' || mainCategory === 'Women') && (
-  <Grid item xs={6} md={2}>
-    <FormControl fullWidth>
-      <InputLabel>{t('products.subcategory')}</InputLabel>
-      <Select 
-        value={subCategory} 
-        label={t('products.subcategory')} 
-        onChange={(e) => setSubCategory(e.target.value)}
-      >
-        {subCategoriesByGender[mainCategory].map((sub) => {
-          const translationKey = sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase();
-          return (
-            <MenuItem key={sub} value={sub}>
-              {t(`products.categories.${translationKey}`)}
-            </MenuItem>
-          );
-        })}
-      </Select>
-    </FormControl>
-  </Grid>
-)}
+          {(mainCategory === 'Men' || mainCategory === 'Women') && (
+            <Grid item xs={6} md={2}>
+              <FormControl fullWidth>
+                <InputLabel>{t('products.subcategory')}</InputLabel>
+                <Select 
+                  value={subCategory} 
+                  label={t('products.subcategory')} 
+                  onChange={(e) => setSubCategory(e.target.value)}
+                >
+                  {subCategoriesByGender[mainCategory].map((sub) => {
+                    const translationKey = sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase();
+                    return (
+                      <MenuItem key={sub} value={sub}>
+                        {t(`products.categories.${translationKey}`)}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
           <Grid item xs={6} md={2}>
             <FormControl fullWidth>
               <InputLabel>{t('products.sortBy')}</InputLabel>
@@ -353,7 +451,6 @@ const Products: React.FC = () => {
         </>
       )}
 
-      {/* Product Modal */}
       <ProductModal
         open={modalOpen}
         onClose={() => {
@@ -364,7 +461,6 @@ const Products: React.FC = () => {
         product={editingProduct}
       />
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Delete Product</DialogTitle>
         <DialogContent>
