@@ -1120,3 +1120,23 @@ html, body {
 .MuiBox-root[style*="width: 80px"] {
   flex-shrink: 0;
 }
+/* Global image color boost for external URLs */
+img[src*="http"] {
+ 
+  -webkit-filter: contrast(1.05) saturate(1.1);
+   filter: contrast(1.08) saturate(1.15);
+}
+
+/* Extra boost for specific hosts that tend to desaturate more */
+img[src*="postimg"],
+img[src*="imgur"],
+img[src*="cloudinary"] {
+ 
+  -webkit-filter: contrast(1.08) saturate(1.15);
+   filter: contrast(1.08) saturate(1.15);
+}
+
+/* Smooth transition so it doesn't jar */
+img {
+  transition: filter 0.2s ease;
+}
