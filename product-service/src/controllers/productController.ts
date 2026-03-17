@@ -18,17 +18,22 @@ export class ProductController {
 
             const { name, description, price, category, designer, stock_quantity, images, tags } = req.body;
 
-            // Validate base64 images
+            // Validate images - accept both base64 and URLs
             if (images && images.length > 0) {
                 for (const image of images) {
-                    if (!image.startsWith('data:image')) {
+                    const isValidUrl = typeof image === 'string' && 
+                        (image.startsWith('http://') || image.startsWith('https://'));
+                    const isValidBase64 = typeof image === 'string' && 
+                        image.startsWith('data:image');
+                    
+                    if (!isValidUrl && !isValidBase64) {
                         return res.status(400).json({ 
-                            error: 'Invalid image format. Must be base64 encoded image' 
+                            error: 'Invalid image format. Must be either a valid URL or base64 encoded image' 
                         });
                     }
                 }
             }
-
+            
             // Get user info from auth middleware
             const userId = req.user?.userId;
             const userName = req.user?.name || 'Unknown User';
@@ -136,6 +141,22 @@ export class ProductController {
             const product = await Product.findOne({ _id: id, is_active: true });
             if (!product) {
                 return res.status(404).json({ error: 'Product not found' });
+            }
+
+            // Validate images - accept both base64 and URLs
+            if (req.body.images && req.body.images.length > 0) {
+                for (const image of req.body.images) {
+                    const isValidUrl = typeof image === 'string' && 
+                        (image.startsWith('http://') || image.startsWith('https://'));
+                    const isValidBase64 = typeof image === 'string' && 
+                        image.startsWith('data:image');
+                    
+                    if (!isValidUrl && !isValidBase64) {
+                        return res.status(400).json({ 
+                            error: 'Invalid image format. Must be either a valid URL or base64 encoded image' 
+                        });
+                    }
+                }
             }
 
             // Get user info from auth middleware
