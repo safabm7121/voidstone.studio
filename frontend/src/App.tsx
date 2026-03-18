@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
+
 import { getTheme } from './theme';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -21,7 +22,7 @@ const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail'));
 const Home = React.lazy(() => import('./pages/Home'));
 const Products = React.lazy(() => import('./pages/Products'));
 const ProductDetail = React.lazy(() => import('./pages/ProductDetail'));
-const ProductHistory = React.lazy(() => import('./pages/ProductHistory')); // ADDED
+const ProductHistory = React.lazy(() => import('./pages/ProductHistory')); 
 const CreateProduct = React.lazy(() => import('./pages/CreateProduct'));
 const About = React.lazy(() => import('./pages/About'));
 const Contact = React.lazy(() => import('./pages/Contact'));
