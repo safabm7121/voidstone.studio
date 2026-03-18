@@ -82,12 +82,7 @@
   height: 100%;
   object-fit: cover;
   z-index: 0;
-  /* CRITICAL: Prevent video from capturing touches */
-  pointer-events: none !important;
-  touch-action: none !important;
-  -webkit-touch-callout: none !important;
-  -webkit-user-select: none !important;
-  user-select: none !important;
+  pointer-events: none; /* Prevents video from blocking button clicks */
 }
 
 /* Remove ALL video controls across all browsers */
