@@ -30,6 +30,11 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const [rotation, setRotation] = useState(0);
   
+  // Touch interaction
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+  
   // Settings
   const [rotationSpeed, setRotationSpeed] = useState(8);
   const [orbitRadius, setOrbitRadius] = useState(500);
@@ -42,6 +47,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
 
   const orbitRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Safe check - if no products, don't render
   if (!products || products.length === 0) {
@@ -54,12 +60,35 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     );
   }
 
-  const itemCount = Math.min(products.length, 12);
-  const placeholderCount = Math.max(0, 12 - products.length);
-  const displayItems = [
-    ...products.slice(0, itemCount),
-    ...Array(placeholderCount).fill(null)
-  ];
+  // FIX 1: Multiply products to fill 12 slots
+  const generateDisplayItems = () => {
+    if (products.length === 0) return [];
+    
+    const targetCount = 12;
+    const items: (Product | null)[] = [];
+    
+    if (products.length >= targetCount) {
+      // If we have 12 or more products, just take first 12
+      return products.slice(0, targetCount);
+    } else {
+      // Repeat products to fill 12 slots
+      for (let i = 0; i < targetCount; i++) {
+        const originalIndex = i % products.length;
+        const product = products[originalIndex];
+        
+        // Create a copy with a unique key for repeated items
+        items.push({
+          ...product,
+          _id: `${product._id}-copy-${Math.floor(i / products.length)}-${i}`
+        });
+      }
+    }
+    
+    return items;
+  };
+
+  const displayItems = generateDisplayItems();
+  const itemCount = displayItems.length;
 
   // Animation loop
   useEffect(() => {
@@ -87,9 +116,50 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     setCurrentIndex(centerIndex);
   }, [rotation, displayItems.length]);
 
-  const handlePrev = () => setRotation(prev => prev - (360 / displayItems.length));
-  const handleNext = () => setRotation(prev => prev + (360 / displayItems.length));
-  const handleProductClick = (productId: string) => navigate(`/products/${productId}`);
+  // FIX 2: Touch handlers for mobile swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      handleNext();
+    } else if (isRightSwipe) {
+      handlePrev();
+    }
+  };
+
+  const handlePrev = () => {
+    setRotation(prev => prev - (360 / itemCount));
+    // Pause briefly after manual navigation
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 3000);
+  };
+  
+  const handleNext = () => {
+    setRotation(prev => prev + (360 / itemCount));
+    // Pause briefly after manual navigation
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 3000);
+  };
+
+  const handleProductClick = (productId: string) => {
+    // Remove copy suffix for navigation
+    const originalId = productId.split('-copy-')[0];
+    navigate(`/products/${originalId}`);
+  };
+  
   const handleSettingsClick = (event: React.MouseEvent<HTMLElement>) => setSettingsAnchor(event.currentTarget);
   const handleSettingsClose = () => setSettingsAnchor(null);
   const togglePause = () => setIsPaused(!isPaused);
@@ -132,7 +202,13 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   };
 
   return (
-    <Box className="carousel-container">
+    <Box 
+      ref={containerRef}
+      className="carousel-container"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <Box 
         className="carousel-3d-stage" 
         style={{ perspective: '1200px' }}
@@ -200,7 +276,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
         </Box>
       </Box>
 
-      {/* Navigation Buttons */}
+      {/* Navigation Buttons - Always visible on all devices */}
       <IconButton onClick={handlePrev} className="carousel-nav-btn left">
         <ChevronLeftIcon />
       </IconButton>
