@@ -36,19 +36,14 @@ const Navbar: React.FC = () => {
   // Refs for menu anchoring
   const userMenuAnchorRef = useRef<HTMLDivElement>(null);
   const langMenuAnchorRef = useRef<HTMLButtonElement>(null);
+  // FIX: Add ref for drawer close handling
   const drawerCloseTimeoutRef = useRef<NodeJS.Timeout>();
-  const isTouchDevice = useRef<boolean>(false);
   
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Detect touch device on mount
-  useEffect(() => {
-    isTouchDevice.current = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  }, []);
-
-  // Clean up timeout on unmount
+  // FIX: Clean up timeout on unmount
   useEffect(() => {
     return () => {
       if (drawerCloseTimeoutRef.current) {
@@ -57,8 +52,7 @@ const Navbar: React.FC = () => {
     };
   }, []);
 
-  const handleUserMenuOpen = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleUserMenuOpen = () => {
     setUserMenuOpen(true);
   };
 
@@ -66,8 +60,7 @@ const Navbar: React.FC = () => {
     setUserMenuOpen(false);
   };
 
-  const handleLangMenuOpen = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleLangMenuOpen = () => {
     setLangMenuOpen(true);
   };
 
@@ -86,14 +79,17 @@ const Navbar: React.FC = () => {
     handleUserMenuClose();
   };
 
+  // FIX: Proper drawer close handler with focus management
   const handleDrawerClose = () => {
     setMobileOpen(false);
     
+    // Small delay to ensure drawer is closed before removing focus
     if (drawerCloseTimeoutRef.current) {
       clearTimeout(drawerCloseTimeoutRef.current);
     }
     
     drawerCloseTimeoutRef.current = setTimeout(() => {
+      // Move focus to a safe element (the menu button)
       const menuButton = document.querySelector('[aria-label="menu"]') as HTMLElement;
       if (menuButton) {
         menuButton.focus();
@@ -101,19 +97,15 @@ const Navbar: React.FC = () => {
     }, 100);
   };
 
+  // FIX: Handle drawer link click with proper focus management
   const handleDrawerLinkClick = (e: React.MouseEvent, path: string) => {
     e.preventDefault();
-    e.stopPropagation();
     handleDrawerClose();
     
+    // Small delay to ensure drawer is closed before navigation
     setTimeout(() => {
       navigate(path);
     }, 150);
-  };
-
-  const handleNavLinkClick = (e: React.MouseEvent, path: string) => {
-    e.stopPropagation();
-    navigate(path);
   };
 
   const menuItems = [
@@ -123,6 +115,7 @@ const Navbar: React.FC = () => {
     { text: t('nav.contact'), icon: <ContactMailIcon />, path: '/contact', public: true },
   ];
 
+  // Enhanced responsive text helper with more granular breakpoints
   const getResponsiveText = (fullText: string, shortText: string, mediumText?: string) => {
     if (mediumText) {
       return (
@@ -155,11 +148,10 @@ const Navbar: React.FC = () => {
   const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
   const isRtl = i18n.language === 'ar';
 
+  // FIX: Updated drawer with proper click handling
   const drawer = (
     <Box
       role="presentation"
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
       sx={{
         width: { xs: '85vw', sm: 280 },
         maxWidth: 280,
@@ -318,10 +310,7 @@ const Navbar: React.FC = () => {
               <IconButton
                 color="inherit"
                 aria-label="menu"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMobileOpen(!mobileOpen);
-                }}
+                onClick={() => setMobileOpen(!mobileOpen)}
                 sx={{ 
                   display: { lg: 'none' }, 
                   mr: 0.5,
@@ -335,7 +324,6 @@ const Navbar: React.FC = () => {
                 variant="h6"
                 component={Link}
                 to="/"
-                onClick={(e) => e.stopPropagation()}
                 sx={{
                   textDecoration: 'none',
                   color: 'inherit',
@@ -357,7 +345,7 @@ const Navbar: React.FC = () => {
               </Typography>
             </Box>
 
-            {/* Center section - Desktop menu */}
+            {/* Center section - Desktop menu with multiple breakpoints */}
             <Box sx={{ 
               display: { xs: 'none', lg: 'flex' }, 
               alignItems: 'center', 
@@ -371,7 +359,6 @@ const Navbar: React.FC = () => {
                   component={Link} 
                   to={item.path} 
                   color="inherit"
-                  onClick={(e) => handleNavLinkClick(e, item.path)}
                   sx={{ 
                     whiteSpace: 'nowrap',
                     fontSize: { lg: '0.85rem', xl: '0.9rem' },
@@ -389,7 +376,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/book-appointment" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/book-appointment')}
                     sx={{ 
                       fontSize: { lg: '0.85rem', xl: '0.9rem' },
                       px: { lg: 0.75, xl: 1 },
@@ -402,7 +388,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/appointments" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/appointments')}
                     sx={{ 
                       fontSize: { lg: '0.85rem', xl: '0.9rem' },
                       px: { lg: 0.75, xl: 1 },
@@ -420,7 +405,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/create-product" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/create-product')}
                     sx={{ 
                       fontSize: { lg: '0.85rem', xl: '0.9rem' },
                       px: { lg: 0.75, xl: 1 },
@@ -433,7 +417,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/admin/appointments" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/admin/appointments')}
                     sx={{ 
                       fontSize: { lg: '0.85rem', xl: '0.9rem' },
                       px: { lg: 0.75, xl: 1 },
@@ -446,7 +429,7 @@ const Navbar: React.FC = () => {
               )}
             </Box>
 
-            {/* Tablet Menu */}
+            {/* Tablet/Mobile Menu - Shown on medium screens */}
             <Box sx={{ 
               display: { xs: 'none', md: 'flex', lg: 'none' }, 
               alignItems: 'center', 
@@ -460,7 +443,6 @@ const Navbar: React.FC = () => {
                   component={Link} 
                   to={item.path} 
                   color="inherit"
-                  onClick={(e) => handleNavLinkClick(e, item.path)}
                   sx={{ 
                     whiteSpace: 'nowrap',
                     fontSize: '0.8rem',
@@ -478,7 +460,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/book-appointment" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/book-appointment')}
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
                     {t('nav.book')}
@@ -487,7 +468,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/appointments" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/appointments')}
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
                     {t('nav.appts')}
@@ -501,7 +481,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/create-product" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/create-product')}
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
                     {t('nav.create')}
@@ -510,7 +489,6 @@ const Navbar: React.FC = () => {
                     component={Link} 
                     to="/admin/appointments" 
                     color="inherit"
-                    onClick={(e) => handleNavLinkClick(e, '/admin/appointments')}
                     sx={{ fontSize: '0.8rem', px: 0.5, minWidth: 'auto' }}
                   >
                     {t('nav.admin')}
@@ -554,7 +532,6 @@ const Navbar: React.FC = () => {
                 anchorEl={langMenuAnchorRef.current}
                 open={langMenuOpen}
                 onClose={handleLangMenuClose}
-                onClick={(e) => e.stopPropagation()}
                 anchorOrigin={{
                   vertical: 'bottom',
                   horizontal: isRtl ? 'right' : 'left',
@@ -586,7 +563,6 @@ const Navbar: React.FC = () => {
                     to="/cart" 
                     color="inherit"
                     size="small"
-                    onClick={(e) => e.stopPropagation()}
                     sx={{ p: { xs: 0.5, sm: 0.75 }, mr: 0.25 }}
                   >
                     <Badge 
@@ -626,7 +602,6 @@ const Navbar: React.FC = () => {
                     anchorEl={userMenuAnchorRef.current}
                     open={userMenuOpen}
                     onClose={handleUserMenuClose}
-                    onClick={(e) => e.stopPropagation()}
                     anchorOrigin={{
                       vertical: 'bottom',
                       horizontal: isRtl ? 'left' : 'right',
@@ -642,16 +617,10 @@ const Navbar: React.FC = () => {
                       </Typography>
                     </MenuItem>
                     <Divider />
-                    <MenuItem component={Link} to="/profile" onClick={(e) => {
-                      e.stopPropagation();
-                      handleUserMenuClose();
-                    }}>
+                    <MenuItem component={Link} to="/profile" onClick={handleUserMenuClose}>
                       {t('nav.profile')}
                     </MenuItem>
-                    <MenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      handleLogout();
-                    }}>
+                    <MenuItem onClick={handleLogout}>
                       {t('nav.logout')}
                     </MenuItem>
                   </Menu>
@@ -663,7 +632,6 @@ const Navbar: React.FC = () => {
                     to="/login" 
                     color="inherit" 
                     size="small"
-                    onClick={(e) => e.stopPropagation()}
                     sx={{ 
                       fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
                       px: { xs: 0.5, sm: 0.75, md: 1 },
@@ -679,7 +647,6 @@ const Navbar: React.FC = () => {
                     color="inherit" 
                     variant="outlined" 
                     size="small"
-                    onClick={(e) => e.stopPropagation()}
                     sx={{ 
                       fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
                       px: { xs: 0.5, sm: 0.75, md: 1 },
@@ -697,7 +664,7 @@ const Navbar: React.FC = () => {
         </Container>
       </AppBar>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer - FIXED with proper accessibility */}
       <Drawer
         anchor={isRtl ? 'right' : 'left'}
         open={mobileOpen}
@@ -710,10 +677,13 @@ const Navbar: React.FC = () => {
             bgcolor: 'background.paper',
           },
         }}
+        // FIX: Add ModalProps to handle focus properly
         ModalProps={{
-          keepMounted: true,
+          keepMounted: true, // Better performance on mobile
           onClose: handleDrawerClose,
+          // FIX: Prevent focus from being trapped in hidden drawer
           disableEnforceFocus: true,
+          // FIX: Properly manage aria-hidden
           hideBackdrop: false,
         }}
       >

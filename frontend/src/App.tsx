@@ -7,7 +7,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 import { getTheme } from './theme';
-import { AuthProvider, User } from './context/AuthContext'; // Import User type
+import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Layout from './components/layout/Layout';
@@ -42,12 +42,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';  
 import './styles/product-card.css';
 
-interface AppProps {
-  initialToken?: string | null;
-  initialUser?: User | null;
-}
-
-function App({ initialToken, initialUser }: AppProps) {
+function App() {
   const { i18n } = useTranslation();
   const [direction, setDirection] = useState<'ltr' | 'rtl'>(
     i18n.language === 'ar' ? 'rtl' : 'ltr'
@@ -148,7 +143,7 @@ function App({ initialToken, initialUser }: AppProps) {
         autoClose={3000}
         theme={mode}
       />
-      <AuthProvider initialToken={initialToken} initialUser={initialUser}>
+      <AuthProvider>
         <CartProvider>
           <Router>
             {!isTouchDevice() && (

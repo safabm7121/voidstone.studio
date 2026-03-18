@@ -32,18 +32,12 @@ export const useAuth = () => {
 
 interface AuthProviderProps {
   children: ReactNode;
-  initialToken?: string | null;
-  initialUser?: User | null;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ 
-  children, 
-  initialToken = localStorage.getItem('token'),
-  initialUser = null 
-}) => {
-  const [user, setUser] = useState<User | null>(initialUser);
-  const [token, setToken] = useState<string | null>(initialToken);
-  const [isLoading, setIsLoading] = useState(false); // Start with false to avoid blocking UI
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [isLoading, setIsLoading] = useState(false); // Start false to keep UI interactive
 
   const api = authApi;
 
@@ -58,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     }
   };
 
-  // Only validate if we have a token but no user (e.g., token from storage but user not set)
+  // Validate token in the background after a small delay
   useEffect(() => {
     if (token && !user) {
       const validateToken = async () => {
@@ -78,9 +72,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
           setIsLoading(false);
         }
       };
-      validateToken();
+      const timeoutId = setTimeout(() => {
+        validateToken();
+      }, 100); // Small delay ensures React has fully committed
+      return () => clearTimeout(timeoutId);
     }
-  }, []); // Empty deps – run once on mount
+  }, []); // Empty deps – run once after mount
 
   const refreshUser = async () => {
     const userData = await fetchUserProfile();
