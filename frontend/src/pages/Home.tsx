@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Container, Typography, Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -36,6 +36,8 @@ const Home: React.FC = () => {
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [isMuted, setIsMuted] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const heroSectionRef = useRef<HTMLDivElement>(null);
   const { elementRef: heroRef, isVisible: heroVisible } = useIntersectionObserver({ threshold: 0.1 });
   
   // Use parallax for the hero section content
@@ -53,6 +55,17 @@ const Home: React.FC = () => {
       setFeaturedProducts([]);
     };
   }, []);
+
+  useEffect(() => {
+    // Auto-play video when it becomes available
+    if (videoRef.current && mediaType === 'video') {
+      videoRef.current.muted = isMuted;
+      videoRef.current.play().catch(error => {
+        console.log('Auto-play prevented:', error);
+        // If auto-play fails, we can try again with user interaction
+      });
+    }
+  }, [heroMedia, mediaType, isMuted]);
 
   const fetchHeroMedia = async () => {
     try {
@@ -92,11 +105,15 @@ const Home: React.FC = () => {
     fetchHeroMedia();
   };
 
-  const toggleMute = () => {
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsMuted(!isMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
   };
 
-  // 🔥 FIX: Helper function to get the media URL (handles both base64 and direct URLs)
+  // Helper function to get the media URL (handles both base64 and direct URLs)
   const getMediaUrl = (): string | undefined => {
     if (!heroMedia || !heroMedia.imageData) return undefined;
     
@@ -129,43 +146,49 @@ const Home: React.FC = () => {
         speed={0.3} 
         bgImage={!mediaUrl || mediaType === 'video' ? undefined : mediaUrl}
       >
-        <Box className="hero-section">
+        <Box className="hero-section" ref={heroSectionRef}>
           {/* Background Video for Video Type */}
           {mediaType === 'video' && mediaUrl && (
-            <video
-              src={mediaUrl}
-              autoPlay
-              loop
-              muted={isMuted}
-              playsInline
-              className="hero-background-video"
-            />
+            <>
+              <video
+                ref={videoRef}
+                src={mediaUrl}
+                autoPlay
+                loop
+                muted={isMuted}
+                playsInline
+                className="hero-background-video"
+              />
+              {/* Mute/Unmute Button for Videos - Positioned inside the frame */}
+              <Box className="hero-video-controls">
+                <Tooltip title={isMuted ? t('home.unmute') : t('home.mute')}>
+                  <IconButton
+                    className="hero-mute-button"
+                    onClick={toggleMute}
+                    size="large"
+                  >
+                    {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </>
           )}
           
           <Box className="hero-overlay" />
           
           {/* Admin Edit Button - Only visible to admin */}
           {isAdmin && (
-            <Tooltip title={t('home.editHero')}>
-              <IconButton
-                className="hero-edit-button"
-                onClick={() => setUploadDialogOpen(true)}
-              >
-                <EditIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          
-          {/* Mute/Unmute Button for Videos - Only visible for video type */}
-          {mediaType === 'video' && mediaUrl && (
-            <Tooltip title={isMuted ? t('home.unmute') : t('home.mute')}>
-              <IconButton
-                className="hero-mute-button"
-                onClick={toggleMute}
-              >
-                {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-              </IconButton>
-            </Tooltip>
+            <Box className="hero-admin-controls">
+              <Tooltip title={t('home.editHero')}>
+                <IconButton
+                  className="hero-edit-button"
+                  onClick={() => setUploadDialogOpen(true)}
+                  size="large"
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
           )}
           
           <Container maxWidth="lg" className="hero-content">
@@ -213,7 +236,7 @@ const Home: React.FC = () => {
           </Typography>
         </motion.div>
         
-        {/* FIXED: Safe check for featured products */}
+        {/* Safe check for featured products */}
         {!loading ? (
           featuredProducts && featuredProducts.length > 0 ? (
             <ThreeDCarousel products={featuredProducts} />

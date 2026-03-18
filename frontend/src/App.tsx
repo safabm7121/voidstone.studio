@@ -6,15 +6,14 @@ import { useTranslation } from 'react-i18next';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
-
 import { getTheme } from './theme';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Layout from './components/layout/Layout';
-import { MouseTracker } from './components/common/MouseTracker';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
+
 // Lazy load pages
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
@@ -42,122 +41,116 @@ import './styles/profile.css';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';  
 import './styles/product-card.css';
+
 function App() {
- const { i18n } = useTranslation();
-const [direction, setDirection] = useState<'ltr' | 'rtl'>(
-  i18n.language === 'ar' ? 'rtl' : 'ltr'
-);
-const [mode, setMode] = useState<'light' | 'dark'>(() => {
-  const saved = localStorage.getItem('themeMode');
-  return (saved as 'light' | 'dark') || 'light';
-});
+  const { i18n } = useTranslation();
+  const [direction, setDirection] = useState<'ltr' | 'rtl'>(
+    i18n.language === 'ar' ? 'rtl' : 'ltr'
+  );
+  const [mode, setMode] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('themeMode');
+    return (saved as 'light' | 'dark') || 'light';
+  });
 
-// Track if mouse has moved to show effects
-const [mouseMoved, setMouseMoved] = useState(false);
-const mouseMoveTimer = useRef<NodeJS.Timeout>();
-const isTouchDevice = useRef<boolean>(false);
+  // Track if mouse has moved to show effects
+  const [mouseMoved, setMouseMoved] = useState(false);
+  const mouseMoveTimer = useRef<NodeJS.Timeout>();
+  
+  // Detect touch device - check on every render where needed
+  const isTouchDevice = () => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  };
 
-// Detect touch device on mount
-useEffect(() => {
-  isTouchDevice.current = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}, []);
+  // Mouse tracking for CSS variables - COMPLETELY SKIPPED ON TOUCH DEVICES
+  useEffect(() => {
+    // If it's a touch device, do absolutely nothing - no event listeners, no state changes
+    if (isTouchDevice()) {
+      // Set default values and ensure no mouse-moved class
+      document.documentElement.style.setProperty('--mouse-x', '0.5');
+      document.documentElement.style.setProperty('--mouse-y', '0.5');
+      document.documentElement.style.setProperty('--mouse-x-percent', '0');
+      document.documentElement.style.setProperty('--mouse-y-percent', '0');
+      document.documentElement.style.setProperty('--mouse-x-px', '50%');
+      document.documentElement.style.setProperty('--mouse-y-px', '50%');
+      document.body.classList.remove('mouse-moved');
+      return; // Exit early - NO EVENT LISTENERS
+    }
 
-// Mouse tracking for CSS variables - DISABLED on touch devices
-useEffect(() => {
-  // Completely disable mouse tracking on touch devices
-  if (isTouchDevice.current) {
-    // Set default values
-    document.documentElement.style.setProperty('--mouse-x', '0.5');
-    document.documentElement.style.setProperty('--mouse-y', '0.5');
-    document.documentElement.style.setProperty('--mouse-x-percent', '0');
-    document.documentElement.style.setProperty('--mouse-y-percent', '0');
-    document.documentElement.style.setProperty('--mouse-x-px', '50%');
-    document.documentElement.style.setProperty('--mouse-y-px', '50%');
-    return;
-  }
+    // Only runs on non-touch devices (desktop with mouse)
+    const handleMouseMove = (e: MouseEvent) => {
+      requestAnimationFrame(() => {
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+        
+        document.documentElement.style.setProperty('--mouse-x', x.toString());
+        document.documentElement.style.setProperty('--mouse-y', y.toString());
+        document.documentElement.style.setProperty('--mouse-x-percent', (x - 0.5).toString());
+        document.documentElement.style.setProperty('--mouse-y-percent', (y - 0.5).toString());
+        document.documentElement.style.setProperty('--mouse-x-px', e.clientX + 'px');
+        document.documentElement.style.setProperty('--mouse-y-px', e.clientY + 'px');
+        
+        if (!mouseMoved) {
+          setMouseMoved(true);
+          document.body.classList.add('mouse-moved');
+        }
+        
+        if (mouseMoveTimer.current) {
+          clearTimeout(mouseMoveTimer.current);
+        }
+        
+        mouseMoveTimer.current = setTimeout(() => {
+          document.body.classList.remove('mouse-moved');
+          setMouseMoved(false);
+        }, 1000);
+      });
+    };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    // Use requestAnimationFrame to throttle for better performance
-    requestAnimationFrame(() => {
-      const x = e.clientX / window.innerWidth;
-      const y = e.clientY / window.innerHeight;
-      
-      // Set mouse position as percentage (0-1)
-      document.documentElement.style.setProperty('--mouse-x', x.toString());
-      document.documentElement.style.setProperty('--mouse-y', y.toString());
-      
-      // Set mouse position as offset from center (-0.5 to 0.5)
-      document.documentElement.style.setProperty('--mouse-x-percent', (x - 0.5).toString());
-      document.documentElement.style.setProperty('--mouse-y-percent', (y - 0.5).toString());
-      
-      // Set pixel-based position for gradients
-      document.documentElement.style.setProperty('--mouse-x-px', e.clientX + 'px');
-      document.documentElement.style.setProperty('--mouse-y-px', e.clientY + 'px');
-      
-      // Add class to body to show mouse effects
-      if (!mouseMoved) {
-        setMouseMoved(true);
-        document.body.classList.add('mouse-moved');
-      }
-      
-      // Reset timer to hide effects after mouse stops
+    // Scroll tracking - safe for all devices, doesn't interfere with touch
+    const handleScroll = () => {
+      requestAnimationFrame(() => {
+        const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+        document.documentElement.style.setProperty('--scroll-percent', scrollPercent.toString());
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
       if (mouseMoveTimer.current) {
         clearTimeout(mouseMoveTimer.current);
       }
-      
-      mouseMoveTimer.current = setTimeout(() => {
-        document.body.classList.remove('mouse-moved');
-        setMouseMoved(false);
-      }, 1000);
-    });
-  };
+    };
+  }, [mouseMoved]); // Only re-run if mouseMoved changes
 
-  // Scroll tracking for scroll-based animations
-  const handleScroll = () => {
-    requestAnimationFrame(() => {
-      const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-      document.documentElement.style.setProperty('--scroll-percent', scrollPercent.toString());
-    });
-  };
+  // Update direction when language changes
+  useEffect(() => {
+    const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+    setDirection(dir);
+    document.dir = dir;
+    document.documentElement.lang = i18n.language;
+    localStorage.setItem('language', i18n.language);
+    localStorage.setItem('direction', dir);
 
-  window.addEventListener('mousemove', handleMouseMove, { passive: true });
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  
-  return () => {
-    window.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('scroll', handleScroll);
-    if (mouseMoveTimer.current) {
-      clearTimeout(mouseMoveTimer.current);
+    if (dir === 'rtl') {
+      document.documentElement.classList.add('rtl');
+      document.documentElement.classList.remove('ltr');
+    } else {
+      document.documentElement.classList.add('ltr');
+      document.documentElement.classList.remove('rtl');
     }
-  };
-}, [mouseMoved]); // Keep the dependency
+  }, [i18n.language]);
 
-// Update direction when language changes
-useEffect(() => {
-  const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
-  setDirection(dir);
-  document.dir = dir;
-  document.documentElement.lang = i18n.language;
-  localStorage.setItem('language', i18n.language);
-  localStorage.setItem('direction', dir);
+  // Apply theme mode to root element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', mode);
+    localStorage.setItem('themeMode', mode);
+  }, [mode]);
 
-  // Add/remove RTL class
-  if (dir === 'rtl') {
-    document.documentElement.classList.add('rtl');
-    document.documentElement.classList.remove('ltr');
-  } else {
-    document.documentElement.classList.add('ltr');
-    document.documentElement.classList.remove('rtl');
-  }
-}, [i18n.language]);
+  const toggleTheme = () => setMode(prev => (prev === 'light' ? 'dark' : 'light'));
 
-// Apply theme mode to root element
-useEffect(() => {
-  document.documentElement.setAttribute('data-theme', mode);
-  localStorage.setItem('themeMode', mode);
-}, [mode]);
-
-const toggleTheme = () => setMode(prev => (prev === 'light' ? 'dark' : 'light'));
   return (
     <ThemeProvider theme={getTheme(direction, i18n.language, mode)}>
       <CssBaseline />
@@ -170,94 +163,93 @@ const toggleTheme = () => setMode(prev => (prev === 'light' ? 'dark' : 'light'))
       <AuthProvider>
         <CartProvider>
           <Router>
-            {/* MouseTracker is now just a wrapper - actual tracking is in App.tsx */}
-            <MouseTracker>
-              {/* Mouse glow element */}
+            {/* Mouse glow element - only shown on non-touch devices */}
+            {!isTouchDevice() && (
               <div className={`mouse-glow ${mouseMoved ? 'visible' : ''}`} />
-              
-              <Suspense fallback={
-                <Box 
-                  display="flex" 
-                  justifyContent="center" 
-                  alignItems="center" 
-                  minHeight="100vh"
-                  className="animate-fade-in"
-                >
-                  <CircularProgress size={60} thickness={4} />
-                </Box>
-              }>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
+            )}
+            
+            <Suspense fallback={
+              <Box 
+                display="flex" 
+                justifyContent="center" 
+                alignItems="center" 
+                minHeight="100vh"
+                className="animate-fade-in"
+              >
+                <CircularProgress size={60} thickness={4} />
+              </Box>
+            }>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
-                  {/* Protected routes with Layout */}
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Home />} />
-                    <Route path="products" element={<Products />} />
-                    <Route path="products/:id" element={<ProductDetail />} />
-                    <Route path="products/history/:id" element={ // ADDED
-                      <PrivateRoute roles={['admin', 'manager', 'designer']}>
-                        <ProductHistory />
+                {/* Protected routes with Layout */}
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Home />} />
+                  <Route path="products" element={<Products />} />
+                  <Route path="products/:id" element={<ProductDetail />} />
+                  <Route path="products/history/:id" element={
+                    <PrivateRoute roles={['admin', 'manager', 'designer']}>
+                      <ProductHistory />
+                    </PrivateRoute>
+                  } />
+                  <Route path="cart" element={<Cart />} />
+                  <Route path="checkout" element={<Checkout />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="contact" element={<Contact />} />
+
+                  {/* Appointment routes */}
+                  <Route
+                    path="book-appointment"
+                    element={
+                      <PrivateRoute>
+                        <BookAppointment />
                       </PrivateRoute>
-                    } />
-                    <Route path="cart" element={<Cart />} />
-                    <Route path="checkout" element={<Checkout />} />
-                    <Route path="about" element={<About />} />
-                    <Route path="contact" element={<Contact />} />
+                    }
+                  />
+                  <Route
+                    path="appointments"
+                    element={
+                      <PrivateRoute>
+                        <MyAppointments />
+                      </PrivateRoute>
+                    }
+                  />
 
-                    {/* Appointment routes */}
-                    <Route
-                      path="book-appointment"
-                      element={
-                        <PrivateRoute>
-                          <BookAppointment />
-                        </PrivateRoute>
-                      }
-                    />
-                    <Route
-                      path="appointments"
-                      element={
-                        <PrivateRoute>
-                          <MyAppointments />
-                        </PrivateRoute>
-                      }
-                    />
+                  {/* Admin only routes */}
+                  <Route
+                    path="admin/appointments"
+                    element={
+                      <PrivateRoute roles={['admin']}>
+                        <AdminAppointments />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="profile"
+                    element={
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    }
+                  />
 
-                    {/* Admin only routes */}
-                    <Route
-                      path="admin/appointments"
-                      element={
-                        <PrivateRoute roles={['admin']}>
-                          <AdminAppointments />
-                        </PrivateRoute>
-                      }
-                    />
-                    <Route
-                      path="profile"
-                      element={
-                        <PrivateRoute>
-                          <Profile />
-                        </PrivateRoute>
-                      }
-                    />
-
-                    {/* Product creation - admin/manager/designer only */}
-                    <Route
-                      path="create-product"
-                      element={
-                        <PrivateRoute roles={['admin', 'manager', 'designer']}>
-                          <CreateProduct />
-                        </PrivateRoute>
-                      }
-                    />
-                  </Route>
-                </Routes>
-              </Suspense>
-            </MouseTracker>
+                  {/* Product creation - admin/manager/designer only */}
+                  <Route
+                    path="create-product"
+                    element={
+                      <PrivateRoute roles={['admin', 'manager', 'designer']}>
+                        <CreateProduct />
+                      </PrivateRoute>
+                    }
+                  />
+                </Route>
+              </Routes>
+            </Suspense>
           </Router>
         </CartProvider>
       </AuthProvider>

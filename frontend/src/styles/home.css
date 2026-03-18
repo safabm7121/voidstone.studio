@@ -489,3 +489,129 @@
 .hero-edit-button:hover {
   background-color: rgba(0, 0, 0, 0.7) !important;
 }
+/* Add these styles to your home.css file */
+
+.hero-background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none; /* Prevents video from blocking button clicks */
+}
+
+/* Controls container for mute button */
+.hero-video-controls {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Admin controls container */
+.hero-admin-controls {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Mute button styling */
+.hero-mute-button {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+}
+
+.hero-mute-button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  transform: scale(1.1);
+}
+
+/* Admin edit button styling */
+.hero-edit-button {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+}
+
+.hero-edit-button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  transform: scale(1.1);
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .hero-video-controls {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .hero-admin-controls {
+    top: 20px;
+    right: 20px;
+  }
+  
+  .hero-mute-button,
+  .hero-edit-button {
+    padding: 8px !important;
+  }
+  
+  .hero-mute-button svg,
+  .hero-edit-button svg {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-video-controls {
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .hero-admin-controls {
+    top: 15px;
+    right: 15px;
+  }
+  
+  .hero-mute-button,
+  .hero-edit-button {
+    padding: 6px !important;
+  }
+  
+  .hero-mute-button svg,
+  .hero-edit-button svg {
+    font-size: 20px;
+  }
+}
+
+/* Landscape mode */
+@media (orientation: landscape) and (max-height: 600px) {
+  .hero-video-controls {
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .hero-admin-controls {
+    top: 15px;
+    right: 15px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .hero-mute-button,
+  .hero-edit-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .hero-mute-button:hover,
+  .hero-edit-button:hover {
+    transform: none;
+  }
+}
