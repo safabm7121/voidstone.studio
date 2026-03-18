@@ -211,7 +211,6 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     >
       <Box 
         className="carousel-3d-stage" 
-        style={{ perspective: '1200px' }}
       >
         <Box
           ref={orbitRef}

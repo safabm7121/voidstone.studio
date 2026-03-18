@@ -4,7 +4,13 @@
   position: relative;
   overflow: hidden;
   width: 100%;
+  
+  -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
+ 
+  -webkit-backface-visibility: hidden;
+   backface-visibility: hidden;
+  will-change: transform;
 }
 
 /* Height classes */
@@ -35,34 +41,36 @@
   min-height: 400px;
 }
 
-/* Background image with mouse-responsive parallax */
+/* Background image with smooth parallax */
 .parallax-scroll-bg {
   position: absolute;
-  top: -10%;
-  left: -10%;
-  width: 120%;
-  height: 120%;
+  top: -5%;
+  left: -5%;
+  width: 110%;
+  height: 110%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   will-change: transform;
   z-index: 0;
-  transition: transform 0.1s ease-out;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
   transform: translate(
-    calc(var(--mouse-x-percent, 0) * 20px),
-    calc(var(--mouse-y-percent, 0) * 20px)
+    calc(var(--mouse-x-percent, 0) * 15px),
+    calc(var(--mouse-y-percent, 0) * 15px)
   );
+  pointer-events: none;
 }
 
-/* Mouse follow effect for background */
+/* Smooth mouse follow for background */
 .parallax-scroll:hover .parallax-scroll-bg {
   transform: translate(
-    calc(var(--mouse-x-percent, 0) * 30px),
-    calc(var(--mouse-y-percent, 0) * 30px)
+    calc(var(--mouse-x-percent, 0) * 25px),
+    calc(var(--mouse-y-percent, 0) * 25px)
   );
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* Overlay with mouse-responsive opacity */
+/* Overlay with smooth transition */
 .parallax-scroll-bg.with-overlay::after {
   content: '';
   position: absolute;
@@ -72,14 +80,14 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.4);
   z-index: 1;
-  transition: background 0.3s ease;
+  transition: background 0.4s ease;
 }
 
 .parallax-scroll:hover .parallax-scroll-bg.with-overlay::after {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.25);
 }
 
-/* Content with 3D tilt effect */
+/* Content with smooth 3D tilt */
 .parallax-scroll-content {
   position: relative;
   z-index: 2;
@@ -88,27 +96,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  -webkit-transform-style: preserve-3d;
   transform-style: preserve-3d;
-  transition: transform 0.2s ease-out;
-  transform: perspective(1000px) rotateX(calc(var(--mouse-y-percent, 0) * 5deg)) 
-                             rotateY(calc(var(--mouse-x-percent, 0) * -5deg));
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+  transform: perspective(800px) rotateX(calc(var(--mouse-y-percent, 0) * 3deg)) 
+                             rotateY(calc(var(--mouse-x-percent, 0) * -3deg));
+ 
+  -webkit-backface-visibility: hidden;
+   backface-visibility: hidden;
 }
 
-/* Content children with depth */
+/* Content children with smooth depth */
 .parallax-scroll-content > * {
-  transform: translateZ(30px);
-  transition: transform 0.3s ease;
+  transform: translateZ(20px);
+  transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1);
+ 
+  -webkit-backface-visibility: hidden;
+   backface-visibility: hidden;
 }
 
 .parallax-scroll:hover .parallax-scroll-content > * {
-  transform: translateZ(50px);
+  transform: translateZ(40px);
+  transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* No image fallback with animated gradient */
+/* No image fallback with smooth animated gradient */
 .parallax-scroll.no-image {
   background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
   background-size: 200% 200%;
-  animation: gradientShift 10s ease infinite;
+  animation: gradientShift 12s ease infinite;
 }
 
 @keyframes gradientShift {
@@ -121,7 +138,7 @@
 [data-theme="dark"] .parallax-scroll.no-image {
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   background-size: 200% 200%;
-  animation: gradientShift 10s ease infinite;
+  animation: gradientShift 12s ease infinite;
 }
 
 /* Mouse position variables */
@@ -130,24 +147,31 @@
   --mouse-y-percent: 0;
 }
 
-/* Floating elements inside parallax */
+/* Floating elements with smoother animation */
 .parallax-float-item {
-  animation: float 6s ease-in-out infinite;
+  animation: float 8s ease-in-out infinite;
+  will-change: transform;
 }
 
 .parallax-float-item:nth-child(2) {
-  animation-delay: -2s;
+  animation-delay: -2.5s;
 }
 
 .parallax-float-item:nth-child(3) {
-  animation-delay: -4s;
+  animation-delay: -5s;
 }
 
-/* Text reveal animation on hover */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+/* Smooth text reveal */
 .parallax-scroll .reveal-text {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(25px);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .parallax-scroll:hover .reveal-text {
@@ -170,13 +194,41 @@
     min-height: 500px;
   }
   
-  /* Disable intense 3D effects on mobile */
+  /* Simplified mobile effects but still smooth */
   .parallax-scroll-content {
-    transform: none !important;
+    transform: perspective(800px) rotateX(calc(var(--mouse-y-percent, 0) * 1deg)) 
+                               rotateY(calc(var(--mouse-x-percent, 0) * -1deg)) !important;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
   }
   
   .parallax-scroll-bg {
-    transform: none !important;
+    transform: translate(
+      calc(var(--mouse-x-percent, 0) * 10px),
+      calc(var(--mouse-y-percent, 0) * 10px)
+    ) !important;
+    transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1) !important;
+  }
+  
+  /* Ensure buttons are clickable on mobile */
+  .parallax-scroll-content button,
+  .parallax-scroll-content a,
+  .parallax-scroll-content [role="button"] {
+    position: relative;
+    z-index: 10;
+    cursor: pointer;
+    pointer-events: auto !important;
+  }
+  
+  /* Disable hover effects on mobile */
+  .parallax-scroll:hover .parallax-scroll-bg {
+    transform: translate(
+      calc(var(--mouse-x-percent, 0) * 10px),
+      calc(var(--mouse-y-percent, 0) * 10px)
+    ) !important;
+  }
+  
+  .parallax-scroll:hover .parallax-scroll-content > * {
+    transform: translateZ(25px);
   }
 }
 
@@ -184,6 +236,23 @@
   .parallax-scroll.height-vh-90,
   .parallax-scroll.height-vh-100 {
     min-height: 400px;
+  }
+  
+  /* Further simplify for small screens */
+  .parallax-scroll-content {
+    transform: none !important;
+  }
+  
+  .parallax-scroll-bg {
+    transform: none !important;
+  }
+  
+  .parallax-scroll-content > * {
+    transform: translateZ(10px);
+  }
+  
+  .parallax-scroll:hover .parallax-scroll-content > * {
+    transform: translateZ(15px);
   }
 }
 
@@ -201,18 +270,21 @@
 @media (prefers-reduced-motion: reduce) {
   .parallax-scroll-bg,
   .parallax-scroll-content,
-  .parallax-scroll.no-image {
-    transition: none;
-    animation: none;
-    transform: none;
+  .parallax-scroll-content > *,
+  .parallax-scroll.no-image,
+  .parallax-float-item,
+  .parallax-scroll .reveal-text {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
   }
   
-  .parallax-scroll .reveal-text {
-    transition: none;
+  .parallax-scroll::before {
+    display: none;
   }
 }
 
-/* Mouse trail effect for parallax */
+/* Smooth mouse trail effect */
 .parallax-scroll::before {
   content: '';
   position: absolute;
@@ -221,10 +293,10 @@
   width: 100%;
   height: 100%;
   background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-              rgba(255, 255, 255, 0.1) 0%, 
-              transparent 50%);
+              rgba(255, 255, 255, 0.08) 0%, 
+              transparent 60%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
   pointer-events: none;
   z-index: 3;
   mix-blend-mode: overlay;
@@ -234,19 +306,162 @@
   opacity: 1;
 }
 
-/* 3D card stack effect */
-.parallax-depth-1 { transform: translateZ(20px); }
-.parallax-depth-2 { transform: translateZ(40px); }
-.parallax-depth-3 { transform: translateZ(60px); }
+/* 3D card stack effect with smoother transitions */
+.parallax-depth-1 { transform: translateZ(15px); transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1); }
+.parallax-depth-2 { transform: translateZ(30px); transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1); }
+.parallax-depth-3 { transform: translateZ(45px); transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1); }
 
 .parallax-scroll:hover .parallax-depth-1 {
-  transform: translateZ(30px);
+  transform: translateZ(25px);
 }
 
 .parallax-scroll:hover .parallax-depth-2 {
-  transform: translateZ(60px);
+  transform: translateZ(45px);
 }
 
 .parallax-scroll:hover .parallax-depth-3 {
-  transform: translateZ(90px);
+  transform: translateZ(65px);
+}
+
+/* Ensure all interactive elements are clickable */
+.parallax-scroll button,
+.parallax-scroll a,
+.parallax-scroll [role="button"],
+.parallax-scroll input,
+.parallax-scroll select,
+.parallax-scroll textarea {
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Improve performance */
+.parallax-scroll,
+.parallax-scroll-bg,
+.parallax-scroll-content {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Add these to your existing parallax.css */
+
+/* Ensure all interactive elements are clickable on ALL devices */
+.parallax-scroll button,
+.parallax-scroll a,
+.parallax-scroll [role="button"],
+.parallax-scroll input,
+.parallax-scroll select,
+.parallax-scroll textarea,
+.parallax-scroll .btn,
+.parallax-scroll [class*="button"],
+.parallax-scroll [class*="Button"] {
+  position: relative !important;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+/* Ensure content container doesn't block clicks */
+.parallax-scroll-content {
+  pointer-events: none !important;
+}
+
+/* But allow clicks on interactive elements inside */
+.parallax-scroll-content button,
+.parallax-scroll-content a,
+.parallax-scroll-content [role="button"],
+.parallax-scroll-content .btn,
+.parallax-scroll-content input,
+.parallax-scroll-content select {
+  pointer-events: auto !important;
+}
+
+/* Fix for mobile touch events */
+@media (max-width: 768px) {
+  .parallax-scroll {
+    touch-action: pan-y pinch-zoom !important;
+  }
+  
+  .parallax-scroll-content {
+    transform: none !important;
+    transition: none !important;
+    pointer-events: none !important;
+  }
+  
+  /* Critical: Allow buttons to be clickable on mobile */
+  .parallax-scroll-content > * {
+    pointer-events: auto !important;
+   
+    -webkit-transform: translateZ(0) !important;
+     transform: translateZ(0) !important;
+  }
+  
+  /* Ensure no transforms interfere with clicks */
+  .parallax-scroll:hover .parallax-scroll-content > * {
+   
+    -webkit-transform: translateZ(0) !important;
+     transform: translateZ(0) !important;
+  }
+  
+  /* Disable 3D effects on mobile for better performance */
+  .parallax-scroll-bg {
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+  
+  /* Remove hover effects on mobile */
+  .parallax-scroll:hover .parallax-scroll-bg,
+  .parallax-scroll:hover .parallax-scroll-content > * {
+    transform: none !important;
+  }
+  
+  /* Fix for iOS tap highlight */
+  .parallax-scroll-content a,
+  .parallax-scroll-content button {
+    -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+  }
+  
+  /* Ensure left/right buttons work */
+  .parallax-scroll [class*="carousel"],
+  .parallax-scroll [class*="slider"],
+  .parallax-scroll [class*="button-group"] {
+    touch-action: pan-y pinch-zoom !important;
+  }
+}
+/* For very small screens */
+@media (max-width: 480px) {
+  .parallax-scroll-content > * {
+    pointer-events: auto !important;
+  }
+  
+  /* Ensure all interactive elements are clickable */
+  .parallax-scroll [onClick],
+  .parallax-scroll [role="button"],
+  .parallax-scroll button,
+  .parallax-scroll a {
+    min-height: 44px; /* iOS minimum tap target size */
+    min-width: 44px;
+  }
+}
+
+/* Hardware acceleration for smooth animations */
+.parallax-scroll-bg {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Smooth transitions */
+.parallax-scroll-content {
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.parallax-scroll-content > * {
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
