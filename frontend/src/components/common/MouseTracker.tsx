@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface MouseTrackerProps {
   children: React.ReactNode;
@@ -7,14 +7,20 @@ interface MouseTrackerProps {
 export const MouseTracker: React.FC<MouseTrackerProps> = ({ children }) => {
   const timerRef = useRef<NodeJS.Timeout>();
   
-  // Add touch device detection
-  const [isTouchDevice] = useState(() => {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  });
+  // Check if it's a mobile device - more accurate detection
+  const isMobileDevice = () => {
+    const ua = navigator.userAgent;
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    
+    // Only treat as mobile if it has touch AND is a mobile user agent
+    // This prevents laptops with touch screens from being detected as mobile
+    return hasTouch && isMobileUserAgent;
+  };
 
   useEffect(() => {
-    // 🛑 CRITICAL: Skip on touch devices
-    if (isTouchDevice) {
+    // Skip on actual mobile devices, keep on desktop
+    if (isMobileDevice()) {
       return;
     }
 
@@ -44,7 +50,7 @@ export const MouseTracker: React.FC<MouseTrackerProps> = ({ children }) => {
         clearTimeout(timerRef.current);
       }
     };
-  }, [isTouchDevice]); // Add dependency
+  }, []); // Empty dependency array - runs once on mount
 
   return <>{children}</>;
 };
