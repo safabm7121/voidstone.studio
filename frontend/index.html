@@ -2,18 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-   
     <link rel="icon" type="image/png" href="android-chrome-512x512.png" />
-    
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Voidstone Studio</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700&display=swap" />
   </head>
   <body>
-   
-   
+    <!-- CRITICAL FIX: Remove any mouse-glow div -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- ULTIMATE FIX: Force disable all mouse effects on mobile -->
+    <script>
+      (function() {
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+          document.documentElement.style.setProperty('--mouse-x', '0.5');
+          document.documentElement.style.setProperty('--mouse-y', '0.5');
+          document.documentElement.style.setProperty('--mouse-x-percent', '0');
+          document.documentElement.style.setProperty('--mouse-y-percent', '0');
+          document.documentElement.classList.add('touch-device');
+          
+          // Remove any mouse-glow elements
+          setTimeout(function() {
+            var glow = document.querySelector('.mouse-glow');
+            if (glow) glow.remove();
+          }, 0);
+        }
+      })();
+    </script>
   </body>
 </html>
