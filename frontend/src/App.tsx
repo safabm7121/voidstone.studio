@@ -6,15 +6,14 @@ import { useTranslation } from 'react-i18next';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
-
 import { getTheme } from './theme';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Layout from './components/layout/Layout';
-import { MouseTracker } from './components/common/MouseTracker';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
+
 // Lazy load pages
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
@@ -42,6 +41,7 @@ import './styles/profile.css';
 import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';  
 import './styles/product-card.css';
+
 function App() {
   const { i18n } = useTranslation();
   const [direction, setDirection] = useState<'ltr' | 'rtl'>(
@@ -51,13 +51,23 @@ function App() {
     const saved = localStorage.getItem('themeMode');
     return (saved as 'light' | 'dark') || 'light';
   });
-  
+
   // Track if mouse has moved to show effects
   const [mouseMoved, setMouseMoved] = useState(false);
   const mouseMoveTimer = useRef<NodeJS.Timeout>();
+  
+  // CRITICAL: Detect if this is a touch device ONCE and store it
+  const [isTouchDevice] = useState(() => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  });
 
-  // Mouse tracking for CSS variables - KEEP THIS HERE
+  // Mouse tracking for CSS variables - ONLY runs on non-touch devices
   useEffect(() => {
+    // Completely skip on touch devices - no event listeners at all
+    if (isTouchDevice) {
+      return;
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
       const x = e.clientX / window.innerWidth;
       const y = e.clientY / window.innerHeight;
@@ -107,7 +117,7 @@ function App() {
         clearTimeout(mouseMoveTimer.current);
       }
     };
-  }, [mouseMoved]); // Keep the dependency
+  }, [mouseMoved, isTouchDevice]); // Add isTouchDevice to dependencies
 
   // Update direction when language changes
   useEffect(() => {
@@ -118,7 +128,6 @@ function App() {
     localStorage.setItem('language', i18n.language);
     localStorage.setItem('direction', dir);
 
-    // Add/remove RTL class
     if (dir === 'rtl') {
       document.documentElement.classList.add('rtl');
       document.documentElement.classList.remove('ltr');
@@ -148,94 +157,93 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Router>
-            {/* MouseTracker is now just a wrapper - actual tracking is in App.tsx */}
-            <MouseTracker>
-              {/* Mouse glow element */}
+            {/* Mouse glow element - ONLY on non-touch devices */}
+            {!isTouchDevice && (
               <div className={`mouse-glow ${mouseMoved ? 'visible' : ''}`} />
-              
-              <Suspense fallback={
-                <Box 
-                  display="flex" 
-                  justifyContent="center" 
-                  alignItems="center" 
-                  minHeight="100vh"
-                  className="animate-fade-in"
-                >
-                  <CircularProgress size={60} thickness={4} />
-                </Box>
-              }>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
+            )}
+            
+            <Suspense fallback={
+              <Box 
+                display="flex" 
+                justifyContent="center" 
+                alignItems="center" 
+                minHeight="100vh"
+                className="animate-fade-in"
+              >
+                <CircularProgress size={60} thickness={4} />
+              </Box>
+            }>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
-                  {/* Protected routes with Layout */}
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Home />} />
-                    <Route path="products" element={<Products />} />
-                    <Route path="products/:id" element={<ProductDetail />} />
-                    <Route path="products/history/:id" element={ // ADDED
-                      <PrivateRoute roles={['admin', 'manager', 'designer']}>
-                        <ProductHistory />
+                {/* Protected routes with Layout */}
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Home />} />
+                  <Route path="products" element={<Products />} />
+                  <Route path="products/:id" element={<ProductDetail />} />
+                  <Route path="products/history/:id" element={
+                    <PrivateRoute roles={['admin', 'manager', 'designer']}>
+                      <ProductHistory />
+                    </PrivateRoute>
+                  } />
+                  <Route path="cart" element={<Cart />} />
+                  <Route path="checkout" element={<Checkout />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="contact" element={<Contact />} />
+
+                  {/* Appointment routes */}
+                  <Route
+                    path="book-appointment"
+                    element={
+                      <PrivateRoute>
+                        <BookAppointment />
                       </PrivateRoute>
-                    } />
-                    <Route path="cart" element={<Cart />} />
-                    <Route path="checkout" element={<Checkout />} />
-                    <Route path="about" element={<About />} />
-                    <Route path="contact" element={<Contact />} />
+                    }
+                  />
+                  <Route
+                    path="appointments"
+                    element={
+                      <PrivateRoute>
+                        <MyAppointments />
+                      </PrivateRoute>
+                    }
+                  />
 
-                    {/* Appointment routes */}
-                    <Route
-                      path="book-appointment"
-                      element={
-                        <PrivateRoute>
-                          <BookAppointment />
-                        </PrivateRoute>
-                      }
-                    />
-                    <Route
-                      path="appointments"
-                      element={
-                        <PrivateRoute>
-                          <MyAppointments />
-                        </PrivateRoute>
-                      }
-                    />
+                  {/* Admin only routes */}
+                  <Route
+                    path="admin/appointments"
+                    element={
+                      <PrivateRoute roles={['admin']}>
+                        <AdminAppointments />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="profile"
+                    element={
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    }
+                  />
 
-                    {/* Admin only routes */}
-                    <Route
-                      path="admin/appointments"
-                      element={
-                        <PrivateRoute roles={['admin']}>
-                          <AdminAppointments />
-                        </PrivateRoute>
-                      }
-                    />
-                    <Route
-                      path="profile"
-                      element={
-                        <PrivateRoute>
-                          <Profile />
-                        </PrivateRoute>
-                      }
-                    />
-
-                    {/* Product creation - admin/manager/designer only */}
-                    <Route
-                      path="create-product"
-                      element={
-                        <PrivateRoute roles={['admin', 'manager', 'designer']}>
-                          <CreateProduct />
-                        </PrivateRoute>
-                      }
-                    />
-                  </Route>
-                </Routes>
-              </Suspense>
-            </MouseTracker>
+                  {/* Product creation - admin/manager/designer only */}
+                  <Route
+                    path="create-product"
+                    element={
+                      <PrivateRoute roles={['admin', 'manager', 'designer']}>
+                        <CreateProduct />
+                      </PrivateRoute>
+                    }
+                  />
+                </Route>
+              </Routes>
+            </Suspense>
           </Router>
         </CartProvider>
       </AuthProvider>
