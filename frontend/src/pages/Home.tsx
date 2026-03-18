@@ -148,32 +148,33 @@ const Home: React.FC = () => {
       >
         <Box className="hero-section" ref={heroSectionRef}>
           {/* Background Video for Video Type */}
-          {mediaType === 'video' && mediaUrl && (
-            <>
-              <video
-                ref={videoRef}
-                src={mediaUrl}
-                autoPlay
-                loop
-                muted={isMuted}
-                playsInline
-                className="hero-background-video"
-              />
-              {/* Mute/Unmute Button for Videos - Positioned inside the frame */}
-              <Box className="hero-video-controls">
-                <Tooltip title={isMuted ? t('home.unmute') : t('home.mute')}>
-                  <IconButton
-                    className="hero-mute-button"
-                    onClick={toggleMute}
-                    size="large"
-                  >
-                    {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </>
-          )}
-          
+         {mediaType === 'video' && mediaUrl && (
+  <>
+    <video
+      ref={videoRef}
+      src={mediaUrl}
+      autoPlay
+      loop
+      muted={isMuted}
+      playsInline
+      disablePictureInPicture
+      disableRemotePlayback
+      className="hero-background-video"
+    />
+    {/* Mute/Unmute Button for Videos - Positioned inside the frame */}
+    <Box className="hero-video-controls">
+      <Tooltip title={isMuted ? t('home.unmute') : t('home.mute')}>
+        <IconButton
+          className="hero-mute-button"
+          onClick={toggleMute}
+          size="large"
+        >
+          {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+        </IconButton>
+      </Tooltip>
+    </Box>
+  </>
+)}
           <Box className="hero-overlay" />
           
           {/* Admin Edit Button - Only visible to admin */}

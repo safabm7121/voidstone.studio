@@ -73,19 +73,119 @@
   box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
 }
 
-/* Admin Edit Button */
+/* ===== VIDEO BACKGROUND STYLES ===== */
+.hero-background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none; /* Prevents video from blocking button clicks */
+}
+
+/* Remove ALL video controls across all browsers */
+.hero-background-video::-webkit-media-controls {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+.hero-background-video::-webkit-media-controls-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+.hero-background-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+.hero-background-video::-webkit-media-controls-panel {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+.hero-background-video::-webkit-media-controls-enclosure {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+.hero-background-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+.hero-background-video::-webkit-media-controls-timeline {
+  display: none !important;
+}
+
+.hero-background-video::-webkit-media-controls-current-time-display,
+.hero-background-video::-webkit-media-controls-time-remaining-display {
+  display: none !important;
+}
+
+.hero-background-video::-webkit-media-controls-volume-slider,
+.hero-background-video::-webkit-media-controls-mute-button {
+  display: none !important;
+}
+
+.hero-background-video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
+/* Firefox */
+.hero-background-video::-moz-range-track {
+  display: none !important;
+}
+
+.hero-background-video::-moz-range-progress {
+  display: none !important;
+}
+
+.hero-background-video::-moz-range-thumb {
+  display: none !important;
+}
+
+/* Controls container for mute button */
+.hero-video-controls {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Admin controls container */
+.hero-admin-controls {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Mute button styling */
+.hero-mute-button {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+}
+
+.hero-mute-button:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  transform: scale(1.1);
+}
+
+/* Admin edit button styling */
 .hero-edit-button {
-  position: absolute !important;
-  top: 20px !important;
-  right: 20px !important;
-  z-index: 20 !important;
-  background-color: rgba(0,0,0,0.6) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
   color: white !important;
   transition: all 0.3s ease !important;
 }
 
 .hero-edit-button:hover {
-  background-color: rgba(0,0,0,0.8) !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
   transform: scale(1.1);
 }
 
@@ -188,6 +288,26 @@
     height: min(350px, 45vh, 90vw);
     margin: 1rem 0 0.5rem 0;
   }
+  
+  .hero-video-controls {
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .hero-admin-controls {
+    top: 15px;
+    right: 15px;
+  }
+  
+  .hero-mute-button,
+  .hero-edit-button {
+    padding: 4px !important;
+  }
+  
+  .hero-mute-button svg,
+  .hero-edit-button svg {
+    font-size: 18px;
+  }
 }
 
 /* iPhone 12/13/14 (375px) */
@@ -216,6 +336,26 @@
   .featured-section .carousel-container {
     height: min(400px, 50vh, 85vw);
     margin: 1.25rem 0 0.75rem 0;
+  }
+  
+  .hero-video-controls {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .hero-admin-controls {
+    top: 20px;
+    right: 20px;
+  }
+  
+  .hero-mute-button,
+  .hero-edit-button {
+    padding: 6px !important;
+  }
+  
+  .hero-mute-button svg,
+  .hero-edit-button svg {
+    font-size: 20px;
   }
 }
 
@@ -274,6 +414,26 @@
     height: min(500px, 60vh, 75vw);
     margin: 2rem 0 1.25rem 0;
   }
+  
+  .hero-video-controls {
+    bottom: 25px;
+    right: 25px;
+  }
+  
+  .hero-admin-controls {
+    top: 25px;
+    right: 25px;
+  }
+  
+  .hero-mute-button,
+  .hero-edit-button {
+    padding: 8px !important;
+  }
+  
+  .hero-mute-button svg,
+  .hero-edit-button svg {
+    font-size: 24px;
+  }
 }
 
 /* iPad Mini (768px) */
@@ -323,6 +483,26 @@
   .featured-section .carousel-container {
     height: min(600px, 70vh, 65vw);
     margin: 3rem 0 2rem 0;
+  }
+  
+  .hero-video-controls {
+    bottom: 30px;
+    right: 30px;
+  }
+  
+  .hero-admin-controls {
+    top: 30px;
+    right: 30px;
+  }
+  
+  .hero-mute-button,
+  .hero-edit-button {
+    padding: 10px !important;
+  }
+  
+  .hero-mute-button svg,
+  .hero-edit-button svg {
+    font-size: 28px;
   }
 }
 
@@ -378,6 +558,12 @@
   margin-right: 0;
 }
 
+[dir="rtl"] .hero-video-controls,
+[dir="rtl"] .hero-admin-controls {
+  right: auto;
+  left: 30px;
+}
+
 /* ===== TOUCH OPTIMIZATIONS ===== */
 @media (hover: none) and (pointer: coarse) {
   .hero-button {
@@ -389,19 +575,29 @@
     transform: none !important;
   }
   
+  .hero-mute-button:hover,
   .hero-edit-button:hover {
-    transform: none;
+    transform: none !important;
+  }
+  
+  .hero-mute-button,
+  .hero-edit-button {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
 /* ===== REDUCE MOTION ===== */
 @media (prefers-reduced-motion: reduce) {
   .hero-button,
+  .hero-mute-button,
   .hero-edit-button {
     transition: none !important;
   }
   
-  .hero-button:hover {
+  .hero-button:hover,
+  .hero-mute-button:hover,
+  .hero-edit-button:hover {
     transform: none !important;
   }
 }
@@ -428,6 +624,16 @@
   .featured-section .carousel-container {
     height: min(400px, 80vh);
   }
+  
+  .hero-video-controls {
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .hero-admin-controls {
+    top: 15px;
+    right: 15px;
+  }
 }
 
 /* ===== PRINT STYLES ===== */
@@ -439,7 +645,9 @@
   }
   
   .hero-overlay,
-  .hero-edit-button {
+  .hero-edit-button,
+  .hero-video-controls,
+  .hero-background-video {
     display: none;
   }
   
@@ -450,168 +658,5 @@
   
   .hero-button {
     display: none;
-  }
-}
-/* Add to your home.css file */
-
-.hero-background-video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-}
-
-.hero-mute-button {
-  position: absolute !important;
-  bottom: 30px;
-  right: 30px;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  z-index: 10 !important;
-}
-
-.hero-mute-button:hover {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-}
-
-.hero-edit-button {
-  position: absolute !important;
-  top: 30px;
-  right: 30px;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  z-index: 10 !important;
-}
-
-.hero-edit-button:hover {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-}
-/* Add these styles to your home.css file */
-
-.hero-background-video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-  pointer-events: none; /* Prevents video from blocking button clicks */
-}
-
-/* Controls container for mute button */
-.hero-video-controls {
-  position: absolute;
-  bottom: 30px;
-  right: 30px;
-  z-index: 20;
-  pointer-events: auto;
-}
-
-/* Admin controls container */
-.hero-admin-controls {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  z-index: 20;
-  pointer-events: auto;
-}
-
-/* Mute button styling */
-.hero-mute-button {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  transition: all 0.3s ease !important;
-}
-
-.hero-mute-button:hover {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  transform: scale(1.1);
-}
-
-/* Admin edit button styling */
-.hero-edit-button {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  transition: all 0.3s ease !important;
-}
-
-.hero-edit-button:hover {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  transform: scale(1.1);
-}
-
-/* Responsive adjustments for mobile */
-@media (max-width: 768px) {
-  .hero-video-controls {
-    bottom: 20px;
-    right: 20px;
-  }
-  
-  .hero-admin-controls {
-    top: 20px;
-    right: 20px;
-  }
-  
-  .hero-mute-button,
-  .hero-edit-button {
-    padding: 8px !important;
-  }
-  
-  .hero-mute-button svg,
-  .hero-edit-button svg {
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-video-controls {
-    bottom: 15px;
-    right: 15px;
-  }
-  
-  .hero-admin-controls {
-    top: 15px;
-    right: 15px;
-  }
-  
-  .hero-mute-button,
-  .hero-edit-button {
-    padding: 6px !important;
-  }
-  
-  .hero-mute-button svg,
-  .hero-edit-button svg {
-    font-size: 20px;
-  }
-}
-
-/* Landscape mode */
-@media (orientation: landscape) and (max-height: 600px) {
-  .hero-video-controls {
-    bottom: 15px;
-    right: 15px;
-  }
-  
-  .hero-admin-controls {
-    top: 15px;
-    right: 15px;
-  }
-}
-
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .hero-mute-button,
-  .hero-edit-button {
-    min-width: 44px;
-    min-height: 44px;
-  }
-  
-  .hero-mute-button:hover,
-  .hero-edit-button:hover {
-    transform: none;
   }
 }
