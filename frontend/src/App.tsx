@@ -43,22 +43,42 @@ import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';  
 import './styles/product-card.css';
 function App() {
-  const { i18n } = useTranslation();
-  const [direction, setDirection] = useState<'ltr' | 'rtl'>(
-    i18n.language === 'ar' ? 'rtl' : 'ltr'
-  );
-  const [mode, setMode] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('themeMode');
-    return (saved as 'light' | 'dark') || 'light';
-  });
-  
-  // Track if mouse has moved to show effects
-  const [mouseMoved, setMouseMoved] = useState(false);
-  const mouseMoveTimer = useRef<NodeJS.Timeout>();
+ const { i18n } = useTranslation();
+const [direction, setDirection] = useState<'ltr' | 'rtl'>(
+  i18n.language === 'ar' ? 'rtl' : 'ltr'
+);
+const [mode, setMode] = useState<'light' | 'dark'>(() => {
+  const saved = localStorage.getItem('themeMode');
+  return (saved as 'light' | 'dark') || 'light';
+});
 
-  // Mouse tracking for CSS variables - KEEP THIS HERE
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+// Track if mouse has moved to show effects
+const [mouseMoved, setMouseMoved] = useState(false);
+const mouseMoveTimer = useRef<NodeJS.Timeout>();
+const isTouchDevice = useRef<boolean>(false);
+
+// Detect touch device on mount
+useEffect(() => {
+  isTouchDevice.current = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}, []);
+
+// Mouse tracking for CSS variables - DISABLED on touch devices
+useEffect(() => {
+  // Completely disable mouse tracking on touch devices
+  if (isTouchDevice.current) {
+    // Set default values
+    document.documentElement.style.setProperty('--mouse-x', '0.5');
+    document.documentElement.style.setProperty('--mouse-y', '0.5');
+    document.documentElement.style.setProperty('--mouse-x-percent', '0');
+    document.documentElement.style.setProperty('--mouse-y-percent', '0');
+    document.documentElement.style.setProperty('--mouse-x-px', '50%');
+    document.documentElement.style.setProperty('--mouse-y-px', '50%');
+    return;
+  }
+
+  const handleMouseMove = (e: MouseEvent) => {
+    // Use requestAnimationFrame to throttle for better performance
+    requestAnimationFrame(() => {
       const x = e.clientX / window.innerWidth;
       const y = e.clientY / window.innerHeight;
       
@@ -89,53 +109,55 @@ function App() {
         document.body.classList.remove('mouse-moved');
         setMouseMoved(false);
       }, 1000);
-    };
+    });
+  };
 
-    // Scroll tracking for scroll-based animations
-    const handleScroll = () => {
+  // Scroll tracking for scroll-based animations
+  const handleScroll = () => {
+    requestAnimationFrame(() => {
       const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
       document.documentElement.style.setProperty('--scroll-percent', scrollPercent.toString());
-    };
+    });
+  };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('scroll', handleScroll);
-      if (mouseMoveTimer.current) {
-        clearTimeout(mouseMoveTimer.current);
-      }
-    };
-  }, [mouseMoved]); // Keep the dependency
-
-  // Update direction when language changes
-  useEffect(() => {
-    const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
-    setDirection(dir);
-    document.dir = dir;
-    document.documentElement.lang = i18n.language;
-    localStorage.setItem('language', i18n.language);
-    localStorage.setItem('direction', dir);
-
-    // Add/remove RTL class
-    if (dir === 'rtl') {
-      document.documentElement.classList.add('rtl');
-      document.documentElement.classList.remove('ltr');
-    } else {
-      document.documentElement.classList.add('ltr');
-      document.documentElement.classList.remove('rtl');
+  window.addEventListener('mousemove', handleMouseMove, { passive: true });
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  
+  return () => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('scroll', handleScroll);
+    if (mouseMoveTimer.current) {
+      clearTimeout(mouseMoveTimer.current);
     }
-  }, [i18n.language]);
+  };
+}, [mouseMoved]); // Keep the dependency
 
-  // Apply theme mode to root element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', mode);
-    localStorage.setItem('themeMode', mode);
-  }, [mode]);
+// Update direction when language changes
+useEffect(() => {
+  const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  setDirection(dir);
+  document.dir = dir;
+  document.documentElement.lang = i18n.language;
+  localStorage.setItem('language', i18n.language);
+  localStorage.setItem('direction', dir);
 
-  const toggleTheme = () => setMode(prev => (prev === 'light' ? 'dark' : 'light'));
+  // Add/remove RTL class
+  if (dir === 'rtl') {
+    document.documentElement.classList.add('rtl');
+    document.documentElement.classList.remove('ltr');
+  } else {
+    document.documentElement.classList.add('ltr');
+    document.documentElement.classList.remove('rtl');
+  }
+}, [i18n.language]);
 
+// Apply theme mode to root element
+useEffect(() => {
+  document.documentElement.setAttribute('data-theme', mode);
+  localStorage.setItem('themeMode', mode);
+}, [mode]);
+
+const toggleTheme = () => setMode(prev => (prev === 'light' ? 'dark' : 'light'));
   return (
     <ThemeProvider theme={getTheme(direction, i18n.language, mode)}>
       <CssBaseline />

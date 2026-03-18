@@ -1165,3 +1165,16 @@ video[src*="streamable"] {
 img, video {
   transition: filter 0.2s ease;
 }
+/* Disable mouse effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .mouse-glow,
+  body.mouse-moved::before,
+  body.mouse-moved::after {
+    display: none !important;
+  }
+  
+  /* Remove any mouse-dependent transitions */
+  * {
+    transition: none !important;
+  }
+}
