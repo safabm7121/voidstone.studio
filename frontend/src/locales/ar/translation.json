@@ -211,7 +211,9 @@
   "newPassword": "كلمة المرور الجديدة",
   "confirmPassword": "تأكيد كلمة المرور",
   "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
-  "passwordTooShort": "كلمة المرور قصيرة جداً"
+  "passwordTooShort": "كلمة المرور قصيرة جداً",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور"
 },
   "footer": {
     "quickLinks": "روابط سريعة",

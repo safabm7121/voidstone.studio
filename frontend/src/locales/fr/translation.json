@@ -211,7 +211,9 @@
   "newPassword": "Nouveau mot de passe",
   "confirmPassword": "Confirmer le mot de passe",
   "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
-  "passwordTooShort": "Mot de passe trop court"
+  "passwordTooShort": "Mot de passe trop court",
+   "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
 },
   "footer": {
     "quickLinks": "Liens rapides",

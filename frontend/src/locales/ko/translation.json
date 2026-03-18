@@ -211,7 +211,9 @@
   "newPassword": "새 비밀번호",
   "confirmPassword": "비밀번호 확인",
   "passwordsDoNotMatch": "비밀번호가 일치하지 않습니다",
-  "passwordTooShort": "비밀번호가 너무 짧습니다"
+  "passwordTooShort": "비밀번호가 너무 짧습니다",
+  "showPassword": "비밀번호 표시",
+    "hidePassword": "비밀번호 숨기기"
 },
   "footer": {
     "quickLinks": "바로가기",
