@@ -33,6 +33,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   // Touch interaction
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
   const minSwipeDistance = 50;
   
   // Settings
@@ -48,6 +49,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   const orbitRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const snapTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Safe check - if no products, don't render
   if (!products || products.length === 0) {
@@ -93,7 +95,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   // Animation loop
   useEffect(() => {
     const animate = () => {
-      if (!isPaused && !isHovered) {
+      if (!isPaused && !isHovered && !isSwiping) {
         setRotation(prev => {
           const increment = 0.1 * (8 / rotationSpeed);
           return (prev + increment) % 360;
@@ -104,8 +106,9 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     animationRef.current = requestAnimationFrame(animate);
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
     };
-  }, [isPaused, isHovered, rotationSpeed]);
+  }, [isPaused, isHovered, isSwiping, rotationSpeed]);
 
   // Update current index
   useEffect(() => {
@@ -116,18 +119,53 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     setCurrentIndex(centerIndex);
   }, [rotation, displayItems.length]);
 
-  // FIX 2: Touch handlers for mobile swipe
+  // FIX: Snap to center after swiping
+  const snapToCenter = () => {
+    if (itemCount === 0) return;
+    
+    const itemAngle = 360 / itemCount;
+    const normalizedRotation = ((rotation % 360) + 360) % 360;
+    const targetIndex = Math.round(normalizedRotation / itemAngle);
+    const targetRotation = targetIndex * itemAngle;
+    
+    // Calculate the shortest path to the target
+    let diff = targetRotation - normalizedRotation;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    
+    setRotation(prev => prev + diff);
+  };
+
+  // FIX 2: Touch handlers for mobile swipe with snap
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
+    setIsSwiping(true);
+    setIsPaused(true); // Pause animation while swiping
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
+    
+    // Add a class to indicate swiping (for visual feedback)
+    if (containerRef.current) {
+      containerRef.current.classList.add('is-swiping');
+    }
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    setIsSwiping(false);
+    
+    // Remove swiping class
+    if (containerRef.current) {
+      containerRef.current.classList.remove('is-swiping');
+    }
+    
+    if (!touchStart || !touchEnd) {
+      // If no swipe happened, just snap to center
+      snapToCenter();
+      return;
+    }
     
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
@@ -137,21 +175,32 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
       handleNext();
     } else if (isRightSwipe) {
       handlePrev();
+    } else {
+      // If it wasn't a full swipe, snap back to center
+      snapToCenter();
     }
+    
+    // Resume animation after a delay
+    if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    snapTimeoutRef.current = setTimeout(() => {
+      setIsPaused(false);
+    }, 500);
   };
 
   const handlePrev = () => {
     setRotation(prev => prev - (360 / itemCount));
     // Pause briefly after manual navigation
     setIsPaused(true);
-    setTimeout(() => setIsPaused(false), 3000);
+    if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    snapTimeoutRef.current = setTimeout(() => setIsPaused(false), 3000);
   };
   
   const handleNext = () => {
     setRotation(prev => prev + (360 / itemCount));
     // Pause briefly after manual navigation
     setIsPaused(true);
-    setTimeout(() => setIsPaused(false), 3000);
+    if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    snapTimeoutRef.current = setTimeout(() => setIsPaused(false), 3000);
   };
 
   const handleProductClick = (productId: string) => {

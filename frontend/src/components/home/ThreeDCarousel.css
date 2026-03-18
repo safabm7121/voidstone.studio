@@ -596,3 +596,26 @@
 [data-theme="dark"] .carousel-settings-panel { background: var(--color-background-paper) !important; border-color: var(--color-border); }
 [data-theme="dark"] .settings-title { color: var(--color-text-primary); }
 [data-theme="dark"] .settings-label { color: var(--color-text-secondary); }
+/* Add this at the end of your ThreeDCarousel.css file */
+
+/* Smooth snapping for mobile */
+.carousel-container.is-swiping .carousel-orbit {
+  transition: transform 0.05s linear !important;
+}
+
+/* Add a subtle snap animation when not swiping */
+.carousel-orbit {
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+}
+
+/* Override for mobile to keep it smooth */
+@media (max-width: 767px) {
+  .carousel-orbit {
+    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+  }
+  
+  /* When actively swiping, use a linear transition for responsiveness */
+  .carousel-container.is-swiping .carousel-orbit {
+    transition: transform 0.05s linear !important;
+  }
+}
