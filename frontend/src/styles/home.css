@@ -660,3 +660,18 @@
     display: none;
   }
 }
+.hero-background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none; /* Prevents video from blocking button clicks */
+  
+  /* ADD THESE 3 LINES */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
