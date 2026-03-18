@@ -7,20 +7,14 @@ interface MouseTrackerProps {
 export const MouseTracker: React.FC<MouseTrackerProps> = ({ children }) => {
   const timerRef = useRef<NodeJS.Timeout>();
   
-  // Check if it's a mobile device - more accurate detection
-  const isMobileDevice = () => {
-    const ua = navigator.userAgent;
-    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-    
-    // Only treat as mobile if it has touch AND is a mobile user agent
-    // This prevents laptops with touch screens from being detected as mobile
-    return hasTouch && isMobileUserAgent;
-  };
-
   useEffect(() => {
-    // Skip on actual mobile devices, keep on desktop
-    if (isMobileDevice()) {
+    // Check if it's a mobile device
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = hasTouch && isMobileUserAgent;
+
+    // Skip on mobile devices, keep on desktop/laptops
+    if (isMobile) {
       return;
     }
 
