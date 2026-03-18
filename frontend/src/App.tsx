@@ -7,7 +7,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 import { getTheme } from './theme';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, User } from './context/AuthContext'; // Import User type
 import { CartProvider } from './context/CartContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Layout from './components/layout/Layout';
@@ -42,7 +42,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import './styles/global.css';  
 import './styles/product-card.css';
 
-function App() {
+interface AppProps {
+  initialToken?: string | null;
+  initialUser?: User | null;
+}
+
+function App({ initialToken, initialUser }: AppProps) {
   const { i18n } = useTranslation();
   const [direction, setDirection] = useState<'ltr' | 'rtl'>(
     i18n.language === 'ar' ? 'rtl' : 'ltr'
@@ -52,20 +57,15 @@ function App() {
     return (saved as 'light' | 'dark') || 'light';
   });
 
-  // Track if mouse has moved to show effects
   const [mouseMoved, setMouseMoved] = useState(false);
   const mouseMoveTimer = useRef<NodeJS.Timeout>();
-  
-  // Detect touch device - check on every render where needed
+
   const isTouchDevice = () => {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   };
 
-  // Mouse tracking for CSS variables - COMPLETELY SKIPPED ON TOUCH DEVICES
   useEffect(() => {
-    // If it's a touch device, do absolutely nothing - no event listeners, no state changes
     if (isTouchDevice()) {
-      // Set default values and ensure no mouse-moved class
       document.documentElement.style.setProperty('--mouse-x', '0.5');
       document.documentElement.style.setProperty('--mouse-y', '0.5');
       document.documentElement.style.setProperty('--mouse-x-percent', '0');
@@ -73,31 +73,25 @@ function App() {
       document.documentElement.style.setProperty('--mouse-x-px', '50%');
       document.documentElement.style.setProperty('--mouse-y-px', '50%');
       document.body.classList.remove('mouse-moved');
-      return; // Exit early - NO EVENT LISTENERS
+      return;
     }
 
-    // Only runs on non-touch devices (desktop with mouse)
     const handleMouseMove = (e: MouseEvent) => {
       requestAnimationFrame(() => {
         const x = e.clientX / window.innerWidth;
         const y = e.clientY / window.innerHeight;
-        
         document.documentElement.style.setProperty('--mouse-x', x.toString());
         document.documentElement.style.setProperty('--mouse-y', y.toString());
         document.documentElement.style.setProperty('--mouse-x-percent', (x - 0.5).toString());
         document.documentElement.style.setProperty('--mouse-y-percent', (y - 0.5).toString());
         document.documentElement.style.setProperty('--mouse-x-px', e.clientX + 'px');
         document.documentElement.style.setProperty('--mouse-y-px', e.clientY + 'px');
-        
+
         if (!mouseMoved) {
           setMouseMoved(true);
           document.body.classList.add('mouse-moved');
         }
-        
-        if (mouseMoveTimer.current) {
-          clearTimeout(mouseMoveTimer.current);
-        }
-        
+        if (mouseMoveTimer.current) clearTimeout(mouseMoveTimer.current);
         mouseMoveTimer.current = setTimeout(() => {
           document.body.classList.remove('mouse-moved');
           setMouseMoved(false);
@@ -105,7 +99,6 @@ function App() {
       });
     };
 
-    // Scroll tracking - safe for all devices, doesn't interfere with touch
     const handleScroll = () => {
       requestAnimationFrame(() => {
         const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
@@ -115,17 +108,14 @@ function App() {
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
-      if (mouseMoveTimer.current) {
-        clearTimeout(mouseMoveTimer.current);
-      }
+      if (mouseMoveTimer.current) clearTimeout(mouseMoveTimer.current);
     };
-  }, [mouseMoved]); // Only re-run if mouseMoved changes
+  }, [mouseMoved]);
 
-  // Update direction when language changes
   useEffect(() => {
     const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
     setDirection(dir);
@@ -133,7 +123,6 @@ function App() {
     document.documentElement.lang = i18n.language;
     localStorage.setItem('language', i18n.language);
     localStorage.setItem('direction', dir);
-
     if (dir === 'rtl') {
       document.documentElement.classList.add('rtl');
       document.documentElement.classList.remove('ltr');
@@ -143,7 +132,6 @@ function App() {
     }
   }, [i18n.language]);
 
-  // Apply theme mode to root element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', mode);
     localStorage.setItem('themeMode', mode);
@@ -160,34 +148,23 @@ function App() {
         autoClose={3000}
         theme={mode}
       />
-      <AuthProvider>
+      <AuthProvider initialToken={initialToken} initialUser={initialUser}>
         <CartProvider>
           <Router>
-            {/* Mouse glow element - only shown on non-touch devices */}
             {!isTouchDevice() && (
               <div className={`mouse-glow ${mouseMoved ? 'visible' : ''}`} />
             )}
-            
             <Suspense fallback={
-              <Box 
-                display="flex" 
-                justifyContent="center" 
-                alignItems="center" 
-                minHeight="100vh"
-                className="animate-fade-in"
-              >
+              <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
                 <CircularProgress size={60} thickness={4} />
               </Box>
             }>
               <Routes>
-                {/* Public routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-
-                {/* Protected routes with Layout */}
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Home />} />
                   <Route path="products" element={<Products />} />
@@ -201,52 +178,11 @@ function App() {
                   <Route path="checkout" element={<Checkout />} />
                   <Route path="about" element={<About />} />
                   <Route path="contact" element={<Contact />} />
-
-                  {/* Appointment routes */}
-                  <Route
-                    path="book-appointment"
-                    element={
-                      <PrivateRoute>
-                        <BookAppointment />
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="appointments"
-                    element={
-                      <PrivateRoute>
-                        <MyAppointments />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  {/* Admin only routes */}
-                  <Route
-                    path="admin/appointments"
-                    element={
-                      <PrivateRoute roles={['admin']}>
-                        <AdminAppointments />
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="profile"
-                    element={
-                      <PrivateRoute>
-                        <Profile />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  {/* Product creation - admin/manager/designer only */}
-                  <Route
-                    path="create-product"
-                    element={
-                      <PrivateRoute roles={['admin', 'manager', 'designer']}>
-                        <CreateProduct />
-                      </PrivateRoute>
-                    }
-                  />
+                  <Route path="book-appointment" element={<PrivateRoute><BookAppointment /></PrivateRoute>} />
+                  <Route path="appointments" element={<PrivateRoute><MyAppointments /></PrivateRoute>} />
+                  <Route path="admin/appointments" element={<PrivateRoute roles={['admin']}><AdminAppointments /></PrivateRoute>} />
+                  <Route path="profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                  <Route path="create-product" element={<PrivateRoute roles={['admin', 'manager', 'designer']}><CreateProduct /></PrivateRoute>} />
                 </Route>
               </Routes>
             </Suspense>
@@ -254,7 +190,6 @@ function App() {
         </CartProvider>
       </AuthProvider>
 
-      {/* Theme Toggle Button */}
       <Box
         className="theme-toggle-button"
         sx={{
@@ -272,10 +207,7 @@ function App() {
           sx={{
             bgcolor: 'background.paper',
             boxShadow: 3,
-            '&:hover': { 
-              bgcolor: 'action.hover',
-              transform: 'rotate(180deg)',
-            },
+            '&:hover': { bgcolor: 'action.hover', transform: 'rotate(180deg)' },
             width: { xs: 40, sm: 48 },
             height: { xs: 40, sm: 48 },
             transition: 'all 0.3s ease',

@@ -1,8 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { authApi } from '../services/api'; // Import the configured axios instance
+import { authApi } from '../services/api';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   firstName: string;
@@ -32,20 +32,23 @@ export const useAuth = () => {
 
 interface AuthProviderProps {
   children: ReactNode;
+  initialToken?: string | null;
+  initialUser?: User | null;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [isLoading, setIsLoading] = useState(true);
+export const AuthProvider: React.FC<AuthProviderProps> = ({ 
+  children, 
+  initialToken = localStorage.getItem('token'),
+  initialUser = null 
+}) => {
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [token, setToken] = useState<string | null>(initialToken);
+  const [isLoading, setIsLoading] = useState(false); // Start with false to avoid blocking UI
 
-  // Use the imported authApi instead of creating a new one
   const api = authApi;
 
-  // Fetch user profile
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = async (): Promise<User | null> => {
     if (!token) return null;
-    
     try {
       const response = await api.get('/api/auth/me');
       return response.data.user;
@@ -55,56 +58,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Validate token and fetch user on mount
+  // Only validate if we have a token but no user (e.g., token from storage but user not set)
   useEffect(() => {
-    const initializeAuth = async () => {
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const userData = await fetchUserProfile();
-        if (userData) {
-          setUser(userData);
-        } else {
-          // If profile fetch fails, token might be invalid
+    if (token && !user) {
+      const validateToken = async () => {
+        setIsLoading(true);
+        try {
+          const userData = await fetchUserProfile();
+          if (userData) {
+            setUser(userData);
+          } else {
+            localStorage.removeItem('token');
+            setToken(null);
+          }
+        } catch (error) {
           localStorage.removeItem('token');
           setToken(null);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        localStorage.removeItem('token');
-        setToken(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, [token]);
+      };
+      validateToken();
+    }
+  }, []); // Empty deps – run once on mount
 
   const refreshUser = async () => {
     const userData = await fetchUserProfile();
-    if (userData) {
-      setUser(userData);
-    }
+    if (userData) setUser(userData);
   };
 
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/api/auth/login', { email, password });
       const { token: newToken, user: userData } = response.data;
-      
       localStorage.setItem('token', newToken);
       setToken(newToken);
       setUser(userData);
-      
-      console.log('User logged in:', { 
-        email: userData.email, 
-        role: userData.role,
-        isAdmin: userData.role === 'admin'
-      });
-      
       toast.success(`Welcome back, ${userData.firstName}!`);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Login failed';
@@ -117,10 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await api.post('/api/auth/register', userData);
       toast.success('Registration successful! Please check your email for verification code.');
-      
-      // Store email for verification page
       localStorage.setItem('pendingVerification', userData.email);
-      
       return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Registration failed';

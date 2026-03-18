@@ -46,6 +46,22 @@ const Home: React.FC = () => {
   // Check if user is admin
   const isAdmin = isAuthenticated && user?.role === 'admin';
 
+  // Helper function to get the media URL (defined BEFORE it's used)
+  const getMediaUrl = (): string | undefined => {
+    if (!heroMedia || !heroMedia.imageData) return undefined;
+    
+    // If it's a URL (starts with http), use it directly
+    if (heroMedia.imageData.startsWith('http')) {
+      return heroMedia.imageData;
+    }
+    
+    // Otherwise, it's base64 - construct data URL
+    const type = heroMedia.imageType || 'image/jpeg';
+    return `data:${type};base64,${heroMedia.imageData}`;
+  };
+
+  const mediaUrl = getMediaUrl();
+
   useEffect(() => {
     fetchFeaturedProducts();
     fetchHeroMedia();
@@ -56,16 +72,49 @@ const Home: React.FC = () => {
     };
   }, []);
 
+  // Improved video autoplay handling for iOS
   useEffect(() => {
-    // Auto-play video when it becomes available
-    if (videoRef.current && mediaType === 'video') {
-      videoRef.current.muted = isMuted;
-      videoRef.current.play().catch(error => {
-        console.log('Auto-play prevented:', error);
-        // If auto-play fails, we can try again with user interaction
-      });
+    if (videoRef.current && mediaType === 'video' && mediaUrl) {
+      const video = videoRef.current;
+      
+      // Set video attributes for iOS
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('x5-playsinline', ''); // For WeChat
+      
+      // Remove controls attribute
+      video.removeAttribute('controls');
+      
+      // Ensure muted for autoplay
+      video.muted = isMuted;
+      
+      // Attempt to play
+      const playPromise = video.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('Video autoplay started');
+          })
+          .catch(error => {
+            console.log('Video autoplay failed:', error);
+            
+            // Some iOS devices need user interaction
+            // We'll try to play again when the user interacts with the page
+            const handleUserInteraction = () => {
+              if (videoRef.current) {
+                videoRef.current.play().catch(e => console.log('Still failed:', e));
+              }
+              document.removeEventListener('touchstart', handleUserInteraction);
+              document.removeEventListener('click', handleUserInteraction);
+            };
+            
+            document.addEventListener('touchstart', handleUserInteraction, { once: true });
+            document.addEventListener('click', handleUserInteraction, { once: true });
+          });
+      }
     }
-  }, [heroMedia, mediaType, isMuted]);
+  }, [heroMedia, mediaUrl, mediaType, isMuted]);
 
   const fetchHeroMedia = async () => {
     try {
@@ -110,24 +159,15 @@ const Home: React.FC = () => {
     setIsMuted(!isMuted);
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
+      
+      // If unmuting and video is paused, try to play
+      if (!isMuted && videoRef.current.paused) {
+        videoRef.current.play().catch(error => {
+          console.log('Play after unmute failed:', error);
+        });
+      }
     }
   };
-
-  // Helper function to get the media URL (handles both base64 and direct URLs)
-  const getMediaUrl = (): string | undefined => {
-    if (!heroMedia || !heroMedia.imageData) return undefined;
-    
-    // If it's a URL (starts with http), use it directly
-    if (heroMedia.imageData.startsWith('http')) {
-      return heroMedia.imageData;
-    }
-    
-    // Otherwise, it's base64 - construct data URL
-    const type = heroMedia.imageType || 'image/jpeg';
-    return `data:${type};base64,${heroMedia.imageData}`;
-  };
-
-  const mediaUrl = getMediaUrl();
 
   // Show loading state
   if (loading) {
@@ -148,33 +188,32 @@ const Home: React.FC = () => {
       >
         <Box className="hero-section" ref={heroSectionRef}>
           {/* Background Video for Video Type */}
-         {mediaType === 'video' && mediaUrl && (
-  <>
-    <video
-      ref={videoRef}
-      src={mediaUrl}
-      autoPlay
-      loop
-      muted={isMuted}
-      playsInline
-      disablePictureInPicture
-      disableRemotePlayback
-      className="hero-background-video"
-    />
-    {/* Mute/Unmute Button for Videos - Positioned inside the frame */}
-    <Box className="hero-video-controls">
-      <Tooltip title={isMuted ? t('home.unmute') : t('home.mute')}>
-        <IconButton
-          className="hero-mute-button"
-          onClick={toggleMute}
-          size="large"
-        >
-          {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-        </IconButton>
-      </Tooltip>
-    </Box>
-  </>
-)}
+          {mediaType === 'video' && mediaUrl && (
+            <>
+              <video
+                ref={videoRef}
+                src={mediaUrl}
+                loop
+                muted={isMuted}
+                playsInline
+                disablePictureInPicture
+                disableRemotePlayback
+                className="hero-background-video"
+              />
+              {/* Mute/Unmute Button for Videos - Positioned inside the frame */}
+              <Box className="hero-video-controls">
+                <Tooltip title={isMuted ? t('home.unmute') : t('home.mute')}>
+                  <IconButton
+                    className="hero-mute-button"
+                    onClick={toggleMute}
+                    size="large"
+                  >
+                    {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </>
+          )}
           <Box className="hero-overlay" />
           
           {/* Admin Edit Button - Only visible to admin */}
