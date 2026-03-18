@@ -54,13 +54,17 @@ function App() {
 
   const [mouseMoved, setMouseMoved] = useState(false);
   const mouseMoveTimer = useRef<NodeJS.Timeout>();
-
-  const isTouchDevice = () => {
+  
+  // CRITICAL FIX: Detect touch device ONCE and store it as a constant value
+  const [isTouchDevice] = useState(() => {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  };
+  });
 
+  // Mouse tracking - ONLY runs on non-touch devices
   useEffect(() => {
-    if (isTouchDevice()) {
+    // Skip if touch device
+    if (isTouchDevice) {
+      // Set default CSS values for touch devices
       document.documentElement.style.setProperty('--mouse-x', '0.5');
       document.documentElement.style.setProperty('--mouse-y', '0.5');
       document.documentElement.style.setProperty('--mouse-x-percent', '0');
@@ -109,7 +113,7 @@ function App() {
       window.removeEventListener('scroll', handleScroll);
       if (mouseMoveTimer.current) clearTimeout(mouseMoveTimer.current);
     };
-  }, [mouseMoved]);
+  }, [mouseMoved, isTouchDevice]);
 
   useEffect(() => {
     const dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
@@ -146,9 +150,11 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Router>
-            {!isTouchDevice() && (
+            {/* CRITICAL FIX: Use the constant isTouchDevice value, not a function call */}
+            {!isTouchDevice && (
               <div className={`mouse-glow ${mouseMoved ? 'visible' : ''}`} />
             )}
+            
             <Suspense fallback={
               <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
                 <CircularProgress size={60} thickness={4} />
