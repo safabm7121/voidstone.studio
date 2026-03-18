@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface MouseTrackerProps {
   children: React.ReactNode;
@@ -6,8 +6,18 @@ interface MouseTrackerProps {
 
 export const MouseTracker: React.FC<MouseTrackerProps> = ({ children }) => {
   const timerRef = useRef<NodeJS.Timeout>();
+  
+  // Add touch device detection
+  const [isTouchDevice] = useState(() => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  });
 
   useEffect(() => {
+    // 🛑 CRITICAL: Skip on touch devices
+    if (isTouchDevice) {
+      return;
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
       // Update CSS variables
       document.documentElement.style.setProperty('--mouse-x-px', e.clientX + 'px');
@@ -34,7 +44,7 @@ export const MouseTracker: React.FC<MouseTrackerProps> = ({ children }) => {
         clearTimeout(timerRef.current);
       }
     };
-  }, []);
+  }, [isTouchDevice]); // Add dependency
 
   return <>{children}</>;
 };
