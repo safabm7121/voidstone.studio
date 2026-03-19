@@ -26,7 +26,6 @@ import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/helpers';
 import ImageGallery from '../components/products/ImageGallery';
 import { toast } from 'react-toastify';
-import '../styles/ProductDetail.css';
 
 interface Product {
   _id: string;
