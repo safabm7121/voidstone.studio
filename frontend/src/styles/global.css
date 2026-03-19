@@ -1165,3 +1165,56 @@ video[src*="streamable"] {
 img, video {
   transition: filter 0.2s ease;
 }
+.fade-blur,
+.fade-blur *,
+.MuiContainer-root,
+.MuiPaper-root {
+  pointer-events: none !important;
+}
+
+button, 
+a, 
+.MuiButtonBase-root,
+.navbar a,
+.navbar button {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 9999 !important;
+}
+/* Force all interactive elements to be clickable */
+button, 
+a, 
+[role="button"],
+.MuiButtonBase-root,
+.MuiIconButton-root,
+.MuiListItem-root,
+.navbar *,
+[class*="nav"] *,
+[class*="Nav"] * {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 9999 !important;
+  cursor: pointer !important;
+}
+
+/* Make all container elements non-interactive by default */
+div, 
+section, 
+main, 
+header, 
+footer,
+.MuiContainer-root,
+.MuiPaper-root,
+.MuiBox-root {
+  pointer-events: none;
+}
+
+/* Re-enable pointer events on elements that need them */
+button, a, input, select, textarea,
+.MuiButtonBase-root,
+.MuiIconButton-root,
+.MuiListItem-root,
+[role="button"],
+[tabindex] {
+  pointer-events: auto !important;
+}
