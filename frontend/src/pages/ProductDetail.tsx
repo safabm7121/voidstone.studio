@@ -1,21 +1,33 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  Container, Typography, Grid, Card, CardMedia, Box, Chip, Button, CircularProgress,
-  Divider, Paper, IconButton, FormControlLabel, Switch, Alert, 
+  Container,
+  Typography,
+  Grid,
+  Box,
+  Chip,
+  Button,
+  CircularProgress,
+  Divider,
+  IconButton,
+ 
+
+  Alert
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import HomeIcon from '@mui/icons-material/Home';
+import StoreIcon from '@mui/icons-material/Store';
 import { productApi } from '../services/api';
-import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/helpers';
 import ImageSlider from '../components/products/ImageSlider';
 import { toast } from 'react-toastify';
+import './../styles/ProductDetail.css';
 
 interface Product {
   _id: string;
@@ -36,23 +48,17 @@ const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  // State
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingImages, setSavingImages] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [useNewSlider, setUseNewSlider] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [simpleSliderIndex, setSimpleSliderIndex] = useState(0);
-  // Hooks
-  const { elementRef, isVisible } = useIntersectionObserver({ threshold: 0.1 });
+  
   const { addToCart } = useCart();
   const { isAuthenticated, user } = useAuth();
 
-  // Check if user is admin
   const isAdmin = user?.role?.toLowerCase() === 'admin';
 
-  // Helper to split category into main and sub (e.g., "Men Shirts" → main="Men", sub="Shirts")
   const splitCategory = (cat: string) => {
     if (!cat) return { main: '', sub: '' };
     const parts = cat.split(' ');
@@ -62,7 +68,6 @@ const ProductDetail: React.FC = () => {
     return { main: cat, sub: '' };
   };
 
-  // Fetch product data
   const fetchProduct = useCallback(async () => {
     if (!id) return;
     
@@ -91,14 +96,12 @@ const ProductDetail: React.FC = () => {
     fetchProduct(); 
   }, [fetchProduct]);
 
-  // Handle image changes
   const handleImagesChange = async (newImages: string[]) => {
     if (!isAdmin || !product) {
       toast.warning('You do not have permission to edit images');
       return;
     }
     
-    // Validate images
     const validImages = newImages.filter(img => img && typeof img === 'string');
     
     if (validImages.length === 0) {
@@ -109,17 +112,14 @@ const ProductDetail: React.FC = () => {
     try {
       setSavingImages(true);
       
-      // Only send the images field to avoid overwriting other data
       const response = await productApi.put(`/products/${product._id}`, {
         images: validImages
       });
       
       if (response.data?.product) {
-        // Update local state with the response from server
         setProduct(response.data.product);
         toast.success('Images updated successfully');
       } else {
-        // Fallback: update local state manually
         setProduct({ ...product, images: validImages });
         toast.success('Images updated successfully');
       }
@@ -127,7 +127,6 @@ const ProductDetail: React.FC = () => {
     } catch (error: any) {
       console.error('Error updating images:', error);
       
-      // Handle specific error cases
       if (error.response?.status === 401) {
         toast.error('Authentication required. Please login again.');
         navigate('/login');
@@ -141,7 +140,6 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  // Handle add to cart
   const handleAddToCart = () => {
     if (!isAuthenticated) { 
       toast.info('Please login to add items to cart');
@@ -160,7 +158,6 @@ const ProductDetail: React.FC = () => {
     toast.success(`${quantity} × ${product.name} added to cart`);
   };
 
-  // Handle quantity changes
   const increaseQuantity = () => {
     if (!product) return;
     if (quantity < product.stock_quantity) {
@@ -174,32 +171,22 @@ const ProductDetail: React.FC = () => {
     setQuantity(prev => Math.max(1, prev - 1));
   };
 
-  // Loading state
   if (loading) {
     return (
-      <Box 
-        display="flex" 
-        justifyContent="center" 
-        alignItems="center" 
-        minHeight="60vh"
-        flexDirection="column"
-        gap={2}
-      >
+      <Box className="loading-container">
         <CircularProgress size={60} thickness={4} />
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="textSecondary">
           Loading product details...
         </Typography>
       </Box>
     );
   }
 
-  // Error state
   if (error || !product) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" className="error-container">
         <Alert 
-          severity="error" 
-          sx={{ mb: 3 }}
+          severity="error"
           action={
             <Button color="inherit" size="small" onClick={() => navigate('/products')}>
               Browse Products
@@ -212,6 +199,7 @@ const ProductDetail: React.FC = () => {
           startIcon={<ArrowBackIcon />} 
           onClick={() => navigate('/products')}
           variant="outlined"
+          className="back-button"
         >
           {t('common.back')}
         </Button>
@@ -222,380 +210,231 @@ const ProductDetail: React.FC = () => {
   const { main, sub } = splitCategory(product.category || '');
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <div ref={elementRef} className={`fade-blur ${isVisible ? 'visible' : ''}`}>
-        {/* Header with back button and slider toggle */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          mb: 2,
-          flexWrap: 'wrap',
-          gap: 2
-        }}>
-          <Button 
-            startIcon={<ArrowBackIcon />} 
-            onClick={() => navigate('/products')}
-            variant="text"
-            sx={{ '&:hover': { bgcolor: 'action.hover' } }}
-          >
-            {t('common.back')}
-          </Button>
-          
-          {/* Admin info and slider toggle */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {isAdmin && (
-              <Chip 
-                label="Admin Mode" 
-                color="primary" 
-                size="small"
-                sx={{ fontWeight: 'bold' }}
-              />
-            )}
-            <FormControlLabel
-              control={
-                <Switch 
-                  checked={useNewSlider} 
-                  onChange={(e) => setUseNewSlider(e.target.checked)}
-                  color="primary"
-                />
-              }
-              label="3D Slider"
-              labelPlacement="start"
-            />
-          </Box>
-        </Box>
+    <Container maxWidth="lg" className="product-detail-container">
+      {/* Breadcrumbs */}
+      <div className="breadcrumbs">
+        <Link to="/" className="breadcrumb-link">
+          <HomeIcon fontSize="small" />
+          <span>Home</span>
+        </Link>
+        <span className="breadcrumb-separator">/</span>
+        <Link to="/products" className="breadcrumb-link">
+          <StoreIcon fontSize="small" />
+          <span>Products</span>
+        </Link>
+        <span className="breadcrumb-separator">/</span>
+        <span className="breadcrumb-current">{product.name}</span>
+      </div>
 
-        {/* Saving indicator */}
-        {savingImages && (
-          <Alert 
-            severity="info" 
-            sx={{ mb: 2 }}
-            icon={<CircularProgress size={20} />}
-          >
-            Saving images... Please wait.
-          </Alert>
+      {/* Header */}
+      <div className="product-header">
+        <Button 
+          startIcon={<ArrowBackIcon />} 
+          onClick={() => navigate('/products')}
+          className="back-button"
+        >
+          Back to Products
+        </Button>
+        
+        {isAdmin && (
+          <Chip 
+            label="Admin Mode" 
+            color="primary" 
+            size="small"
+            className="admin-chip"
+          />
         )}
+      </div>
 
-        {/* Main content grid */}
-        <Grid container spacing={4}>
-          {/* Image section */}
-          <Grid item xs={12} md={6}>
-            {useNewSlider ? (
-              <ImageSlider 
-                images={product.images || []} 
-                productName={product.name}
-                isEditable={isAdmin}
-                onImagesChange={handleImagesChange}
-              />
-            ) : (
-              <Card elevation={3}>
-                {product.images?.length > 0 ? (
-                  <>
-                    <CardMedia
-                      component="img"
-                      height="400"
-                      image={product.images[simpleSliderIndex]}  
-                      alt={product.name}
-                      sx={{
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s',
-                        '&:hover': { transform: 'scale(1.02)' }
-                      }}
-                    />
-                    {product.images.length > 1 && (
-                      <Box sx={{
-                        display: 'flex',
-                        gap: 1,
-                        p: 2,
-                        overflowX: 'auto',
-                        '&::-webkit-scrollbar': { height: 8 },
-                        '&::-webkit-scrollbar-thumb': {
-                          bgcolor: 'primary.main',
-                          borderRadius: 4,
-                        }
-                      }}>
-                        {product.images.map((img: string, idx: number) => (
-                          <Box
-                            key={idx}
-                            onClick={() => setSimpleSliderIndex(idx)}  
-                            sx={{
-                              width: 80,
-                              height: 80,
-                              border: '2px solid',
-                              borderColor: idx === simpleSliderIndex ? 'primary.main' : 'transparent',  
-                              borderRadius: 1,
-                              cursor: 'pointer',
-                              backgroundImage: `url(${img})`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                              transition: 'transform 0.2s',
-                              '&:hover': {
-                                transform: 'scale(1.1)',
-                                borderColor: 'primary.main'
-                              }
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                  </>
-                ) : (
-                  <Box sx={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
-                    <Typography color="text.secondary">No images available</Typography>
-                  </Box>
-                )}
-              </Card>
+      {/* Saving Indicator */}
+      {savingImages && (
+        <Alert 
+          severity="info" 
+          className="saving-alert"
+          icon={<CircularProgress size={20} />}
+        >
+          Saving images... Please wait.
+        </Alert>
+      )}
+
+      {/* Main Content */}
+      <Grid container spacing={6} className="product-grid">
+        {/* Image Section */}
+        <Grid item xs={12} md={6}>
+          <div className="image-section">
+            <ImageSlider 
+              images={product.images || []} 
+              productName={product.name}
+              isEditable={isAdmin}
+              onImagesChange={handleImagesChange}
+            />
+          </div>
+        </Grid>
+
+        {/* Info Section */}
+        <Grid item xs={12} md={6}>
+          <div className="info-section">
+            <Typography variant="h3" className="product-title">
+              {product.name}
+            </Typography>
+            
+            <Typography variant="h4" className="product-price">
+              {formatCurrency(product.price)}
+            </Typography>
+            
+            {/* Tags */}
+            {product.tags && product.tags.length > 0 && (
+              <div className="tags-container">
+                {product.tags.map((tag: string) => (
+                  <Chip 
+                    key={tag} 
+                    label={tag} 
+                    size="small"
+                    className="tag-chip"
+                  />
+                ))}
+              </div>
             )}
-          </Grid>
-
-          {/* Product info section */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: { xs: 2, md: 4 } }}>
-              <Typography 
-                variant="h3" 
-                gutterBottom 
-                sx={{ 
-                  fontWeight: 700,
-                  fontSize: { xs: '2rem', md: '2.5rem' }
-                }}
-              >
-                {product.name}
-              </Typography>
-              
-              <Typography 
-                variant="h4" 
-                color="primary" 
-                gutterBottom 
-                sx={{ fontWeight: 600, mb: 3 }}
-              >
-                {formatCurrency(product.price)}
-              </Typography>
-              
-              {/* Tags */}
-              {product.tags && product.tags.length > 0 && (
-                <Box sx={{ my: 2 }}>
-                  {product.tags.map((tag: string) => (
-                    <Chip 
-                      key={tag} 
-                      label={tag} 
-                      size="small"
-                      sx={{ 
-                        mr: 1, 
-                        mb: 1,
-                        bgcolor: 'secondary.light',
-                        color: 'secondary.contrastText'
-                      }} 
-                    />
-                  ))}
-                </Box>
-              )}
-              
-              <Divider sx={{ my: 3 }} />
-              
-              {/* Description */}
-              <Typography 
-                variant="body1" 
-                paragraph 
-                sx={{ 
-                  lineHeight: 1.8,
-                  color: 'text.secondary'
-                }}
-              >
-                {product.description}
-              </Typography>
-              
-              {/* Product details grid */}
-              <Grid container spacing={3} sx={{ mt: 2 }}>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    {t('product.category')}
-                  </Typography>
-                  {/* Category chips – main and sub (translated) */}
-                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            
+            <Divider className="divider" />
+            
+            {/* Description */}
+            <Typography className="product-description">
+              {product.description}
+            </Typography>
+            
+            {/* Product Details Grid */}
+            <div className="details-grid">
+              <div className="detail-item">
+                <Typography variant="subtitle2" color="textSecondary" className="detail-label">
+                  {t('product.category')}
+                </Typography>
+                <div className="category-chips">
+                  <Chip
+                    label={t(`products.categories.${main.toLowerCase()}`)}
+                    size="small"
+                    variant="outlined"
+                  />
+                  {sub && (
                     <Chip
-                      label={t(`products.categories.${main.toLowerCase()}`)}
+                      label={t(`products.categories.${sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase()}`)}
                       size="small"
+                      color="primary"
                       variant="outlined"
                     />
-                    {sub && (
-                      <Chip
-                        label={t(`products.categories.${sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase()}`)}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    {t('product.designer')}
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {product.designer || t('product.defaultDesigner')}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    {t('product.stock')}
-                  </Typography>
-                  <Typography 
-                    variant="body1" 
-                    fontWeight="500"
-                    color={product.stock_quantity > 0 ? 'success.main' : 'error.main'}
-                  >
-                    {product.stock_quantity > 0 
-                      ? `${product.stock_quantity} ${t('product.available')}`
-                      : 'Out of Stock'
-                    }
-                  </Typography>
-                </Grid>
-
-                {product._id && (
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Product ID
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
-                      {product._id.slice(-8)}
-                    </Typography>
-                  </Grid>
-                )}
-              </Grid>
-
-              {/* Quantity selector */}
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 2, 
-                my: 4,
-                p: 2,
-                bgcolor: 'action.hover',
-                borderRadius: 2
-              }}>
-                <Typography variant="body1" fontWeight="500">
-                  {t('product.quantity')}:
+                  )}
+                </div>
+              </div>
+              
+              <div className="detail-item">
+                <Typography variant="subtitle2" color="textSecondary" className="detail-label">
+                  {t('product.designer')}
                 </Typography>
-                
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1,
-                  bgcolor: 'background.paper',
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'divider'
-                }}>
-                  <IconButton 
-                    onClick={decreaseQuantity} 
-                    disabled={quantity <= 1}
-                    size="small"
-                    sx={{ 
-                      borderRadius: 0,
-                      '&:hover': { bgcolor: 'action.hover' }
-                    }}
-                  >
-                    <RemoveIcon />
-                  </IconButton>
-                  
-                  <Typography 
-                    sx={{ 
-                      minWidth: 40, 
-                      textAlign: 'center',
-                      fontWeight: 600
-                    }}
-                  >
-                    {quantity}
-                  </Typography>
-                  
-                  <IconButton 
-                    onClick={increaseQuantity}
-                    disabled={quantity >= product.stock_quantity}
-                    size="small"
-                    sx={{ 
-                      borderRadius: 0,
-                      '&:hover': { bgcolor: 'action.hover' }
-                    }}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Box>
-                
-                <Typography variant="body2" color="text.secondary">
-                  Total: {formatCurrency(product.price * quantity)}
+                <Typography variant="body1" className="detail-value">
+                  {product.designer || t('product.defaultDesigner')}
                 </Typography>
-              </Box>
-
-              {/* Add to cart button */}
-              <Button 
-                variant="contained" 
-                size="large" 
-                fullWidth 
-                startIcon={<ShoppingCartIcon />} 
-                onClick={handleAddToCart} 
-                disabled={product.stock_quantity === 0 || savingImages} 
-                sx={{ 
-                  py: 2,
-                  bgcolor: 'black', 
-                  '&:hover': { 
-                    bgcolor: '#333',
-                    transform: 'translateY(-2px)',
-                    boxShadow: 4
-                  },
-                  '&:disabled': {
-                    bgcolor: 'action.disabledBackground'
-                  },
-                  transition: 'all 0.2s'
-                }}
-              >
-                {product.stock_quantity > 0 
-                  ? t('product.addToCart') 
-                  : t('product.outOfStock')
-                }
-              </Button>
-
-              {/* Login prompt for non-authenticated users */}
-              {!isAuthenticated && (
+              </div>
+              
+              <div className="detail-item">
+                <Typography variant="subtitle2" color="textSecondary" className="detail-label">
+                  {t('product.stock')}
+                </Typography>
                 <Typography 
-                  variant="body2" 
-                  color="text.secondary" 
-                  align="center" 
-                  sx={{ mt: 3 }}
+                  variant="body1" 
+                  className={`stock-value ${product.stock_quantity > 0 ? 'in-stock' : 'out-of-stock'}`}
                 >
-                  {t('product.loginRequired')}{' '}
-                  <Button 
-                    component={Link} 
-                    to="/login" 
-                    size="small"
-                    sx={{ textTransform: 'none' }}
-                  >
-                    {t('auth.login')}
-                  </Button>
+                  {product.stock_quantity > 0 
+                    ? `${product.stock_quantity} ${t('product.available')}`
+                    : 'Out of Stock'
+                  }
                 </Typography>
-              )}
+              </div>
 
-              {/* Admin note */}
-              {isAdmin && (
-                <Typography 
-                  variant="caption" 
-                  color="text.secondary" 
-                  align="center" 
-                  sx={{ 
-                    mt: 2, 
-                    display: 'block',
-                    fontStyle: 'italic'
-                  }}
-                >
-                  You are in admin mode. You can add, remove, or reorder images using the 3D slider.
-                </Typography>
+              {product._id && (
+                <div className="detail-item">
+                  <Typography variant="subtitle2" color="textSecondary" className="detail-label">
+                    Product ID
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" className="product-id">
+                    {product._id.slice(-8)}
+                  </Typography>
+                </div>
               )}
-            </Paper>
-          </Grid>
+            </div>
+
+            {/* Quantity Selector */}
+            <div className="quantity-selector">
+              <Typography variant="body1" className="quantity-label">
+                {t('product.quantity')}:
+              </Typography>
+              
+              <div className="quantity-controls">
+                <IconButton 
+                  onClick={decreaseQuantity} 
+                  disabled={quantity <= 1}
+                  className="quantity-button"
+                >
+                  <RemoveIcon />
+                </IconButton>
+                
+                <Typography className="quantity-value">
+                  {quantity}
+                </Typography>
+                
+                <IconButton 
+                  onClick={increaseQuantity}
+                  disabled={quantity >= product.stock_quantity}
+                  className="quantity-button"
+                >
+                  <AddIcon />
+                </IconButton>
+              </div>
+              
+              <Typography variant="body2" color="textSecondary" className="total-price">
+                Total: {formatCurrency(product.price * quantity)}
+              </Typography>
+            </div>
+
+            {/* Add to Cart Button */}
+            <Button 
+              variant="contained" 
+              size="large" 
+              fullWidth 
+              startIcon={<ShoppingCartIcon />} 
+              onClick={handleAddToCart} 
+              disabled={product.stock_quantity === 0 || savingImages} 
+              className="add-to-cart-button"
+            >
+              {product.stock_quantity > 0 
+                ? t('product.addToCart') 
+                : t('product.outOfStock')
+              }
+            </Button>
+
+            {/* Login Prompt */}
+            {!isAuthenticated && (
+              <Typography variant="body2" color="textSecondary" className="login-prompt">
+                {t('product.loginRequired')}{' '}
+                <Button 
+                  component={Link} 
+                  to="/login" 
+                  size="small"
+                  className="login-link"
+                >
+                  {t('auth.login')}
+                </Button>
+              </Typography>
+            )}
+
+            {/* Admin Note */}
+            {isAdmin && (
+              <Typography variant="caption" color="textSecondary" className="admin-note">
+                You are in admin mode. You can add, remove, or reorder images using the slider controls.
+              </Typography>
+            )}
+          </div>
         </Grid>
-      </div>
+      </Grid>
     </Container>
   );
 };

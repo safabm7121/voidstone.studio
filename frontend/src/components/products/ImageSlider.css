@@ -1,416 +1,460 @@
-/* ImageSlider.css */
-
 .slider-container {
   position: relative;
   width: 100%;
-  min-height: 400px; /* ensure space for buttons */
+  background: transparent;
 }
 
-/* Settings Button - base (right side) */
-.slider-settings-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 100; /* increased to be above image */
-}
-
-/* Settings Button - left side variant */
-.slider-settings-left {
-  left: 10px !important;
-  right: auto !important;
-}
-
-.slider-settings-button button,
-.slider-play-pause button,
-.slider-add-image button,
-.slider-delete-button {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  width: 40px !important;
-  height: 40px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.slider-settings-button button:hover,
-.slider-play-pause button:hover,
-.slider-add-image button:hover,
-.slider-delete-button:hover {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-}
-
-.slider-delete-button {
-  background-color: rgba(255, 0, 0, 0.8) !important;
-}
-
-.slider-delete-button:hover {
-  background-color: rgba(255, 0, 0, 1) !important;
-}
-
-/* Play/Pause Button */
-.slider-play-pause {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 100;
-}
-
-.slider-play-pause-shifted {
-  left: 60px !important;
-}
-
-/* Add Image Button */
-.slider-add-image {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  z-index: 100;
-}
-
-/* Main Slider */
-.slider-main {
+.main-image-container {
   position: relative;
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  perspective: 1200px;
-  overflow: visible;
-  cursor: grab;
-  /* Prevent page scroll on touch */
-  touch-action: pan-y pinch-zoom; /* Allow vertical scroll but not horizontal */
-}
-
-.slider-main.dragging {
-  cursor: grabbing;
-  touch-action: none; /* Disable all touch actions while dragging */
-}
-
-/* Navigation Arrows */
-.slider-nav-left,
-.slider-nav-right {
-  position: absolute;
-  z-index: 50;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px !important;
-  height: 40px !important;
-  /* Ensure buttons don't cause page scroll */
-  touch-action: manipulation;
-}
-
-.slider-nav-left:hover,
-.slider-nav-right:hover {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-}
-
-.slider-nav-left {
-  left: 0;
-}
-
-.slider-nav-right {
-  right: 0;
-}
-
-/* Image Container */
-.slider-image-container {
-  position: absolute;
-  cursor: pointer;
-  transform-style: preserve-3d;
-  /* Don't block touch events on the container */
-  touch-action: none;
-  pointer-events: none; /* You already have this */
-}
-
-.slider-image-box {
-  width: 100%;
-  height: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f8f8f8;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Image with contain (no white background) */
-.slider-image-contain {
+[data-theme="dark"] .main-image-container {
+  background: #2d2d2d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.main-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background-color: transparent;
-  /* Prevent image from causing scroll */
-  touch-action: none;
-  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-/* Image Index Badge */
-.slider-image-badge {
+.nav-button {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
-  z-index: 50;
-  /* Allow clicking through badge */
-  pointer-events: none;
-}
-
-.slider-image-badge span {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  color: white !important;
-  font-size: 0.8rem;
-  /* Badge itself shouldn't block touches */
-  pointer-events: none;
-}
-
-/* Delete Button - Bottom Right variant */
-.slider-delete-bottom-right {
-  top: auto !important;
-  bottom: 10px !important;
-  right: 10px !important;
-  position: absolute !important;
-  z-index: 100 !important;
-  /* Delete button should be clickable but not cause scroll */
-  touch-action: manipulation;
-}
-
-/* No Image Placeholder */
-.slider-no-image {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f0f0f0;
-  flex-direction: column;
-  touch-action: pan-y pinch-zoom;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
 }
 
-.slider-add-button {
+[data-theme="dark"] .nav-button {
+  background: rgba(30, 30, 30, 0.9);
+  color: white;
+}
+
+.nav-button:hover {
+  background: white;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.nav-button.left {
+  left: 16px;
+}
+
+.nav-button.right {
+  right: 16px;
+}
+
+.nav-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.image-counter {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 10;
+  
+  -webkit-backdrop-filter:  blur(4px);
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.5px;
+}
+
+.admin-buttons {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.admin-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.admin-button.delete {
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+}
+
+.admin-button.delete:hover {
+  background: rgb(220, 38, 38);
+  transform: scale(1.1);
+}
+
+.admin-button.add {
+  background: rgba(37, 99, 235, 0.9);
+  color: white;
+}
+
+.admin-button.add:hover {
+  background: rgb(37, 99, 235);
+  transform: scale(1.1);
+}
+
+.settings-button {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+}
+
+[data-theme="dark"] .settings-button {
+  background: rgba(30, 30, 30, 0.9);
+  color: white;
+}
+
+.settings-button:hover {
+  transform: scale(1.1);
+  background: white;
+}
+
+.play-pause-button {
+  position: absolute;
+  top: 16px;
+  left: 68px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+}
+
+[data-theme="dark"] .play-pause-button {
+  background: rgba(30, 30, 30, 0.9);
+  color: white;
+}
+
+.play-pause-button:hover {
+  transform: scale(1.1);
+  background: white;
+}
+
+.thumbnail-strip {
+  display: flex;
+  gap: 8px;
   margin-top: 16px;
-  touch-action: manipulation;
+  padding: 8px 4px;
+  overflow-x: auto;
+
 }
 
-/* Processing Indicator */
-.slider-processing {
+.thumbnail-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.thumbnail-strip::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.thumbnail-strip::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+[data-theme="dark"] .thumbnail-strip::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+.thumbnail-item {
+  position: relative;
+  flex: 0 0 auto;
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.thumbnail-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.thumbnail-item.active {
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .thumbnail-item.active {
+  border-color: #60a5fa;
+}
+
+.thumbnail-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reorder-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 5;
+  transition: all 0.2s;
+}
+
+.reorder-handle:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.reorder-handle:active {
+  cursor: grabbing;
+}
+
+.placeholder-thumb {
+  flex: 0 0 auto;
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  border: 2px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+[data-theme="dark"] .placeholder-thumb {
+  border-color: #444;
+}
+
+.placeholder-thumb:hover {
+  background: rgba(0, 0, 0, 0.05);
+  transform: scale(1.05);
+}
+
+.placeholder-thumb svg {
+  color: #999;
+}
+
+[data-theme="dark"] .placeholder-thumb svg {
+  color: #666;
+}
+
+.settings-panel {
+  padding: 24px;
+  width: 300px;
+  background: white;
+  border-radius: 12px !important;
+}
+
+[data-theme="dark"] .settings-panel {
+  background: #1e1e1e !important;
+  color: white;
+}
+
+.settings-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.settings-control {
+  margin-bottom: 20px;
+}
+
+.settings-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+[data-theme="dark"] .settings-label {
+  color: #aaa;
+}
+
+.processing-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 200;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 16px;
-  border-radius: inherit;
-  /* Don't block touches when processing */
-  pointer-events: none;
+  z-index: 100;
+  border-radius: 12px;
+   -webkit-backdrop-filter:  blur(4px);
+  backdrop-filter: blur(4px);
 }
 
-.slider-processing .MuiTypography-root {
+.processing-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   color: white;
 }
 
-/* Side Cards */
-.slider-side-card {
-  position: absolute;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  opacity: 0.6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 30;
-  /* Side cards should be clickable but not cause scroll */
-  touch-action: manipulation;
-}
-
-.slider-side-card:hover {
-  opacity: 0.8;
-  transform: scale(1.05);
-}
-
-.slider-side-card.left {
-  left: calc(50% - 300px);
-}
-
-.slider-side-card.right {
-  right: calc(50% - 300px);
-}
-
-.slider-side-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none; /* Let clicks pass through to parent */
-}
-
-/* Thumbnails */
-.slider-thumbnails {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 40;
-  /* Thumbnails area should allow vertical scroll if needed */
-  touch-action: pan-y pinch-zoom;
-}
-
-.slider-thumbnail {
-  width: 60px;
-  height: 60px;
-  border-radius: 4px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  touch-action: manipulation;
-}
-
-.slider-thumbnail.active {
-  border: 3px solid black;
-  opacity: 1;
-}
-
-.slider-thumbnail.inactive {
-  border: 1px solid #ddd;
-  opacity: 0.6;
-}
-
-.slider-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
-}
-
-/* Reorder Handle */
-.slider-reorder-handle {
-  position: absolute !important;
-  top: 2px !important;
-  left: 2px !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  width: 24px !important;
-  height: 24px !important;
-  padding: 2px !important;
-  z-index: 60 !important;
-  touch-action: manipulation;
-}
-
-.slider-reorder-handle:hover {
-  background-color: rgba(0, 0, 0, 0.8) !important;
-}
-
-.slider-reorder-handle:active {
-  cursor: grabbing !important;
-}
-
-/* Placeholder */
-.slider-placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 4px;
-  background-color: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px dashed #ccc;
-  touch-action: manipulation;
-}
-
-.slider-placeholder svg {
-  color: #ccc;
-  pointer-events: none;
-}
-
-/* Settings Popover */
-.slider-settings-paper {
-  padding: 24px;
-  width: 300px;
-}
-
-.slider-settings-title {
-  margin-bottom: 16px;
-}
-
-.slider-speed-control,
-.slider-depth-control,
-.slider-radius-control {
-  margin-top: 16px;
-}
-
-/* Mobile indicator dots */
-.slider-dots {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 16px;
-  flex-wrap: wrap;
-  touch-action: pan-y pinch-zoom;
-}
-
-.slider-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 3px;
-  background-color: #ccc;
-  transition: all 0.3s;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.slider-dot.active {
-  width: 20px;
-  background-color: #1976d2;
-}
-
 /* Mobile adjustments */
-@media screen and (max-width: 600px) {
-  .slider-thumbnail {
+@media (max-width: 768px) {
+  .nav-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .nav-button svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .thumbnail-item {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .placeholder-thumb {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .admin-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .settings-button,
+  .play-pause-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .play-pause-button {
+    left: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .thumbnail-item {
     width: 50px;
     height: 50px;
   }
   
-  .slider-delete-button {
-    width: 28px !important;
-    height: 28px !important;
+  .placeholder-thumb {
+    width: 50px;
+    height: 50px;
   }
-  
-  .slider-delete-button svg {
-    font-size: 16px !important;
-  }
-  
-  .slider-reorder-handle {
-    width: 20px !important;
-    height: 20px !important;
-  }
-  
-  .slider-reorder-handle svg {
-    font-size: 14px !important;
-  }
-  
-  .slider-side-card.left {
-    left: calc(50% - 200px);
-    width: 60px !important;
-  }
-  
-  .slider-side-card.right {
-    right: calc(50% - 200px);
-    width: 60px !important;
-  }
-  
-  .slider-settings-paper {
-    width: 250px;
-    padding: 16px;
-  }
-  
-  /* Additional mobile touch improvements */
-  .slider-main {
-    touch-action: pan-y pinch-zoom;
-  }
-  
-  .slider-main.dragging {
-    touch-action: none;
+}
+
+/* Loading state */
+.no-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  gap: 16px;
+}
+
+[data-theme="dark"] .no-image-placeholder {
+  background: #2d2d2d;
+}
+
+/* RTL support */
+[dir="rtl"] .nav-button.left {
+  left: auto;
+  right: 16px;
+}
+
+[dir="rtl"] .nav-button.right {
+  right: auto;
+  left: 16px;
+}
+
+[dir="rtl"] .image-counter {
+  right: auto;
+  left: 16px;
+}
+
+[dir="rtl"] .admin-buttons {
+  left: auto;
+  right: 16px;
+}
+
+[dir="rtl"] .settings-button {
+  left: auto;
+  right: 16px;
+}
+
+[dir="rtl"] .play-pause-button {
+  left: auto;
+  right: 68px;
+}
+
+@media (max-width: 768px) {
+  [dir="rtl"] .play-pause-button {
+    right: 60px;
   }
 }
