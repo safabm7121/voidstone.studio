@@ -268,15 +268,11 @@
   -webkit-tap-highlight-color: rgba(0,0,0,0.1);
 }
 
-/* Content container - doesn't block clicks but children can receive them */
-.parallax-scroll-content {
-  pointer-events: none !important;
-}
-
-/* All direct children of content can receive clicks */
-.parallax-scroll-content > * {
-  pointer-events: auto !important;
-}
+/* IMPORTANT:
+   Avoid disabling pointer-events on the content wrapper.
+   On iOS Safari (and with component libraries like MUI), DOM structure can change
+   (wrappers/spans/portals), causing elements to fall outside "direct child" overrides
+   and become untappable. Background layers already have pointer-events: none. */
 
 /* ========== MOBILE RESPONSIVE - BUTTON FIX ========== */
 
@@ -291,7 +287,6 @@
     transform: perspective(800px) rotateX(calc(var(--mouse-y-percent, 0) * 1deg)) 
                                rotateY(calc(var(--mouse-x-percent, 0) * -1deg)) !important;
     transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
-    pointer-events: none !important;
   }
   
   .parallax-scroll-bg {
@@ -428,4 +423,26 @@
 .parallax-scroll-content {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+/* DISABLE ALL PARALLAX EFFECTS ON MOBILE */
+@media (hover: none) and (pointer: coarse) {
+  .parallax-scroll,
+  .parallax-scroll-content,
+  .parallax-scroll-bg,
+  .parallax-scroll:hover .parallax-scroll-content,
+  .parallax-scroll:hover .parallax-scroll-bg,
+  .parallax-scroll-content > *,
+  .parallax-scroll:hover .parallax-scroll-content > * {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  
+  .parallax-scroll::before,
+  .parallax-scroll:hover::before {
+    display: none !important;
+    opacity: 0 !important;
+  }
 }
