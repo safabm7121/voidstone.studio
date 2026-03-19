@@ -62,28 +62,28 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     );
   }
 
-  // Framer behavior: ensure at least 6 items for a full ring
+  // FIX 1: Multiply products to fill 12 slots
   const generateDisplayItems = () => {
     if (products.length === 0) return [];
     
-    const minCount = 6;
-    const targetCount = Math.max(products.length, minCount);
+    const targetCount = 12;
     const items: (Product | null)[] = [];
     
-    if (products.length >= minCount) {
-      return products;
-    }
-
-    // Repeat products to fill at least 6 slots
-    for (let i = 0; i < targetCount; i++) {
-      const originalIndex = i % products.length;
-      const product = products[originalIndex];
-      
-      // Create a copy with a unique key for repeated items
-      items.push({
-        ...product,
-        _id: `${product._id}-copy-${Math.floor(i / products.length)}-${i}`
-      });
+    if (products.length >= targetCount) {
+      // If we have 12 or more products, just take first 12
+      return products.slice(0, targetCount);
+    } else {
+      // Repeat products to fill 12 slots
+      for (let i = 0; i < targetCount; i++) {
+        const originalIndex = i % products.length;
+        const product = products[originalIndex];
+        
+        // Create a copy with a unique key for repeated items
+        items.push({
+          ...product,
+          _id: `${product._id}-copy-${Math.floor(i / products.length)}-${i}`
+        });
+      }
     }
     
     return items;
@@ -97,7 +97,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     const animate = () => {
       if (!isPaused && !isHovered && !isSwiping) {
         setRotation(prev => {
-          const increment = 0.1 * (rotationSpeed / 8);
+          const increment = 0.1 * (8 / rotationSpeed);
           return (prev + increment) % 360;
         });
       }
@@ -110,7 +110,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     };
   }, [isPaused, isHovered, isSwiping, rotationSpeed]);
 
-  // Update current index based on rotation
+  // Update current index
   useEffect(() => {
     if (displayItems.length === 0) return;
     const itemAngle = 360 / displayItems.length;
@@ -119,7 +119,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     setCurrentIndex(centerIndex);
   }, [rotation, displayItems.length]);
 
-  // Snap to center after swiping
+  // FIX: Snap to center after swiping
   const snapToCenter = () => {
     if (itemCount === 0) return;
     
@@ -136,17 +136,18 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     setRotation(prev => prev + diff);
   };
 
-  // Touch handlers for mobile swipe with snap
+  // FIX 2: Touch handlers for mobile swipe with snap
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
     setIsSwiping(true);
-    setIsPaused(true);
+    setIsPaused(true); // Pause animation while swiping
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
     
+    // Add a class to indicate swiping (for visual feedback)
     if (containerRef.current) {
       containerRef.current.classList.add('is-swiping');
     }
@@ -155,11 +156,13 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   const onTouchEnd = () => {
     setIsSwiping(false);
     
+    // Remove swiping class
     if (containerRef.current) {
       containerRef.current.classList.remove('is-swiping');
     }
     
     if (!touchStart || !touchEnd) {
+      // If no swipe happened, just snap to center
       snapToCenter();
       return;
     }
@@ -173,9 +176,11 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     } else if (isRightSwipe) {
       handlePrev();
     } else {
+      // If it wasn't a full swipe, snap back to center
       snapToCenter();
     }
     
+    // Resume animation after a delay
     if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
     snapTimeoutRef.current = setTimeout(() => {
       setIsPaused(false);
@@ -184,6 +189,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
 
   const handlePrev = () => {
     setRotation(prev => prev - (360 / itemCount));
+    // Pause briefly after manual navigation
     setIsPaused(true);
     if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
     snapTimeoutRef.current = setTimeout(() => setIsPaused(false), 3000);
@@ -191,12 +197,14 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
   
   const handleNext = () => {
     setRotation(prev => prev + (360 / itemCount));
+    // Pause briefly after manual navigation
     setIsPaused(true);
     if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
     snapTimeoutRef.current = setTimeout(() => setIsPaused(false), 3000);
   };
 
   const handleProductClick = (productId: string) => {
+    // Remove copy suffix for navigation
     const originalId = productId.split('-copy-')[0];
     navigate(`/products/${originalId}`);
   };
@@ -214,17 +222,12 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     }).format(price).replace('TND', 'DT').trim();
   };
 
-  // FIXED: Proper TypeScript style object with correct CSS properties
-  const getItemStyle = (index: number): React.CSSProperties => {
+  const getItemStyle = (index: number) => {
     const totalItems = displayItems.length;
     const angleStep = 360 / totalItems;
+    const angle = angleStep * index - rotation;
     
-    // Fixed position in the ring (doesn't change with rotation)
-    const fixedAngle = angleStep * index;
-
-    // Use current rotation only for depth/scale calculation
-    const globalAngle = fixedAngle + rotation;
-    const radian = (globalAngle * Math.PI) / 180;
+    const radian = (angle * Math.PI) / 180;
     const zPosition = Math.cos(radian) * orbitRadius;
     
     const minScale = 1 - depthIntensity;
@@ -232,22 +235,18 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     const normalizedZ = zPosition / orbitRadius;
     const scale = ((normalizedZ + 1) / 2) * (maxScale - minScale) + minScale;
     
-    // Slight vertical movement for depth effect
-    const yOffset = Math.sin(radian) * 8;
+    const yOffset = Math.sin(radian) * 10;
     
     return {
-      transform: `translateX(-50%) translateY(calc(-50% + ${yOffset}px)) rotateY(${fixedAngle}deg) translateZ(${orbitRadius}px) scale(${scale})`,
+      transform: `translateX(-50%) translateY(calc(-50% + ${yOffset}px)) rotateY(${angle}deg) translateZ(${orbitRadius}px) scale(${scale})`,
       width: imageWidth,
       height: imageHeight,
       left: '50%',
       top: '50%',
-      position: 'absolute',
+      position: 'absolute' as const,
       opacity: 1,
       filter: 'none',
       zIndex: Math.floor((zPosition + orbitRadius) / 10),
-      // Fixed: Use string literals for CSS properties
-      WebkitBackfaceVisibility: 'hidden' as const,
-      backfaceVisibility: 'hidden' as const,
     };
   };
 
@@ -259,12 +258,13 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <Box className="carousel-3d-stage">
+      <Box 
+        className="carousel-3d-stage" 
+      >
         <Box
           ref={orbitRef}
           className="carousel-orbit"
-          // Framer-style: rotate the whole container for true 3D orbit
-          style={{ transform: `rotateX(-8deg) rotateY(${rotation}deg)` }}
+          style={{ transform: `rotateX(0deg)` }}
           onMouseEnter={() => pauseOnHover && setIsHovered(true)}
           onMouseLeave={() => pauseOnHover && setIsHovered(false)}
         >
@@ -272,7 +272,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
             const style = getItemStyle(index);
             const isCenter = index === currentIndex;
             
-            // Placeholder for missing items
+            // SAFE: Check if item exists before rendering
             if (!item) {
               return (
                 <Box
@@ -289,7 +289,9 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
                 </Box>
               );
             }
-          const imageUrl = item.images && item.images.length > 0 
+
+            // SAFE: Check if images array exists before accessing [0]
+            const imageUrl = item.images && item.images.length > 0 
               ? item.images[0] 
               : 'https://via.placeholder.com/400x300';
 
@@ -322,7 +324,7 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
         </Box>
       </Box>
 
-      {/* Navigation Buttons */}
+      {/* Navigation Buttons - Always visible on all devices */}
       <IconButton onClick={handlePrev} className="carousel-nav-btn left">
         <ChevronLeftIcon />
       </IconButton>
@@ -384,20 +386,11 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
           </Box>
 
           <Box className="settings-item">
-            <Box className="settings-label"><span>Border Radius</span><span>{borderRadius}px</span></Box>
+            <Box className="settings-label"><span>Radius</span><span>{borderRadius}px</span></Box>
             <Slider value={borderRadius} onChange={(_, val) => setBorderRadius(val as number)} min={0} max={30} step={2} size="small" />
           </Box>
 
-          <FormControlLabel 
-            control={
-              <Switch 
-                checked={pauseOnHover} 
-                onChange={(e) => setPauseOnHover(e.target.checked)} 
-                size="small" 
-              />
-            } 
-            label="Pause on hover" 
-          />
+          <FormControlLabel control={<Switch checked={pauseOnHover} onChange={(e) => setPauseOnHover(e.target.checked)} size="small" />} label="Pause on hover" />
 
           <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block', textAlign: 'center' }}>
             Item {currentIndex + 1} of {displayItems.length}
