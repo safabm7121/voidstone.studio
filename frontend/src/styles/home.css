@@ -284,8 +284,9 @@
     line-height: 1.6;
   }
   
+  /* ONLY CHANGED THIS - increased height from 350px to 400px */
   .featured-section .carousel-container {
-    height: min(350px, 45vh, 90vw);
+    height: 400px;
     margin: 1rem 0 0.5rem 0;
   }
   
@@ -333,8 +334,9 @@
     font-size: clamp(0.85rem, 3.5vw, 0.95rem);
   }
   
+  /* ONLY CHANGED THIS - increased height from 400px to 450px */
   .featured-section .carousel-container {
-    height: min(400px, 50vh, 85vw);
+    height: 450px;
     margin: 1.25rem 0 0.75rem 0;
   }
   
@@ -382,8 +384,9 @@
     font-size: clamp(0.9rem, 3vw, 1rem);
   }
   
+  /* ONLY CHANGED THIS - increased height from 450px to 500px */
   .featured-section .carousel-container {
-    height: min(450px, 55vh, 80vw);
+    height: 500px;
     margin: 1.5rem 0 1rem 0;
   }
 }
@@ -410,8 +413,9 @@
     font-size: clamp(0.95rem, 2.5vw, 1.1rem);
   }
   
+  /* ONLY CHANGED THIS - increased height from 500px to 550px */
   .featured-section .carousel-container {
-    height: min(500px, 60vh, 75vw);
+    height: 550px;
     margin: 2rem 0 1.25rem 0;
   }
   
@@ -436,7 +440,7 @@
   }
 }
 
-/* iPad Mini (768px) */
+/* iPad Mini (768px) - BACK TO ORIGINAL */
 @media (min-width: 768px) {
   .hero-title {
     font-size: clamp(3rem, 5.5vw, 4rem);
@@ -460,6 +464,7 @@
     font-size: clamp(1rem, 2.2vw, 1.15rem);
   }
   
+  /* RESTORED ORIGINAL responsive size */
   .featured-section .carousel-container {
     height: min(550px, 65vh, 70vw);
     margin: 2.5rem 0 1.5rem 0;
@@ -660,6 +665,7 @@
     display: none;
   }
 }
+
 .hero-background-video {
   position: absolute;
   top: 0;
@@ -668,7 +674,7 @@
   height: 100%;
   object-fit: cover;
   z-index: 0;
-  pointer-events: none; /* Prevents video from blocking button clicks */
+  pointer-events: none;
   
   /* ADD THESE 3 LINES */
   -webkit-touch-callout: none;
