@@ -30,13 +30,20 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [localImages, setLocalImages] = useState(images);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleNext = () => {
+    if (isTransitioning || localImages.length <= 1) return;
+    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev + 1) % localImages.length);
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const handlePrev = () => {
+    if (isTransitioning || localImages.length <= 1) return;
+    setIsTransitioning(true);
     setCurrentIndex((prev) => (prev - 1 + localImages.length) % localImages.length);
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const handleDelete = (index: number) => {
@@ -58,7 +65,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   };
 
   const handleAddImage = () => {
-    // Add your image upload logic here
     toast.info('Image upload functionality');
   };
 
@@ -71,6 +77,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             variant="outlined"
             startIcon={<AddPhotoAlternateIcon />}
             onClick={handleAddImage}
+            sx={{ 
+              borderColor: 'rgba(0,0,0,0.3)', 
+              color: 'text.primary',
+              '&:hover': { borderColor: 'rgba(0,0,0,0.5)' }
+            }}
           >
             Add Images
           </Button>
@@ -83,19 +94,22 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     <Box className="gallery-container">
       {/* Main Image */}
       <Box className="main-image-wrapper">
-        <img
+        <img 
+          key={currentIndex}
           src={localImages[currentIndex]}
           alt={`${productName} - ${currentIndex + 1}`}
           className="main-image"
+          
         />
 
-        {/* Navigation Arrows - Always Visible */}
+        {/* Navigation Arrows */}
         {localImages.length > 1 && (
           <>
             <Tooltip title="Previous">
               <IconButton
                 onClick={handlePrev}
                 className="nav-arrow left"
+                disabled={isTransitioning}
               >
                 <ChevronLeftIcon />
               </IconButton>
@@ -104,6 +118,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               <IconButton
                 onClick={handleNext}
                 className="nav-arrow right"
+                disabled={isTransitioning}
               >
                 <ChevronRightIcon />
               </IconButton>

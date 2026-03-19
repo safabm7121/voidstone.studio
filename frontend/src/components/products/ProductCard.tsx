@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Typography, Chip, Box, CardActions, Button, IconButton, Tooltip } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -45,21 +45,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
     return { main: cat, sub: '' };
   };
 
+  const handleCardClick = () => {
+    navigate(`/products/${product._id}`);
+  };
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent card click
     addToCart(product, 1);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent card click
     onDelete?.(product);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent card click
     if (onEdit) {
       onEdit(product);
     } else {
@@ -69,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleViewHistory = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent card click
     onViewHistory?.(product);
   };
 
@@ -78,10 +82,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div ref={elementRef} className={`fade-blur ${isVisible ? 'visible' : ''} product-card-wrapper`}>
-      <Card className="product-card">
+      <Card className="product-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
         {/* Admin actions – positioned according to direction */}
         {isAdmin && (
-          <Box className={`product-card-admin-actions ${isRtl ? 'rtl' : 'ltr'}`}>
+          <Box className={`product-card-admin-actions ${isRtl ? 'rtl' : 'ltr'}`} onClick={(e) => e.stopPropagation()}>
             <Tooltip title="View History">
               <IconButton
                 size="small"
@@ -112,93 +116,87 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </Box>
         )}
 
-        <Link
-          to={`/products/${product._id}`}
-          className="product-card-link"
-        >
-          {/* Image container */}
-          <Box className="product-card-image-container">
-            {product.images?.length ? (
-              <Box
-                component="img"
-                src={product.images[0]}
-                alt={product.name}
-                className="product-card-image"
+        {/* Image container */}
+        <Box className="product-card-image-container">
+          {product.images?.length ? (
+            <Box
+              component="img"
+              src={product.images[0]}
+              alt={product.name}
+              className="product-card-image"
+            />
+          ) : (
+            <Box className="product-card-no-image">
+              No image
+            </Box>
+          )}
+        </Box>
+
+        <CardContent className="product-card-content">
+          <Typography
+            variant="subtitle1"
+            className="product-card-title"
+            noWrap
+          >
+            {product.name}
+          </Typography>
+          <Typography
+            variant="body2"
+            className="product-card-description"
+            noWrap
+          >
+            {product.description}
+          </Typography>
+
+          {/* Category chips – main and sub (translated) */}
+          {product.category && (
+            <Box className="product-card-categories">
+              <Chip
+                label={t(`products.categories.${main.toLowerCase()}`)}
+                size="small"
+                variant="outlined"
               />
-            ) : (
-              <Box className="product-card-no-image">
-                No image
-              </Box>
-            )}
-          </Box>
-
-          <CardContent className="product-card-content">
-            <Typography
-              variant="subtitle1"
-              className="product-card-title"
-              noWrap // Ensure single line
-            >
-              {product.name}
-            </Typography>
-            <Typography
-              variant="body2"
-              className="product-card-description"
-              noWrap // Ensure single line
-            >
-              {product.description}
-            </Typography>
-
-            {/* Category chips – main and sub (translated) */}
-            {product.category && (
-              <Box className="product-card-categories">
+              {sub && (
                 <Chip
-                  label={t(`products.categories.${main.toLowerCase()}`)}
+                  label={t(`products.categories.${sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase()}`)}
                   size="small"
+                  color="primary"
                   variant="outlined"
                 />
-                {sub && (
-                  <Chip
-                    label={t(`products.categories.${sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase()}`)}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                )}
-              </Box>
-            )}
+              )}
+            </Box>
+          )}
 
-            <Typography variant="h6" className="product-card-price">
-              {formatCurrency(product.price)}
-            </Typography>
+          <Typography variant="h6" className="product-card-price">
+            {formatCurrency(product.price)}
+          </Typography>
 
-            {/* Tags – justified based on direction */}
-            {product.tags?.length > 0 && (
-              <Box className={`product-card-tags ${isRtl ? 'rtl' : 'ltr'}`}>
-                {product.tags.slice(0, 3).map(tag => (
-                  <Chip
-                    key={tag}
-                    label={tag}
-                    size="small"
-                    sx={{ fontSize: '0.6875rem', height: 22, bgcolor: 'action.hover' }}
-                  />
-                ))}
-                {product.tags.length > 3 && (
-                  <Chip
-                    label={`+${product.tags.length - 3}`}
-                    size="small"
-                    sx={{ fontSize: '0.6875rem', height: 22, bgcolor: 'action.hover' }}
-                  />
-                )}
-              </Box>
-            )}
-          </CardContent>
-        </Link>
+          {/* Tags – justified based on direction */}
+          {product.tags?.length > 0 && (
+            <Box className={`product-card-tags ${isRtl ? 'rtl' : 'ltr'}`}>
+              {product.tags.slice(0, 3).map(tag => (
+                <Chip
+                  key={tag}
+                  label={tag}
+                  size="small"
+                  sx={{ fontSize: '0.6875rem', height: 22, bgcolor: 'action.hover' }}
+                />
+              ))}
+              {product.tags.length > 3 && (
+                <Chip
+                  label={`+${product.tags.length - 3}`}
+                  size="small"
+                  sx={{ fontSize: '0.6875rem', height: 22, bgcolor: 'action.hover' }}
+                />
+              )}
+            </Box>
+          )}
+        </CardContent>
 
-        <CardActions className="product-card-actions">
+        <CardActions className="product-card-actions" onClick={(e) => e.stopPropagation()}>
           <Button
-            component={Link}
-            to={`/products/${product._id}`}
             className="product-card-view-details-btn"
+            onClick={handleCardClick}
           >
             View Details
           </Button>
