@@ -1182,6 +1182,50 @@ footer,
 [class*="wrapper"] {
   pointer-events: none !important;
 }
+/* ===== FIX CLICK ISSUES ON CARDS AND CAROUSEL ===== */
+.product-card,
+.product-card *,
+.product-card-wrapper,
+.product-card-wrapper *,
+.carousel-item,
+.carousel-item *,
+.carousel-card,
+.carousel-card *,
+.MuiCard-root,
+.MuiCard-root *,
+[class*="product-card"],
+[class*="carousel-item"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Ensure interactive elements inside cards remain clickable */
+.product-card button,
+.product-card a,
+.product-card .MuiButtonBase-root,
+.carousel-item button,
+.carousel-item a,
+.carousel-nav-btn,
+.carousel-control-btn {
+  pointer-events: auto !important;
+  z-index: 10000 !important;
+}
+
+/* Make sure the card content doesn't block clicks on the card itself */
+.product-card-content,
+.product-card-image-container,
+.product-card-actions {
+  pointer-events: none !important;
+}
+
+/* But allow clicks on buttons inside those containers */
+.product-card-content button,
+.product-card-content a,
+.product-card-image-container button,
+.product-card-actions button,
+.product-card-actions a {
+  pointer-events: auto !important;
+}
 
 /* Force ALL interactive elements to be clickable */
 button, 
