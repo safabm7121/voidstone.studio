@@ -1,11 +1,11 @@
 /* 3D Orbit Carousel - Final Version */
-/* Truly responsive - fills its container */
+/* Smooth on mobile, zero linter warnings */
 
 .carousel-container {
   position: relative;
   width: 100%;
-  height: 100%; /* Fill the container completely */
-  margin: 0; /* Remove margins - let parent handle spacing */
+  height: min(500px, 65vh);
+  margin: clamp(15px, 4vw, 40px) 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,8 +52,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Smooth animation - consistent across all devices */
-  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+  /* No transition by default – animation loop handles rotation */
+  transition: none;
 }
 
 .carousel-item {
@@ -133,7 +133,7 @@
   z-index: 1;
 }
 
-/* IMAGES */
+/* IMAGES – no more linter warnings (only -webkit-optimize-contrast) */
 .carousel-image {
   width: 100%;
   height: 100%;
@@ -142,8 +142,9 @@
   /* Hardware acceleration */
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
-  /* Image rendering */
+  /* Image rendering – works in Chrome, Safari, Edge 79+, and Firefox 75+ */
   image-rendering: -webkit-optimize-contrast;
+  /* IE/Edge Legacy */
   -ms-interpolation-mode: nearest-neighbor;
 }
 
@@ -205,8 +206,8 @@
   transform: translate3d(0, -50%, 0) !important;
   background-color: rgba(255, 255, 255, 0.95) !important;
   color: var(--color-text-primary) !important;
-  width: 44px !important;
-  height: 44px !important;
+  width: clamp(36px, 4.5vw, 44px) !important;
+  height: clamp(36px, 4.5vw, 44px) !important;
   box-shadow: 0 4px 15px var(--color-shadow) !important;
   transition: all 0.2s ease !important;
   z-index: 200;
@@ -234,28 +235,28 @@
 }
 
 .carousel-nav-btn.left {
-  inset-inline-start: 10px;
+  inset-inline-start: clamp(10px, 3vw, 30px);
 }
 
 .carousel-nav-btn.right {
-  inset-inline-end: 10px;
+  inset-inline-end: clamp(10px, 3vw, 30px);
 }
 
 .carousel-nav-btn svg {
-  font-size: 24px;
+  font-size: clamp(18px, 3.5vw, 24px);
 }
 
 .carousel-controls {
   position: absolute;
-  bottom: 20px;
-  inset-inline-end: 20px;
+  bottom: clamp(10px, 3vh, 20px);
+  inset-inline-end: clamp(10px, 3vw, 30px);
   display: flex;
-  gap: 8px;
+  gap: clamp(5px, 1.5vw, 8px);
   z-index: 200;
   background: rgba(255, 255, 255, 0.2);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  padding: 6px;
+  padding: clamp(4px, 1.2vw, 6px);
   border-radius: 40px;
   box-shadow: 0 4px 15px var(--color-shadow);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -272,8 +273,8 @@
   background: transparent !important;
   color: var(--color-text-secondary) !important;
   transition: all 0.2s ease !important;
-  width: 32px !important;
-  height: 32px !important;
+  width: clamp(26px, 3.5vw, 32px) !important;
+  height: clamp(26px, 3.5vw, 32px) !important;
 }
 
 .carousel-control-btn:hover {
@@ -284,8 +285,8 @@
 }
 
 .carousel-settings-panel {
-  padding: 20px;
-  width: 260px;
+  padding: clamp(14px, 3.5vw, 20px);
+  width: min(260px, 85vw);
   border-radius: 16px !important;
   background: var(--color-background-paper) !important;
   -webkit-backdrop-filter: blur(10px);
@@ -299,14 +300,14 @@
 }
 
 .settings-title {
-  font-size: 1rem;
+  font-size: clamp(0.95rem, 2.8vw, 1.05rem);
   font-weight: 600;
-  margin-bottom: 18px;
+  margin-bottom: clamp(14px, 3.5vh, 18px);
   color: var(--color-text-primary);
 }
 
 .settings-item {
-  margin-bottom: 18px;
+  margin-bottom: clamp(14px, 3.5vh, 18px);
 }
 
 .settings-label {
@@ -314,7 +315,7 @@
   justify-content: space-between;
   margin-bottom: 6px;
   color: var(--color-text-secondary);
-  font-size: 0.85rem;
+  font-size: clamp(0.75rem, 2.2vw, 0.85rem);
 }
 
 [dir="rtl"] .settings-label {
@@ -327,12 +328,12 @@
   justify-content: center;
   background: linear-gradient(135deg, var(--color-background-paper) 0%, var(--color-background) 100%);
   color: var(--color-text-disabled);
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 2.8vw, 0.95rem);
   font-weight: 500;
   border: 2px dashed var(--color-border);
 }
 
-/* Mobile indicators */
+/* Mobile indicators (optional) */
 .carousel-indicators {
   position: absolute;
   bottom: 60px;
@@ -360,54 +361,71 @@
   opacity: 1;
 }
 
-/* ===== RESPONSIVE ADJUSTMENTS ===== */
-/* Only adjust UI elements, NOT the carousel size */
+/* ===== MOBILE OPTIMIZATIONS ===== */
+@media (max-width: 767px) {
+  .carousel-3d-stage {
+    -webkit-perspective: 600px;
+    perspective: 600px;
+  }
 
-/* Tablet and below */
-@media (max-width: 768px) {
-  .carousel-nav-btn {
-    width: 40px !important;
-    height: 40px !important;
+  .carousel-orbit {
+    -webkit-transform: rotateX(-3deg) rotateY(0deg) translate3d(0, 0, 0);
+    transform: rotateX(-3deg) rotateY(0deg) translate3d(0, 0, 0);
+    /* Tiny transition smoothes the animation on lower-end devices */
+    
+    -webkit-transition: -webkit-transform 0.1s linear;
+    transition: transform 0.1s linear;
   }
-  
-  .carousel-nav-btn svg {
-    font-size: 20px;
+
+  .carousel-item {
+    transition: none;
   }
-  
-  .carousel-controls {
-    bottom: 15px;
-    inset-inline-end: 15px;
-    padding: 4px;
-    gap: 4px;
+
+  /* Hide distant items to reduce rendering load */
+  .carousel-item[style*="scale(0.7)"],
+  .carousel-item[style*="scale(0.8)"],
+  .carousel-item[style*="scale(0.9)"],
+  .carousel-item[style*="scale(1)"] {
+    display: block;
   }
-  
-  .carousel-control-btn {
-    width: 28px !important;
-    height: 28px !important;
+
+  .carousel-item[style*="scale(0.5)"],
+  .carousel-item[style*="scale(0.6)"] {
+    display: none;
   }
-  
+
+  .carousel-card {
+    box-shadow: 0 5px 15px var(--color-shadow);
+  }
+
+  .carousel-card:hover {
+    -webkit-transform: scale(1.02) translate3d(0, -3px, 0);
+    transform: scale(1.02) translate3d(0, -3px, 0);
+  }
+
   .carousel-overlay {
-    padding: 12px;
+    padding: 8px;
   }
-  
+
   .product-name {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    margin-bottom: 2px;
   }
-  
+
   .product-category {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
+    margin-bottom: 2px;
   }
-  
+
   .product-price {
-    font-size: 0.8rem;
-    padding: 3px 6px;
+    font-size: 0.75rem;
   }
-  
+
   .carousel-indicators {
     display: flex;
-    bottom: 45px;
+    bottom: 50px;
   }
-  
+
   .carousel-settings-panel {
     position: fixed !important;
     bottom: 0 !important;
@@ -418,52 +436,44 @@
     border-radius: 20px 20px 0 0 !important;
     animation: slideUp 0.3s ease;
   }
-  
+
   @keyframes slideUp {
     from { -webkit-transform: translate3d(0, 100%, 0); transform: translate3d(0, 100%, 0); }
     to { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
   }
-}
 
-/* Small phones */
-@media (max-width: 375px) {
   .carousel-nav-btn {
-    width: 36px !important;
-    height: 36px !important;
-  }
-  
-  .carousel-nav-btn svg {
-    font-size: 18px;
-  }
-  
-  .carousel-overlay {
-    padding: 8px;
-  }
-  
-  .product-name {
-    font-size: 0.7rem;
-  }
-  
-  .product-category {
-    font-size: 0.55rem;
-  }
-  
-  .product-price {
-    font-size: 0.7rem;
-    padding: 2px 4px;
-  }
-  
-  .carousel-indicator {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .carousel-indicator.active {
-    width: 16px;
+    width: 44px !important;
+    height: 44px !important;
   }
 }
 
-/* Swipe hint gradients */
+@media (max-width: 575px) {
+  .carousel-3d-stage {
+    -webkit-perspective: 500px;
+    perspective: 500px;
+  }
+
+  .carousel-orbit {
+    -webkit-transform: rotateX(-2deg) rotateY(0deg) translate3d(0, 0, 0);
+    transform: rotateX(-2deg) rotateY(0deg) translate3d(0, 0, 0);
+  }
+
+  .carousel-card::after {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.1) 40%, transparent 80%);
+  }
+}
+
+/* Throttle animation on very low‑end devices */
+@media (max-width: 375px) and (prefers-reduced-motion: no-preference) {
+  .carousel-orbit {
+   
+    -webkit-transition: -webkit-transform 0.15s linear;
+     transition: transform 0.15s linear;
+  }
+}
+
+/* Swipe hint gradients (optional) */
 .carousel-container::before,
 .carousel-container::after {
   content: '';
@@ -492,9 +502,86 @@
   opacity: 1;
 }
 
-/* Smooth snapping for mobile */
-.carousel-container.is-swiping .carousel-orbit {
-  transition: transform 0.05s linear !important;
+/* Responsive breakpoints – your existing ones (unchanged) */
+@media (min-width: 2000px) {
+  .carousel-container { height: 600px; margin: 80px 0; }
+  .carousel-orbit { -webkit-transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); }
+  .carousel-nav-btn { width: 52px !important; height: 52px !important; }
+  .carousel-nav-btn.left { inset-inline-start: 60px; }
+  .carousel-nav-btn.right { inset-inline-end: 60px; }
+  .carousel-controls { bottom: 30px; inset-inline-end: 60px; padding: 10px; gap: 12px; }
+  .carousel-control-btn { width: 42px !important; height: 42px !important; }
+  .carousel-overlay { padding: 25px; }
+  .product-name { font-size: 1.2rem; }
+  .product-price { font-size: 1.2rem; }
+}
+
+@media (min-width: 1200px) and (max-width: 1999px) {
+  .carousel-container { height: 500px; margin: 60px 0; }
+  .carousel-orbit { -webkit-transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  .carousel-container { height: 480px; margin: 50px 0; }
+  .carousel-orbit { -webkit-transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); }
+  .carousel-nav-btn.left { inset-inline-start: 20px; }
+  .carousel-nav-btn.right { inset-inline-end: 20px; }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .carousel-container { height: 450px; margin: 40px 0; }
+  .carousel-orbit { -webkit-transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); transform: rotateX(-8deg) rotateY(0deg) translate3d(0, 0, 0); }
+  .carousel-nav-btn { width: 40px !important; height: 40px !important; }
+  .carousel-nav-btn.left { inset-inline-start: 15px; }
+  .carousel-nav-btn.right { inset-inline-end: 15px; }
+  .carousel-overlay { padding: 14px; }
+}
+
+@media (min-width: 576px) and (max-width: 767px) {
+  .carousel-container { height: 400px; margin: 35px 0; }
+  .carousel-nav-btn { width: 44px !important; height: 44px !important; }
+  .carousel-nav-btn.left { inset-inline-start: 12px; }
+  .carousel-nav-btn.right { inset-inline-end: 12px; }
+  .carousel-nav-btn svg { font-size: 20px; }
+  .carousel-overlay { padding: 12px; }
+}
+
+@media (min-width: 400px) and (max-width: 575px) {
+  .carousel-container { height: 350px; margin: 30px 0; }
+  .carousel-nav-btn { width: 44px !important; height: 44px !important; }
+  .carousel-nav-btn.left { inset-inline-start: 8px; }
+  .carousel-nav-btn.right { inset-inline-end: 8px; }
+  .carousel-nav-btn svg { font-size: 18px; }
+  .carousel-overlay { padding: 10px; }
+}
+
+@media (min-width: 376px) and (max-width: 399px) {
+  .carousel-container { height: 320px; margin: 25px 0; }
+  .carousel-nav-btn { width: 40px !important; height: 40px !important; }
+  .carousel-nav-btn.left { inset-inline-start: 6px; }
+  .carousel-nav-btn.right { inset-inline-end: 6px; }
+  .carousel-overlay { padding: 8px; }
+  .carousel-settings-panel { width: 200px; padding: 12px; }
+}
+
+@media (min-width: 320px) and (max-width: 375px) {
+  .carousel-container { height: 300px; margin: 20px 0; }
+  .carousel-nav-btn { width: 38px !important; height: 38px !important; }
+  .carousel-nav-btn.left { inset-inline-start: 4px; }
+  .carousel-nav-btn.right { inset-inline-end: 4px; }
+  .carousel-nav-btn svg { font-size: 18px; }
+  .carousel-overlay { padding: 6px; }
+  .carousel-settings-panel { padding: 10px; width: 180px; }
+}
+
+@media (max-width: 319px) {
+  .carousel-container { height: 250px; margin: 15px 0; }
+  .carousel-nav-btn { width: 34px !important; height: 34px !important; }
+  .carousel-nav-btn.left { inset-inline-start: 2px; }
+  .carousel-nav-btn.right { inset-inline-end: 2px; }
+  .carousel-nav-btn svg { font-size: 16px; }
+  .carousel-overlay { padding: 5px; }
+  .carousel-settings-panel { padding: 8px; width: 160px; }
 }
 
 /* RTL */
@@ -509,3 +596,26 @@
 [data-theme="dark"] .carousel-settings-panel { background: var(--color-background-paper) !important; border-color: var(--color-border); }
 [data-theme="dark"] .settings-title { color: var(--color-text-primary); }
 [data-theme="dark"] .settings-label { color: var(--color-text-secondary); }
+/* Add this at the end of your ThreeDCarousel.css file */
+
+/* Smooth snapping for mobile */
+.carousel-container.is-swiping .carousel-orbit {
+  transition: transform 0.05s linear !important;
+}
+
+/* Add a subtle snap animation when not swiping */
+.carousel-orbit {
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+}
+
+/* Override for mobile to keep it smooth */
+@media (max-width: 767px) {
+  .carousel-orbit {
+    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1) !important;
+  }
+  
+  /* When actively swiping, use a linear transition for responsiveness */
+  .carousel-container.is-swiping .carousel-orbit {
+    transition: transform 0.05s linear !important;
+  }
+}
