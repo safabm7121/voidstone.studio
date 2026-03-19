@@ -10,9 +10,8 @@ import {
   CircularProgress,
   Divider,
   IconButton,
- 
-
-  Alert
+  Alert,
+  Breadcrumbs
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -25,9 +24,9 @@ import { productApi } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/helpers';
-import ImageSlider from '../components/products/ImageSlider';
+import ImageGallery from '../components/products/ImageGallery';
 import { toast } from 'react-toastify';
-import './../styles/ProductDetail.css';
+import '../styles/ProductDetail.css';
 
 interface Product {
   _id: string;
@@ -212,22 +211,22 @@ const ProductDetail: React.FC = () => {
   return (
     <Container maxWidth="lg" className="product-detail-container">
       {/* Breadcrumbs */}
-      <div className="breadcrumbs">
+      <Breadcrumbs className="breadcrumbs" separator="/">
         <Link to="/" className="breadcrumb-link">
           <HomeIcon fontSize="small" />
           <span>Home</span>
         </Link>
-        <span className="breadcrumb-separator">/</span>
         <Link to="/products" className="breadcrumb-link">
           <StoreIcon fontSize="small" />
           <span>Products</span>
         </Link>
-        <span className="breadcrumb-separator">/</span>
-        <span className="breadcrumb-current">{product.name}</span>
-      </div>
+        <Typography color="textPrimary" className="breadcrumb-current">
+          {product.name}
+        </Typography>
+      </Breadcrumbs>
 
       {/* Header */}
-      <div className="product-header">
+      <Box className="product-header">
         <Button 
           startIcon={<ArrowBackIcon />} 
           onClick={() => navigate('/products')}
@@ -244,7 +243,7 @@ const ProductDetail: React.FC = () => {
             className="admin-chip"
           />
         )}
-      </div>
+      </Box>
 
       {/* Saving Indicator */}
       {savingImages && (
@@ -261,19 +260,19 @@ const ProductDetail: React.FC = () => {
       <Grid container spacing={6} className="product-grid">
         {/* Image Section */}
         <Grid item xs={12} md={6}>
-          <div className="image-section">
-            <ImageSlider 
+          <Box className="image-section">
+            <ImageGallery 
               images={product.images || []} 
               productName={product.name}
               isEditable={isAdmin}
               onImagesChange={handleImagesChange}
             />
-          </div>
+          </Box>
         </Grid>
 
         {/* Info Section */}
         <Grid item xs={12} md={6}>
-          <div className="info-section">
+          <Box className="info-section">
             <Typography variant="h3" className="product-title">
               {product.name}
             </Typography>
@@ -284,7 +283,7 @@ const ProductDetail: React.FC = () => {
             
             {/* Tags */}
             {product.tags && product.tags.length > 0 && (
-              <div className="tags-container">
+              <Box className="tags-container">
                 {product.tags.map((tag: string) => (
                   <Chip 
                     key={tag} 
@@ -293,7 +292,7 @@ const ProductDetail: React.FC = () => {
                     className="tag-chip"
                   />
                 ))}
-              </div>
+              </Box>
             )}
             
             <Divider className="divider" />
@@ -304,12 +303,12 @@ const ProductDetail: React.FC = () => {
             </Typography>
             
             {/* Product Details Grid */}
-            <div className="details-grid">
-              <div className="detail-item">
+            <Box className="details-grid">
+              <Box className="detail-item">
                 <Typography variant="subtitle2" color="textSecondary" className="detail-label">
                   {t('product.category')}
                 </Typography>
-                <div className="category-chips">
+                <Box className="category-chips">
                   <Chip
                     label={t(`products.categories.${main.toLowerCase()}`)}
                     size="small"
@@ -323,19 +322,19 @@ const ProductDetail: React.FC = () => {
                       variant="outlined"
                     />
                   )}
-                </div>
-              </div>
+                </Box>
+              </Box>
               
-              <div className="detail-item">
+              <Box className="detail-item">
                 <Typography variant="subtitle2" color="textSecondary" className="detail-label">
                   {t('product.designer')}
                 </Typography>
                 <Typography variant="body1" className="detail-value">
                   {product.designer || t('product.defaultDesigner')}
                 </Typography>
-              </div>
+              </Box>
               
-              <div className="detail-item">
+              <Box className="detail-item">
                 <Typography variant="subtitle2" color="textSecondary" className="detail-label">
                   {t('product.stock')}
                 </Typography>
@@ -348,31 +347,32 @@ const ProductDetail: React.FC = () => {
                     : 'Out of Stock'
                   }
                 </Typography>
-              </div>
+              </Box>
 
               {product._id && (
-                <div className="detail-item">
+                <Box className="detail-item">
                   <Typography variant="subtitle2" color="textSecondary" className="detail-label">
                     Product ID
                   </Typography>
                   <Typography variant="body2" color="textSecondary" className="product-id">
                     {product._id.slice(-8)}
                   </Typography>
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
 
             {/* Quantity Selector */}
-            <div className="quantity-selector">
+            <Box className="quantity-selector">
               <Typography variant="body1" className="quantity-label">
                 {t('product.quantity')}:
               </Typography>
               
-              <div className="quantity-controls">
+              <Box className="quantity-controls">
                 <IconButton 
                   onClick={decreaseQuantity} 
                   disabled={quantity <= 1}
                   className="quantity-button"
+                  size="small"
                 >
                   <RemoveIcon />
                 </IconButton>
@@ -385,15 +385,16 @@ const ProductDetail: React.FC = () => {
                   onClick={increaseQuantity}
                   disabled={quantity >= product.stock_quantity}
                   className="quantity-button"
+                  size="small"
                 >
                   <AddIcon />
                 </IconButton>
-              </div>
+              </Box>
               
               <Typography variant="body2" color="textSecondary" className="total-price">
                 Total: {formatCurrency(product.price * quantity)}
               </Typography>
-            </div>
+            </Box>
 
             {/* Add to Cart Button */}
             <Button 
@@ -429,10 +430,10 @@ const ProductDetail: React.FC = () => {
             {/* Admin Note */}
             {isAdmin && (
               <Typography variant="caption" color="textSecondary" className="admin-note">
-                You are in admin mode. You can add, remove, or reorder images using the slider controls.
+                You are in admin mode. You can add, remove, or reorder images using the gallery controls.
               </Typography>
             )}
-          </div>
+          </Box>
         </Grid>
       </Grid>
     </Container>
