@@ -619,3 +619,17 @@
     transition: transform 0.05s linear !important;
   }
 }
+/* ===== FIX CLICK ISSUES ===== */
+.carousel-item,
+.carousel-item *,
+.carousel-card,
+.carousel-card * {
+  pointer-events: auto !important;
+}
+
+/* Ensure navigation buttons and controls remain clickable */
+.carousel-nav-btn,
+.carousel-control-btn {
+  pointer-events: auto !important;
+  z-index: 9999 !important;
+}

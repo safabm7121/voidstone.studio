@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/helpers';
 import ImageGallery from '../components/products/ImageGallery';
 import { toast } from 'react-toastify';
+import './../styles/ProductDetail.css'; 
 
 interface Product {
   _id: string;
@@ -237,7 +238,6 @@ const ProductDetail: React.FC = () => {
         {isAdmin && (
           <Chip 
             label="Admin Mode" 
-            color="primary" 
             size="small"
             className="admin-chip"
           />
@@ -317,7 +317,6 @@ const ProductDetail: React.FC = () => {
                     <Chip
                       label={t(`products.categories.${sub === 'T-Shirts' ? 'tShirts' : sub.toLowerCase()}`)}
                       size="small"
-                      color="primary"
                       variant="outlined"
                     />
                   )}
@@ -339,7 +338,7 @@ const ProductDetail: React.FC = () => {
                 </Typography>
                 <Typography 
                   variant="body1" 
-                  className={`stock-value ${product.stock_quantity > 0 ? 'in-stock' : 'out-of-stock'}`}
+                  className="stock-value"
                 >
                   {product.stock_quantity > 0 
                     ? `${product.stock_quantity} ${t('product.available')}`

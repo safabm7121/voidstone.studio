@@ -248,3 +248,20 @@
   -webkit-filter: contrast(1.08) saturate(1.15);
   filter: contrast(1.08) saturate(1.15);
 }
+/* ===== FIX CLICK ISSUES ===== */
+.product-card,
+.product-card *,
+.product-card-wrapper,
+.product-card-wrapper * {
+  pointer-events: auto !important;
+}
+
+/* Ensure admin buttons are still clickable */
+.product-card-admin-actions {
+  pointer-events: auto !important;
+  z-index: 20 !important;
+}
+
+.product-card-actions {
+  pointer-events: auto !important;
+}
