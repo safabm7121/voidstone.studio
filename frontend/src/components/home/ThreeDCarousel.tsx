@@ -222,43 +222,33 @@ const ThreeDCarousel: React.FC<ThreeDCarouselProps> = ({ products }) => {
     }).format(price).replace('TND', 'DT').trim();
   };
 
- const getItemStyle = (index: number) => {
-  const totalItems = displayItems.length;
-  const angleStep = 360 / totalItems;
-  const angle = angleStep * index - rotation;
-  
-  const radian = (angle * Math.PI) / 180;
-  const zPosition = Math.cos(radian) * orbitRadius;
-  
-  const minScale = 1 - depthIntensity;
-  const maxScale = 1 + depthIntensity;
-  const normalizedZ = zPosition / orbitRadius;
-  const scale = ((normalizedZ + 1) / 2) * (maxScale - minScale) + minScale;
-  
-  const yOffset = Math.sin(radian) * 10;
-  
-  // Calculate responsive card dimensions based on container size
-  const containerWidth = containerRef.current?.clientWidth || 1200;
-  const baseWidth = Math.min(200, containerWidth * 0.15); // 15% of container width, max 200px
-  const baseHeight = baseWidth * 1.3; // Maintain aspect ratio (260/200 = 1.3)
-  
-  // Use responsive dimensions instead of fixed state values for mobile
-  const isMobile = window.innerWidth <= 768;
-  const cardWidth = isMobile ? baseWidth : imageWidth;
-  const cardHeight = isMobile ? baseHeight : imageHeight;
-  
-  return {
-    transform: `translateX(-50%) translateY(calc(-50% + ${yOffset}px)) rotateY(${angle}deg) translateZ(${orbitRadius}px) scale(${scale})`,
-    width: cardWidth,
-    height: cardHeight,
-    left: '50%',
-    top: '50%',
-    position: 'absolute' as const,
-    opacity: 1,
-    filter: 'none',
-    zIndex: Math.floor((zPosition + orbitRadius) / 10),
+  const getItemStyle = (index: number) => {
+    const totalItems = displayItems.length;
+    const angleStep = 360 / totalItems;
+    const angle = angleStep * index - rotation;
+    
+    const radian = (angle * Math.PI) / 180;
+    const zPosition = Math.cos(radian) * orbitRadius;
+    
+    const minScale = 1 - depthIntensity;
+    const maxScale = 1 + depthIntensity;
+    const normalizedZ = zPosition / orbitRadius;
+    const scale = ((normalizedZ + 1) / 2) * (maxScale - minScale) + minScale;
+    
+    const yOffset = Math.sin(radian) * 10;
+    
+    return {
+      transform: `translateX(-50%) translateY(calc(-50% + ${yOffset}px)) rotateY(${angle}deg) translateZ(${orbitRadius}px) scale(${scale})`,
+      width: imageWidth,
+      height: imageHeight,
+      left: '50%',
+      top: '50%',
+      position: 'absolute' as const,
+      opacity: 1,
+      filter: 'none',
+      zIndex: Math.floor((zPosition + orbitRadius) / 10),
+    };
   };
-};
 
   return (
     <Box 
