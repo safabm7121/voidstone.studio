@@ -38,7 +38,7 @@
   display: block;
 }
 
-/* Custom Navigation Arrows (positioned inside the image container) */
+/* Custom Navigation Arrows */
 .custom-nav {
   position: absolute;
   top: 50%;
@@ -78,7 +78,7 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Swiper Pagination Dots - Instagram style (inside image container) */
+/* Swiper Pagination Dots – Instagram style (inside image) */
 .image-swiper .swiper-pagination {
   position: absolute;
   bottom: 12px !important;
@@ -113,49 +113,13 @@
   background: white;
 }
 
-/* Controls outside image container */
-.gallery-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 12px 0 8px;
-  padding: 0 4px;
-}
-
-.pagination-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Custom dots (outside) – same style as inside but we can reuse */
-.dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.2s ease;
-}
-
-.dot.active {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-[data-theme='dark'] .dot {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-[data-theme='dark'] .dot.active {
-  background: rgba(255, 255, 255, 0.8);
-}
-
-/* Admin buttons */
+/* Admin Buttons (outside image) */
 .admin-buttons {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
+  margin: 12px 0 8px;
+  padding: 0 4px;
 }
 
 .admin-delete,
@@ -322,9 +286,9 @@
   justify-content: center;
   z-index: 100;
   border-radius: 16px;
-  
+
   -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px)
 }
 
 .processing-content {
@@ -391,10 +355,11 @@
   margin-top: 16px;
 }
 
-/* Mobile/tablet adjustments */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .custom-nav {
-    display: none !important;
+    width: 36px;
+    height: 36px;
   }
 
   .admin-delete,
@@ -407,21 +372,16 @@
     width: 60px;
     height: 60px;
   }
-  
+
   .reorder-handle {
     width: 22px;
     height: 22px;
   }
-  
+
   .reorder-handle svg {
     font-size: 12px;
   }
-  
-  .dot {
-    width: 3px;
-    height: 3px;
-  }
-  
+
   .image-swiper .swiper-pagination-bullet {
     width: 3px;
     height: 3px;
@@ -433,12 +393,12 @@
     width: 50px;
     height: 50px;
   }
-  
+
   .reorder-handle {
     width: 20px;
     height: 20px;
   }
-  
+
   .reorder-handle svg {
     font-size: 11px;
   }
@@ -450,7 +410,7 @@
     width: 28px;
     height: 28px;
   }
-  
+
   .thumbnail-item {
     cursor: default;
   }

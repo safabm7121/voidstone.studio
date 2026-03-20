@@ -33,7 +33,7 @@ interface ImageGalleryProps {
   isEditable?: boolean;
 }
 
-// Image compression utility
+// Image compression (same as CreateProduct)
 const compressImage = async (
   base64String: string,
   maxWidth = 2000,
@@ -107,19 +107,16 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [imageUrls, setImageUrls] = useState('');
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const swiperRef = useRef<any>(null);
   const isReordering = useRef(false);
 
+  // Update when images prop changes
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const isMobile = windowWidth <= 768;
+    setLocalImages(images);
+    setCurrentIndex(0);
+  }, [images]);
 
   const handleSlideChange = (swiper: any) => {
     setCurrentIndex(swiper.activeIndex);
@@ -142,7 +139,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setLocalImages(newImages);
     onImagesChange?.(newImages);
     toast.success('Images reordered');
-    // After reorder, update current index if needed
+
+    // Update current index after reorder
     if (currentIndex === fromIndex) {
       setCurrentIndex(toIndex);
     } else if (currentIndex > fromIndex && currentIndex <= toIndex) {
@@ -152,7 +150,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   };
 
-  // File upload handlers
+  // File upload via dropzone
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -252,7 +250,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           </Button>
         )}
         {isProcessing && <CircularProgress size={24} className="processing-spinner" />}
-        
+
         <AddImageDialog
           open={addDialogOpen}
           onClose={() => setAddDialogOpen(false)}
@@ -305,7 +303,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         >
           {localImages.map((img, idx) => (
             <SwiperSlide key={idx}>
-              <img 
+              <img
                 src={img}
                 alt={`${productName} - ${idx + 1}`}
                 className="main-image"
@@ -314,8 +312,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           ))}
         </Swiper>
 
-        {/* Navigation Arrows - visible on desktop only */}
-        {!isMobile && localImages.length > 1 && (
+        {/* Navigation Arrows - always visible */}
+        {localImages.length > 1 && (
           <>
             <div className="swiper-button-prev custom-nav" aria-label="Previous image">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -331,36 +329,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
       </div>
 
-      {/* Admin Buttons & Pagination Dots (outside image container) */}
-      <div className="gallery-controls">
-        {localImages.length > 1 && (
-          <div className="pagination-dots">
-            {localImages.map((_, idx) => (
-              <button
-                key={idx}
-                className={`dot ${idx === currentIndex ? 'active' : ''}`}
-                onClick={() => swiperRef.current?.slideTo(idx)}
-                aria-label={`Go to image ${idx + 1}`}
-              />
-            ))}
-          </div>
-        )}
-
-        {isEditable && (
-          <div className="admin-buttons">
-            <Tooltip title="Delete current image">
-              <IconButton onClick={handleDelete} className="admin-delete" size="small">
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Add images">
-              <IconButton onClick={() => setAddDialogOpen(true)} className="admin-add" size="small">
-                <AddPhotoAlternateIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </div>
-        )}
-      </div>
+      {/* Admin Buttons (outside image) */}
+      {isEditable && (
+        <div className="admin-buttons">
+          <Tooltip title="Delete current image">
+            <IconButton onClick={handleDelete} className="admin-delete" size="small">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Add images">
+            <IconButton onClick={() => setAddDialogOpen(true)} className="admin-add" size="small">
+              <AddPhotoAlternateIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </div>
+      )}
 
       {/* Thumbnail Strip */}
       <div className="thumbnail-strip">
@@ -395,12 +378,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   e.stopPropagation();
                   const fromIndex = idx;
                   const element = e.currentTarget;
-                  
+
                   const onTouchEnd = (endEvent: TouchEvent) => {
                     const endTouch = endEvent.changedTouches[0];
                     const elementsAtPoint = document.elementsFromPoint(endTouch.clientX, endTouch.clientY);
                     const targetBox = elementsAtPoint.find(el => el.closest?.('.thumbnail-item')) as HTMLElement;
-                    
+
                     if (targetBox && targetBox !== element.closest('.thumbnail-item')) {
                       const targetIndex = Array.from(document.querySelectorAll('.thumbnail-item')).findIndex(item => item === targetBox);
                       if (targetIndex !== -1 && targetIndex !== fromIndex) {
@@ -410,7 +393,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     document.removeEventListener('touchend', onTouchEnd);
                     isReordering.current = false;
                   };
-                  
+
                   document.addEventListener('touchend', onTouchEnd);
                   element.style.opacity = '0.5';
                   setTimeout(() => { if (element) element.style.opacity = ''; }, 200);
