@@ -14,8 +14,9 @@
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   touch-action: pan-y pinch-zoom;
+
   -webkit-user-select: none;
-  user-select: none;
+    user-select: none;
 }
 
 [data-theme='dark'] .main-image-wrapper {
@@ -31,7 +32,7 @@
   transition: opacity 0.3s ease-in-out;
 }
 
-/* Instagram-style TINY pagination dots - 2px size */
+/* Instagram-style tiny pagination dots */
 .pagination-dots {
   display: flex;
   justify-content: center;
@@ -41,8 +42,8 @@
 }
 
 .dot {
-  width: 2px !important;
-  height: 2px !important;
+  width: 2px;
+  height: 2px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.3);
   border: none;
@@ -52,8 +53,8 @@
 }
 
 .dot.active {
-  width: 2px !important;
-  height: 2px !important;
+  width: 2px;
+  height: 2px;
   background: rgba(0, 0, 0, 0.8);
   transform: scale(1);
 }
@@ -66,7 +67,7 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* Navigation arrows - hidden on mobile/tablet by default, shown via media query */
+/* Navigation arrows - hidden on mobile/tablet */
 .nav-arrow {
   position: absolute !important;
   top: 50%;
@@ -171,12 +172,12 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Thumbnail items - no blue borders */
+/* Thumbnail items - original size */
 .thumbnail-item {
   position: relative;
   flex: 0 0 auto;
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
@@ -289,9 +290,9 @@
   justify-content: center;
   z-index: 100;
   border-radius: 16px;
-  
+ 
   -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+   backdrop-filter: blur(4px);
 }
 
 .processing-content {
@@ -358,7 +359,7 @@
   margin-top: 16px;
 }
 
-/* Hide navigation arrows on mobile and tablet */
+/* Mobile/tablet adjustments */
 @media (max-width: 768px) {
   .nav-arrow {
     display: none !important;
@@ -375,8 +376,8 @@
   }
 
   .thumbnail-item {
-    width: 55px;
-    height: 55px;
+    width: 60px;
+    height: 60px;
   }
   
   .reorder-handle {
@@ -394,13 +395,13 @@
   }
   
   .dot {
-    width: 2px !important;
-    height: 2px !important;
+    width: 2px;
+    height: 2px;
   }
   
   .dot.active {
-    width: 2px !important;
-    height: 2px !important;
+    width: 2px;
+    height: 2px;
   }
 }
 

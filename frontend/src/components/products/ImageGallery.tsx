@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
   IconButton,
@@ -31,7 +31,7 @@ interface ImageGalleryProps {
   isEditable?: boolean;
 }
 
-// Image compression utility
+// Image compression utility (unchanged)
 const compressImage = async (
   base64String: string,
   maxWidth = 2000,
@@ -111,19 +111,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const isReordering = useRef(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef(0);
-  const dragEndX = useRef(0);
   const [direction, setDirection] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const isMobile = windowWidth <= 768;
 
   const variants = {
     enter: (direction: number) => ({
@@ -201,7 +189,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     touchEndX.current = 0;
   };
 
-  // Mouse handlers for desktop drag
+  // Mouse handlers for desktop drag (optional, but adds nice touch)
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef(0);
+  const dragEndX = useRef(0);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isReordering.current) return;
     setIsDragging(true);
@@ -230,7 +222,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     dragEndX.current = 0;
   };
 
-  // File upload via dropzone
+  // File upload via dropzone (unchanged)
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -397,25 +389,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               x: { type: "spring", stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 }
             }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.7}
-            dragMomentum={false}
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={(_, { offset, velocity }) => {
-              setIsDragging(false);
-              const swipe = Math.abs(offset.x) * velocity.x;
-              if (swipe < -10000 || (Math.abs(offset.x) > 100 && velocity.x < -0.5)) {
-                handleNext();
-              } else if (swipe > 10000 || (Math.abs(offset.x) > 100 && velocity.x > 0.5)) {
-                handlePrev();
-              }
-            }}
           />
         </AnimatePresence>
 
-        {/* Navigation arrows - hidden on mobile/tablet */}
-        {localImages.length > 1 && !isMobile && (
+        {/* Navigation arrows - always rendered, hidden on mobile via CSS */}
+        {localImages.length > 1 && (
           <>
             <Tooltip title="Previous">
               <IconButton
@@ -465,7 +443,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
       </Box>
 
-      {/* Instagram-style pagination dots - TINY */}
+      {/* Instagram-style pagination dots - tiny */}
       {localImages.length > 1 && (
         <div className="pagination-dots">
           {localImages.map((_, idx) => (
@@ -602,7 +580,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   );
 };
 
-// Separate dialog component
+// Separate dialog component (unchanged)
 interface AddImageDialogProps {
   open: boolean;
   onClose: () => void;
