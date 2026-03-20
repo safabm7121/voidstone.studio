@@ -273,13 +273,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           onSwiper={(swiper) => { swiperRef.current = swiper; }}
           onSlideChange={handleSlideChange}
           modules={[Navigation, Pagination]}
-          navigation={{
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
-          }}
-          pagination={{
+          navigation={true}
+          pagination={{ 
             clickable: true,
-            dynamicBullets: true,
+            dynamicBullets: false,
           }}
           loop={false}
           spaceBetween={0}
@@ -296,18 +293,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             </SwiperSlide>
           ))}
         </Swiper>
-
-        {/* Custom Navigation Arrows */}
-        <button className="swiper-button-prev custom-nav" aria-label="Previous image">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        <button className="swiper-button-next custom-nav" aria-label="Next image">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
 
         {/* Admin Buttons */}
         {isEditable && (
