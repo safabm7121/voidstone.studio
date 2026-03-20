@@ -31,7 +31,7 @@ interface ImageGalleryProps {
   isEditable?: boolean;
 }
 
-// Image compression utility (unchanged)
+// Image compression utility
 const compressImage = async (
   base64String: string,
   maxWidth = 2000,
@@ -104,31 +104,41 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [localImages, setLocalImages] = useState(images);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [imageUrls, setImageUrls] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isDragging = useRef(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const isReordering = useRef(false);
+
+  const [direction, setDirection] = useState(0);
 
   const variants = {
-    enter: { opacity: 0 },
-    center: { opacity: 1 },
-    exit: { opacity: 0 },
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 300 : -300,
+      opacity: 0,
+    }),
   };
 
   const handleNext = () => {
-    if (isTransitioning || localImages.length <= 1) return;
-    setIsTransitioning(true);
+    if (localImages.length <= 1) return;
+    setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % localImages.length);
-    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const handlePrev = () => {
-    if (isTransitioning || localImages.length <= 1) return;
-    setIsTransitioning(true);
+    if (localImages.length <= 1) return;
+    setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + localImages.length) % localImages.length);
-    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const handleDelete = (index: number) => {
@@ -148,6 +158,69 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setLocalImages(newImages);
     onImagesChange?.(newImages);
     toast.success('Images reordered');
+  };
+
+  // Touch handlers for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isReordering.current) return;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isReordering.current) return;
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (isReordering.current) {
+      isReordering.current = false;
+      return;
+    }
+    
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+    
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
+
+  // Mouse handlers for desktop drag
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef(0);
+  const dragEndX = useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isReordering.current) return;
+    setIsDragging(true);
+    dragStartX.current = e.clientX;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || isReordering.current) return;
+    dragEndX.current = e.clientX;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    const diff = dragStartX.current - dragEndX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+    
+    dragStartX.current = 0;
+    dragEndX.current = 0;
   };
 
   // File upload via dropzone
@@ -290,19 +363,47 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         </div>
       )}
 
-      {/* Main image carousel */}
-      <Box className="main-image-wrapper">
-        <AnimatePresence mode="wait" initial={false}>
+      {/* Main image carousel with swipe support */}
+      <Box 
+        className="main-image-wrapper"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+      >
+        <AnimatePresence mode="wait" custom={direction} initial={false}>
           <motion.img
             key={currentIndex}
             src={localImages[currentIndex]}
             alt={`${productName} - ${currentIndex + 1}`}
             className="main-image"
+            custom={direction}
             variants={variants}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.3 }}
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.7}
+            dragMomentum={false}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={(_, { offset, velocity }) => {
+              setIsDragging(false);
+              const swipe = Math.abs(offset.x) * velocity.x;
+              if (swipe < -10000 || (Math.abs(offset.x) > 100 && velocity.x < -0.5)) {
+                handleNext();
+              } else if (swipe > 10000 || (Math.abs(offset.x) > 100 && velocity.x > 0.5)) {
+                handlePrev();
+              }
+            }}
           />
         </AnimatePresence>
 
@@ -313,7 +414,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               <IconButton
                 onClick={handlePrev}
                 className="nav-arrow left"
-                disabled={isTransitioning}
                 aria-label="Previous image"
               >
                 <ChevronLeftIcon />
@@ -323,7 +423,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               <IconButton
                 onClick={handleNext}
                 className="nav-arrow right"
-                disabled={isTransitioning}
                 aria-label="Next image"
               >
                 <ChevronRightIcon />
@@ -398,6 +497,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                 draggable
                 aria-label="Drag to reorder"
                 onDragStart={(e) => {
+                  isReordering.current = true;
                   e.dataTransfer.setData('text/plain', idx.toString());
                   const dragImg = new Image();
                   dragImg.src =
@@ -411,10 +511,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                   if (!isNaN(from) && from !== idx) {
                     handleReorder(from, idx);
                   }
+                  isReordering.current = false;
                 }}
                 onTouchStart={(e) => {
                   e.stopPropagation();
-                  isDragging.current = true;
+                  isReordering.current = true;
                   const fromIndex = idx;
                   const element = e.currentTarget;
 
@@ -438,7 +539,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
                     document.removeEventListener('touchmove', onTouchMove);
                     document.removeEventListener('touchend', onTouchEnd);
-                    setTimeout(() => { isDragging.current = false; }, 100);
+                    setTimeout(() => { isReordering.current = false; }, 100);
                   };
 
                   document.addEventListener('touchmove', onTouchMove, { passive: false });
