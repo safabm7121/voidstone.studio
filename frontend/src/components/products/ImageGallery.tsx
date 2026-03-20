@@ -4,7 +4,6 @@ import {
   IconButton,
   Typography,
   Tooltip,
-  Badge,
   Button,
   CircularProgress,
   Dialog,
@@ -32,7 +31,7 @@ interface ImageGalleryProps {
   isEditable?: boolean;
 }
 
-// Image compression utility
+// Image compression utility (unchanged)
 const compressImage = async (
   base64String: string,
   maxWidth = 2000,
@@ -110,6 +109,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const [imageUrls, setImageUrls] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isDragging = useRef(false);
 
   const variants = {
     enter: { opacity: 0 },
@@ -150,7 +150,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     toast.success('Images reordered');
   };
 
-  // Handle file upload via dropzone
+  // File upload via dropzone
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -261,59 +261,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
         {isProcessing && <CircularProgress size={24} className="processing-spinner" />}
 
-        {/* Add Image Dialog */}
-        <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Add Images</DialogTitle>
-          <DialogContent>
-            <div
-              {...getRootProps()}
-              className={`dropzone-area ${isDragActive ? 'drag-active' : ''}`}
-            >
-              <input {...getInputProps()} />
-              <CloudUploadIcon className="dropzone-icon" />
-              <Typography>
-                {isDragActive ? 'Drop images here...' : 'Drag & drop images here'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                (JPG, PNG, WebP, GIF up to 15MB each)
-              </Typography>
-              <Button variant="outlined" size="small" onClick={handleFileSelect} className="browse-button">
-                Browse Files
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden-file-input"
-                onChange={handleFileInputChange}
-                aria-label="Choose image files to upload"
-                title="Choose image files to upload"
-              />
-            </div>
-
-            <Typography variant="subtitle2" gutterBottom className="url-input-label">
-              Or Add Image URLs
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.png"
-              value={imageUrls}
-              onChange={(e) => setImageUrls(e.target.value)}
-              variant="outlined"
-              size="small"
-              aria-label="Image URLs"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddUrls} variant="contained" startIcon={<LinkIcon />}>
-              Add URLs
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <AddImageDialog
+          open={addDialogOpen}
+          onClose={() => setAddDialogOpen(false)}
+          getRootProps={getRootProps}
+          getInputProps={getInputProps}
+          isDragActive={isDragActive}
+          imageUrls={imageUrls}
+          setImageUrls={setImageUrls}
+          handleAddUrls={handleAddUrls}
+          handleFileSelect={handleFileSelect}
+          fileInputRef={fileInputRef}
+          handleFileInputChange={handleFileInputChange}
+        />
       </Box>
     );
   }
@@ -372,13 +332,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           </>
         )}
 
-        {/* Image counter */}
-        <Badge
-          badgeContent={`${currentIndex + 1}/${localImages.length}`}
-          color="primary"
-          className="image-counter"
-        />
-
         {/* Admin delete button */}
         {isEditable && (
           <Tooltip title="Delete current image">
@@ -406,6 +359,20 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
       </Box>
 
+      {/* Instagram-style pagination dots */}
+      {localImages.length > 1 && (
+        <div className="pagination-dots">
+          {localImages.map((_, idx) => (
+            <button
+              key={idx}
+              className={`dot ${idx === currentIndex ? 'active' : ''}`}
+              onClick={() => setCurrentIndex(idx)}
+              aria-label={`Go to image ${idx + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Thumbnail strip */}
       <Box className="thumbnail-strip">
         {localImages.map((img, idx) => (
@@ -425,69 +392,66 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             <img src={img} alt={`Thumbnail ${idx + 1}`} />
 
             {/* Reorder handle with touch support */}
-           {/* Reorder handle with touch support */}
-{isEditable && (
-  <div
-    className="reorder-handle"
-    draggable
-    aria-label="Drag to reorder"
-    onDragStart={(e) => {
-      e.dataTransfer.setData('text/plain', idx.toString());
-      const dragImg = new Image();
-      dragImg.src =
-        'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-      e.dataTransfer.setDragImage(dragImg, 0, 0);
-    }}
-    onDragOver={(e) => e.preventDefault()}
-    onDrop={(e) => {
-      e.preventDefault();
-      const from = parseInt(e.dataTransfer.getData('text/plain'));
-      if (!isNaN(from) && from !== idx) {
-        handleReorder(from, idx);
-      }
-    }}
-    onTouchStart={(e) => {
-      e.stopPropagation();
-      const element = e.currentTarget;
-      const fromIndex = idx;
-      
-      const onTouchMove = (moveEvent: TouchEvent) => {
-        moveEvent.preventDefault();
-      };
-      
-      const onTouchEnd = (endEvent: TouchEvent) => {
-        const endTouch = endEvent.changedTouches[0];
-        const endX = endTouch.clientX;
-        const endY = endTouch.clientY;
-        
-        const elements = document.elementsFromPoint(endX, endY);
-        const targetThumb = elements.find(el => el.closest?.('.thumbnail-item')) as HTMLElement;
-        const targetBox = targetThumb?.closest('.thumbnail-item');
-        
-        if (targetBox) {
-          const targetIndex = Array.from(document.querySelectorAll('.thumbnail-item'))
-            .findIndex(item => item === targetBox);
-          if (targetIndex !== -1 && targetIndex !== fromIndex) {
-            handleReorder(fromIndex, targetIndex);
-          }
-        }
-        
-        document.removeEventListener('touchmove', onTouchMove);
-        document.removeEventListener('touchend', onTouchEnd);
-      };
-      
-      document.addEventListener('touchmove', onTouchMove, { passive: false });
-      document.addEventListener('touchend', onTouchEnd);
-      
-      element.style.opacity = '0.5';
-      setTimeout(() => {
-        element.style.opacity = '';
-      }, 200);
-    }}
-  >
-    <ReorderIcon />
-  </div>
-)}
+            {isEditable && (
+              <div
+                className="reorder-handle"
+                draggable
+                aria-label="Drag to reorder"
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', idx.toString());
+                  const dragImg = new Image();
+                  dragImg.src =
+                    'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+                  e.dataTransfer.setDragImage(dragImg, 0, 0);
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const from = parseInt(e.dataTransfer.getData('text/plain'));
+                  if (!isNaN(from) && from !== idx) {
+                    handleReorder(from, idx);
+                  }
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  isDragging.current = true;
+                  const fromIndex = idx;
+                  const element = e.currentTarget;
+
+                  const onTouchMove = (moveEvent: TouchEvent) => {
+                    moveEvent.preventDefault();
+                  };
+
+                  const onTouchEnd = (endEvent: TouchEvent) => {
+                    const endTouch = endEvent.changedTouches[0];
+                    const elementsAtPoint = document.elementsFromPoint(endTouch.clientX, endTouch.clientY);
+                    const targetThumb = elementsAtPoint.find(el => el.closest?.('.thumbnail-item')) as HTMLElement;
+                    const targetBox = targetThumb?.closest('.thumbnail-item');
+
+                    if (targetBox && targetBox !== element.closest('.thumbnail-item')) {
+                      const targetIndex = Array.from(document.querySelectorAll('.thumbnail-item'))
+                        .findIndex(item => item === targetBox);
+                      if (targetIndex !== -1 && targetIndex !== fromIndex) {
+                        handleReorder(fromIndex, targetIndex);
+                      }
+                    }
+
+                    document.removeEventListener('touchmove', onTouchMove);
+                    document.removeEventListener('touchend', onTouchEnd);
+                    setTimeout(() => { isDragging.current = false; }, 100);
+                  };
+
+                  document.addEventListener('touchmove', onTouchMove, { passive: false });
+                  document.addEventListener('touchend', onTouchEnd);
+                  element.style.opacity = '0.5';
+                  setTimeout(() => {
+                    if (element) element.style.opacity = '';
+                  }, 200);
+                }}
+              >
+                <ReorderIcon />
+              </div>
+            )}
           </Box>
         ))}
 
@@ -513,59 +477,104 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
       </Box>
 
       {/* Add Image Dialog */}
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Images</DialogTitle>
-        <DialogContent>
-          <div
-            {...getRootProps()}
-            className={`dropzone-area ${isDragActive ? 'drag-active' : ''}`}
-          >
-            <input {...getInputProps()} />
-            <CloudUploadIcon className="dropzone-icon" />
-            <Typography>
-              {isDragActive ? 'Drop images here...' : 'Drag & drop images here'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              (JPG, PNG, WebP, GIF up to 15MB each)
-            </Typography>
-            <Button variant="outlined" size="small" onClick={handleFileSelect} className="browse-button">
-              Browse Files
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden-file-input"
-              onChange={handleFileInputChange}
-              aria-label="Choose image files to upload"
-              title="Choose image files to upload"
-            />
-          </div>
-
-          <Typography variant="subtitle2" gutterBottom className="url-input-label">
-            Or Add Image URLs
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.png"
-            value={imageUrls}
-            onChange={(e) => setImageUrls(e.target.value)}
-            variant="outlined"
-            size="small"
-            aria-label="Image URLs"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleAddUrls} variant="contained" startIcon={<LinkIcon />}>
-            Add URLs
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <AddImageDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        getRootProps={getRootProps}
+        getInputProps={getInputProps}
+        isDragActive={isDragActive}
+        imageUrls={imageUrls}
+        setImageUrls={setImageUrls}
+        handleAddUrls={handleAddUrls}
+        handleFileSelect={handleFileSelect}
+        fileInputRef={fileInputRef}
+        handleFileInputChange={handleFileInputChange}
+      />
     </Box>
+  );
+};
+
+// Separate dialog component
+interface AddImageDialogProps {
+  open: boolean;
+  onClose: () => void;
+  getRootProps: any;
+  getInputProps: any;
+  isDragActive: boolean;
+  imageUrls: string;
+  setImageUrls: (val: string) => void;
+  handleAddUrls: () => void;
+  handleFileSelect: () => void;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const AddImageDialog: React.FC<AddImageDialogProps> = ({
+  open,
+  onClose,
+  getRootProps,
+  getInputProps,
+  isDragActive,
+  imageUrls,
+  setImageUrls,
+  handleAddUrls,
+  handleFileSelect,
+  fileInputRef,
+  handleFileInputChange,
+}) => {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Add Images</DialogTitle>
+      <DialogContent>
+        <div
+          {...getRootProps()}
+          className={`dropzone-area ${isDragActive ? 'drag-active' : ''}`}
+        >
+          <input {...getInputProps()} />
+          <CloudUploadIcon className="dropzone-icon" />
+          <Typography>
+            {isDragActive ? 'Drop images here...' : 'Drag & drop images here'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            (JPG, PNG, WebP, GIF up to 15MB each)
+          </Typography>
+          <Button variant="outlined" size="small" onClick={handleFileSelect} className="browse-button">
+            Browse Files
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden-file-input"
+            onChange={handleFileInputChange}
+            aria-label="Choose image files to upload"
+            title="Choose image files to upload"
+          />
+        </div>
+
+        <Typography variant="subtitle2" gutterBottom className="url-input-label">
+          Or Add Image URLs
+        </Typography>
+        <TextField
+          fullWidth
+          multiline
+          rows={3}
+          placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.png"
+          value={imageUrls}
+          onChange={(e) => setImageUrls(e.target.value)}
+          variant="outlined"
+          size="small"
+          aria-label="Image URLs"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleAddUrls} variant="contained" startIcon={<LinkIcon />}>
+          Add URLs
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
