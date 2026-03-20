@@ -13,7 +13,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
+import { Navigation } from 'swiper/modules'; // Pagination removed
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ReorderIcon from '@mui/icons-material/Reorder';
@@ -23,7 +23,6 @@ import { useDropzone } from 'react-dropzone';
 import { toast } from 'react-toastify';
 import 'swiper/css';
 import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 import './ImageGallery.css';
 
 interface ImageGalleryProps {
@@ -33,7 +32,7 @@ interface ImageGalleryProps {
   isEditable?: boolean;
 }
 
-// Image compression (same as CreateProduct)
+// Image compression (unchanged)
 const compressImage = async (
   base64String: string,
   maxWidth = 2000,
@@ -112,7 +111,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const swiperRef = useRef<any>(null);
   const isReordering = useRef(false);
 
-  // Update when images prop changes
   useEffect(() => {
     setLocalImages(images);
     setCurrentIndex(0);
@@ -140,7 +138,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     onImagesChange?.(newImages);
     toast.success('Images reordered');
 
-    // Update current index after reorder
     if (currentIndex === fromIndex) {
       setCurrentIndex(toIndex);
     } else if (currentIndex > fromIndex && currentIndex <= toIndex) {
@@ -150,7 +147,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   };
 
-  // File upload via dropzone
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -279,19 +275,15 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         </div>
       )}
 
-      {/* Main Image Carousel with Swiper */}
+      {/* Main Image Carousel with Swiper (no pagination) */}
       <div className="main-image-wrapper">
         <Swiper
           onSwiper={(swiper) => { swiperRef.current = swiper; }}
           onSlideChange={handleSlideChange}
-          modules={[Navigation, Pagination]}
+          modules={[Navigation]}
           navigation={{
             nextEl: '.swiper-button-next',
             prevEl: '.swiper-button-prev',
-          }}
-          pagination={{
-            clickable: true,
-            dynamicBullets: false,
           }}
           loop={false}
           spaceBetween={0}
@@ -312,7 +304,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           ))}
         </Swiper>
 
-        {/* Navigation Arrows - always visible */}
+        {/* Navigation Arrows – always visible if more than one image */}
         {localImages.length > 1 && (
           <>
             <div className="swiper-button-prev custom-nav" aria-label="Previous image">
@@ -358,6 +350,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               <div
                 className="reorder-handle"
                 draggable
+                onClick={(e) => e.stopPropagation()}        // Prevent slide change when clicking handle
                 onDragStart={(e) => {
                   e.dataTransfer.setData('text/plain', idx.toString());
                   const dragImg = new Image();
@@ -429,7 +422,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   );
 };
 
-// Separate dialog component
+// Separate dialog component (unchanged)
 interface AddImageDialogProps {
   open: boolean;
   onClose: () => void;
