@@ -1,3 +1,4 @@
+/* Gallery Container */
 .gallery-container {
   position: relative;
   width: 100%;
@@ -5,6 +6,7 @@
   margin: 0 auto;
 }
 
+/* Main Image Container (only the carousel) */
 .main-image-wrapper {
   position: relative;
   width: 100%;
@@ -36,7 +38,7 @@
   display: block;
 }
 
-/* Custom Navigation Arrows */
+/* Custom Navigation Arrows (positioned inside the image container) */
 .custom-nav {
   position: absolute;
   top: 50%;
@@ -76,7 +78,7 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Swiper Pagination Dots - Instagram style */
+/* Swiper Pagination Dots - Instagram style (inside image container) */
 .image-swiper .swiper-pagination {
   position: absolute;
   bottom: 12px !important;
@@ -111,61 +113,74 @@
   background: white;
 }
 
-/* Admin buttons */
-.delete-button {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
+/* Controls outside image container */
+.gallery-controls {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 20;
+  margin: 12px 0 8px;
+  padding: 0 4px;
 }
 
-.delete-button:hover {
-  background: rgba(0, 0, 0, 0.8);
-  transform: scale(1.1);
-}
-
-.add-button-overlay {
-  position: absolute;
-  bottom: 16px;
-  right: 72px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
+.pagination-dots {
   display: flex;
-  align-items: center;
   justify-content: center;
+  gap: 6px;
+}
+
+/* Custom dots (outside) – same style as inside but we can reuse */
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
   cursor: pointer;
+  padding: 0;
   transition: all 0.2s ease;
-  z-index: 20;
 }
 
-.add-button-overlay:hover {
+.dot.active {
   background: rgba(0, 0, 0, 0.8);
-  transform: scale(1.1);
 }
 
-[data-theme='dark'] .delete-button,
-[data-theme='dark'] .add-button-overlay {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-[data-theme='dark'] .delete-button:hover,
-[data-theme='dark'] .add-button-overlay:hover {
+[data-theme='dark'] .dot {
   background: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme='dark'] .dot.active {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Admin buttons */
+.admin-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-delete,
+.admin-add {
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: white !important;
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease;
+}
+
+.admin-delete:hover,
+.admin-add:hover {
+  background: rgba(0, 0, 0, 0.8) !important;
+  transform: scale(1.1);
+}
+
+[data-theme='dark'] .admin-delete,
+[data-theme='dark'] .admin-add {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme='dark'] .admin-delete:hover,
+[data-theme='dark'] .admin-add:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* Thumbnail strip */
@@ -175,6 +190,7 @@
   margin-top: 12px;
   padding: 4px;
   overflow-x: auto;
+ 
 }
 
 .thumbnail-strip::-webkit-scrollbar {
@@ -306,9 +322,9 @@
   justify-content: center;
   z-index: 100;
   border-radius: 16px;
- 
+  
   -webkit-backdrop-filter: blur(4px);
-   backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 
 .processing-content {
@@ -378,17 +394,13 @@
 /* Mobile/tablet adjustments */
 @media (max-width: 768px) {
   .custom-nav {
-    display: none;
+    display: none !important;
   }
 
-  .delete-button,
-  .add-button-overlay {
-    width: 36px;
-    height: 36px;
-  }
-
-  .add-button-overlay {
-    right: 64px;
+  .admin-delete,
+  .admin-add {
+    width: 28px;
+    height: 28px;
   }
 
   .thumbnail-item {
@@ -403,6 +415,11 @@
   
   .reorder-handle svg {
     font-size: 12px;
+  }
+  
+  .dot {
+    width: 3px;
+    height: 3px;
   }
   
   .image-swiper .swiper-pagination-bullet {
@@ -436,91 +453,5 @@
   
   .thumbnail-item {
     cursor: default;
-  }
-}
-/* Add this to your existing CSS - update the mobile section */
-
-/* Desktop navigation arrows - visible by default */
-.custom-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: all 0.2s ease;
-  color: white;
-}
-
-.custom-nav:hover {
-  background: rgba(0, 0, 0, 0.8);
-  transform: translateY(-50%) scale(1.1);
-}
-
-.swiper-button-prev.custom-nav {
-  left: 12px;
-}
-
-.swiper-button-next.custom-nav {
-  right: 12px;
-}
-
-/* Mobile/tablet adjustments - HIDE arrows on mobile */
-@media (max-width: 768px) {
-  .custom-nav {
-    display: none !important;
-  }
-  
-  /* Keep all other mobile styles */
-  .delete-button,
-  .add-button-overlay {
-    width: 36px;
-    height: 36px;
-  }
-
-  .add-button-overlay {
-    right: 64px;
-  }
-
-  .thumbnail-item {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .reorder-handle {
-    width: 22px;
-    height: 22px;
-  }
-  
-  .reorder-handle svg {
-    font-size: 12px;
-  }
-  
-  .image-swiper .swiper-pagination-bullet {
-    width: 3px;
-    height: 3px;
-  }
-}
-
-@media (max-width: 480px) {
-  .thumbnail-item {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .reorder-handle {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .reorder-handle svg {
-    font-size: 11px;
   }
 }
