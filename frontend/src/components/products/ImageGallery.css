@@ -9,14 +9,14 @@
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
-  background: #f8f8f8;
+  background: transparent;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 [data-theme='dark'] .main-image-wrapper {
-  background: #2d2d2d;
+  background: transparent;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -73,9 +73,9 @@
   font-size: 0.875rem;
   padding: 4px 12px;
   border-radius: 20px;
+ 
   -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  
+   backdrop-filter: blur(4px);
 }
 
 .delete-button {
@@ -162,6 +162,11 @@
   cursor: pointer;
   border: 2px solid transparent;
   transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.thumbnail-item:active {
+  transform: scale(0.98);
 }
 
 .thumbnail-item:hover {
@@ -182,6 +187,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
 }
 
 .thumbnail-item.add-button {
@@ -209,8 +215,8 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.6);
   color: white;
@@ -220,6 +226,14 @@
   cursor: grab;
   transition: all 0.2s;
   z-index: 5;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reorder-handle:active {
+  cursor: grabbing;
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
 }
 
 .reorder-handle:hover {
@@ -229,6 +243,7 @@
 
 .reorder-handle svg {
   font-size: 16px;
+  pointer-events: none;
 }
 
 .gallery-empty {
@@ -256,9 +271,10 @@
   justify-content: center;
   z-index: 100;
   border-radius: 16px;
-  -webkit-backdrop-filter:blur(4px);
-  backdrop-filter: blur(4px);
+ 
   
+  -webkit-backdrop-filter: blur(4px);
+   backdrop-filter: blur(4px);
 }
 
 .processing-content {
@@ -341,6 +357,11 @@
     width: 60px;
     height: 60px;
   }
+  
+  .reorder-handle {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -355,5 +376,22 @@
   .thumbnail-item {
     width: 50px;
     height: 50px;
+  }
+  
+  .reorder-handle {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .reorder-handle svg {
+    font-size: 14px;
+  }
+}
+
+/* Touch device improvements */
+@media (hover: none) and (pointer: coarse) {
+  .reorder-handle {
+    width: 32px;
+    height: 32px;
   }
 }
