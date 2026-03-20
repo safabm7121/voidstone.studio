@@ -14,9 +14,8 @@
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   touch-action: pan-y pinch-zoom;
-   -webkit-user-select: none;
+  -webkit-user-select: none;
   user-select: none;
- 
 }
 
 [data-theme='dark'] .main-image-wrapper {
@@ -32,7 +31,7 @@
   transition: opacity 0.3s ease-in-out;
 }
 
-/* Instagram-style tiny pagination dots */
+/* Instagram-style TINY pagination dots - 2px size */
 .pagination-dots {
   display: flex;
   justify-content: center;
@@ -42,8 +41,8 @@
 }
 
 .dot {
-  width: 4px;
-  height: 4px;
+  width: 2px !important;
+  height: 2px !important;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.3);
   border: none;
@@ -53,8 +52,8 @@
 }
 
 .dot.active {
-  width: 4px;
-  height: 4px;
+  width: 2px !important;
+  height: 2px !important;
   background: rgba(0, 0, 0, 0.8);
   transform: scale(1);
 }
@@ -67,7 +66,7 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* Navigation arrows */
+/* Navigation arrows - hidden on mobile/tablet by default, shown via media query */
 .nav-arrow {
   position: absolute !important;
   top: 50%;
@@ -146,6 +145,7 @@
   background: rgba(255, 255, 255, 0.3) !important;
 }
 
+/* Thumbnail strip */
 .thumbnail-strip {
   display: flex;
   gap: 8px;
@@ -153,6 +153,7 @@
   padding: 4px 4px;
   overflow-x: auto;
 }
+
 .thumbnail-strip::-webkit-scrollbar {
   height: 4px;
 }
@@ -288,9 +289,9 @@
   justify-content: center;
   z-index: 100;
   border-radius: 16px;
-
+  
   -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 
 .processing-content {
@@ -357,9 +358,12 @@
   margin-top: 16px;
 }
 
-/* Mobile adjustments */
+/* Hide navigation arrows on mobile and tablet */
 @media (max-width: 768px) {
-  .nav-arrow,
+  .nav-arrow {
+    display: none !important;
+  }
+
   .delete-button,
   .add-button-overlay {
     width: 36px !important;
@@ -390,25 +394,17 @@
   }
   
   .dot {
-    width: 3px;
-    height: 3px;
+    width: 2px !important;
+    height: 2px !important;
   }
   
   .dot.active {
-    width: 3px;
-    height: 3px;
+    width: 2px !important;
+    height: 2px !important;
   }
 }
 
 @media (max-width: 480px) {
-  .nav-arrow.left {
-    left: 8px;
-  }
-
-  .nav-arrow.right {
-    right: 8px;
-  }
-
   .thumbnail-item {
     width: 50px;
     height: 50px;

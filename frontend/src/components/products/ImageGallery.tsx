@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Box,
   IconButton,
@@ -111,8 +111,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const isReordering = useRef(false);
-
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef(0);
+  const dragEndX = useRef(0);
   const [direction, setDirection] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth <= 768;
 
   const variants = {
     enter: (direction: number) => ({
@@ -191,10 +202,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   };
 
   // Mouse handlers for desktop drag
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef(0);
-  const dragEndX = useRef(0);
-
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isReordering.current) return;
     setIsDragging(true);
@@ -407,8 +414,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           />
         </AnimatePresence>
 
-        {/* Navigation arrows */}
-        {localImages.length > 1 && (
+        {/* Navigation arrows - hidden on mobile/tablet */}
+        {localImages.length > 1 && !isMobile && (
           <>
             <Tooltip title="Previous">
               <IconButton
@@ -458,7 +465,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
       </Box>
 
-      {/* Instagram-style pagination dots */}
+      {/* Instagram-style pagination dots - TINY */}
       {localImages.length > 1 && (
         <div className="pagination-dots">
           {localImages.map((_, idx) => (
