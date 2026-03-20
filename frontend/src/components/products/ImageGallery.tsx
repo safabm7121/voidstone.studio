@@ -424,31 +424,70 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           >
             <img src={img} alt={`Thumbnail ${idx + 1}`} />
 
-            {/* Reorder handle */}
-            {isEditable && (
-              <div
-                className="reorder-handle"
-                draggable
-                aria-label="Drag to reorder"
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('text/plain', idx.toString());
-                  const dragImg = new Image();
-                  dragImg.src =
-                    'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-                  e.dataTransfer.setDragImage(dragImg, 0, 0);
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const from = parseInt(e.dataTransfer.getData('text/plain'));
-                  if (!isNaN(from) && from !== idx) {
-                    handleReorder(from, idx);
-                  }
-                }}
-              >
-                <ReorderIcon />
-              </div>
-            )}
+            {/* Reorder handle with touch support */}
+           {/* Reorder handle with touch support */}
+{isEditable && (
+  <div
+    className="reorder-handle"
+    draggable
+    aria-label="Drag to reorder"
+    onDragStart={(e) => {
+      e.dataTransfer.setData('text/plain', idx.toString());
+      const dragImg = new Image();
+      dragImg.src =
+        'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+      e.dataTransfer.setDragImage(dragImg, 0, 0);
+    }}
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={(e) => {
+      e.preventDefault();
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      if (!isNaN(from) && from !== idx) {
+        handleReorder(from, idx);
+      }
+    }}
+    onTouchStart={(e) => {
+      e.stopPropagation();
+      const element = e.currentTarget;
+      const fromIndex = idx;
+      
+      const onTouchMove = (moveEvent: TouchEvent) => {
+        moveEvent.preventDefault();
+      };
+      
+      const onTouchEnd = (endEvent: TouchEvent) => {
+        const endTouch = endEvent.changedTouches[0];
+        const endX = endTouch.clientX;
+        const endY = endTouch.clientY;
+        
+        const elements = document.elementsFromPoint(endX, endY);
+        const targetThumb = elements.find(el => el.closest?.('.thumbnail-item')) as HTMLElement;
+        const targetBox = targetThumb?.closest('.thumbnail-item');
+        
+        if (targetBox) {
+          const targetIndex = Array.from(document.querySelectorAll('.thumbnail-item'))
+            .findIndex(item => item === targetBox);
+          if (targetIndex !== -1 && targetIndex !== fromIndex) {
+            handleReorder(fromIndex, targetIndex);
+          }
+        }
+        
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+      };
+      
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd);
+      
+      element.style.opacity = '0.5';
+      setTimeout(() => {
+        element.style.opacity = '';
+      }, 200);
+    }}
+  >
+    <ReorderIcon />
+  </div>
+)}
           </Box>
         ))}
 
