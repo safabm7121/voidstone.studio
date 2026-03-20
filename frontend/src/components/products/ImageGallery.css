@@ -1,4 +1,3 @@
-/* Gallery Container */
 .gallery-container {
   position: relative;
   width: 100%;
@@ -6,7 +5,6 @@
   margin: 0 auto;
 }
 
-/* Main Image Container (only the carousel) */
 .main-image-wrapper {
   position: relative;
   width: 100%;
@@ -20,17 +18,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.image-swiper {
-  width: 100%;
-  height: 100%;
-}
-
-.image-swiper .swiper-slide {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .main-image {
   width: 100%;
   height: 100%;
@@ -38,8 +25,8 @@
   display: block;
 }
 
-/* Custom Navigation Arrows */
-.custom-nav {
+/* Navigation Arrows - visible on ALL devices */
+.nav-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -57,28 +44,61 @@
   color: white;
 }
 
-.custom-nav:hover {
+.nav-arrow:hover {
   background: rgba(0, 0, 0, 0.8);
   transform: translateY(-50%) scale(1.1);
 }
 
-.swiper-button-prev.custom-nav {
+.nav-arrow.left {
   left: 12px;
 }
 
-.swiper-button-next.custom-nav {
+.nav-arrow.right {
   right: 12px;
 }
 
-[data-theme='dark'] .custom-nav {
+[data-theme='dark'] .nav-arrow {
   background: rgba(255, 255, 255, 0.2);
 }
 
-[data-theme='dark'] .custom-nav:hover {
+[data-theme='dark'] .nav-arrow:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Pagination styles removed entirely */
+/* Pagination Dots - ONLY inside the image */
+.pagination-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  z-index: 10;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.dot.active {
+  background: white;
+}
+
+[data-theme='dark'] .dot {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme='dark'] .dot.active {
+  background: white;
+}
 
 /* Admin Buttons (outside image) */
 .admin-buttons {
@@ -121,7 +141,6 @@
   margin-top: 12px;
   padding: 4px;
   overflow-x: auto;
-  
 }
 
 .thumbnail-strip::-webkit-scrollbar {
@@ -169,7 +188,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  pointer-events: none; /* So clicks go to parent div */
+  pointer-events: none;
 }
 
 .thumbnail-item.add-button {
@@ -253,9 +272,9 @@
   justify-content: center;
   z-index: 100;
   border-radius: 16px;
- 
-  -webkit-backdrop-filter:blur(4px);
-   backdrop-filter: blur(4px);
+
+  -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
 }
 
 .processing-content {
@@ -324,7 +343,7 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .custom-nav {
+  .nav-arrow {
     width: 36px;
     height: 36px;
   }
@@ -347,6 +366,11 @@
 
   .reorder-handle svg {
     font-size: 12px;
+  }
+
+  .dot {
+    width: 3px;
+    height: 3px;
   }
 }
 
