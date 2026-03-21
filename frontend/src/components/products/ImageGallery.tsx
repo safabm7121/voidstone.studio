@@ -26,6 +26,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReorderIcon from '@mui/icons-material/Reorder';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LinkIcon from '@mui/icons-material/Link';
+import EditIcon from '@mui/icons-material/Edit';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useDropzone } from 'react-dropzone';
 import './ImageGallery.css';
@@ -110,6 +111,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const [localImages, setLocalImages] = useState(images);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [imageUrls, setImageUrls] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [addingUrls, setAddingUrls] = useState(false);
@@ -123,6 +127,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Navigation
   const handleNext = () => {
     if (isTransitioning || localImages.length <= 1) return;
     setIsTransitioning(true);
@@ -137,6 +142,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
+  // Delete current image (main)
   const handleDelete = () => {
     if (localImages.length <= 1) {
       showSnackbar('Cannot delete the last image', 'warning');
@@ -151,9 +157,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     showSnackbar('Image deleted successfully', 'success');
   };
 
+  // Reorder
   const handleReorderImages = (fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
-    
     const newImages = [...localImages];
     const [movedImage] = newImages.splice(fromIndex, 1);
     newImages.splice(toIndex, 0, movedImage);
@@ -161,6 +167,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     onImagesChange?.(newImages);
     showSnackbar('Images reordered successfully', 'success');
     
+    // Update current index if needed
     if (currentIndex === fromIndex) {
       setCurrentIndex(toIndex);
     } else if (currentIndex > fromIndex && currentIndex <= toIndex) {
@@ -170,6 +177,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   };
 
+  // Thumbnail menu
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, index: number) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -181,6 +189,41 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setSelectedThumbIndex(null);
   };
 
+  // Edit image (from menu)
+  const handleEditImage = () => {
+    if (selectedThumbIndex !== null) {
+      setEditImageUrl(localImages[selectedThumbIndex]);
+      setEditingIndex(selectedThumbIndex);
+      setEditDialogOpen(true);
+    }
+    handleMenuClose();
+  };
+
+  const handleSaveImageEdit = async () => {
+    if (editingIndex !== null && editImageUrl.trim()) {
+      try {
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = editImageUrl;
+        });
+        
+        const newImages = [...localImages];
+        newImages[editingIndex] = editImageUrl;
+        setLocalImages(newImages);
+        onImagesChange?.(newImages);
+        showSnackbar('Image updated successfully', 'success');
+        setEditDialogOpen(false);
+        setEditImageUrl('');
+        setEditingIndex(null);
+      } catch (error) {
+        showSnackbar('Invalid image URL', 'error');
+      }
+    }
+  };
+
+  // Delete image from menu
   const handleDeleteFromMenu = () => {
     if (selectedThumbIndex !== null) {
       const newImages = localImages.filter((_, i) => i !== selectedThumbIndex);
@@ -396,7 +439,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             className="image-counter"
           />
 
-          {/* Admin Delete Button */}
+          {/* Admin Delete Button (main image) */}
           {isEditable && (
             <Tooltip title="Delete current image">
               <IconButton
@@ -419,7 +462,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             >
               <img src={img} alt={`Thumbnail ${idx + 1}`} />
               
-              {/* Admin Controls */}
+              {/* Admin Controls on thumbnails */}
               {isEditable && (
                 <>
                   {/* Reorder Handle */}
@@ -444,7 +487,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     <ReorderIcon />
                   </div>
 
-                  {/* Menu Button */}
+                  {/* Menu Button (three dots) */}
                   <Tooltip title="Image options">
                     <IconButton
                       className="thumbnail-menu-button"
@@ -459,7 +502,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             </div>
           ))}
 
-          {/* Add Button */}
+          {/* Add Button (last thumbnail) */}
           {isEditable && (
             <div
               className="thumbnail-item add-button"
@@ -484,13 +527,19 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
       </Box>
 
-      {/* Menu Dropdown */}
+      {/* Thumbnail Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         className="thumbnail-menu"
       >
+        <MenuItem onClick={handleEditImage}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit Image URL</ListItemText>
+        </MenuItem>
         <MenuItem onClick={handleDeleteFromMenu}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
@@ -498,6 +547,30 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           <ListItemText>Delete Image</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Edit Image Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Image</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Enter a new image URL to replace the current image
+          </Typography>
+          <TextField
+            fullWidth
+            label="Image URL"
+            value={editImageUrl}
+            onChange={(e) => setEditImageUrl(e.target.value)}
+            margin="normal"
+            placeholder="https://example.com/new-image.jpg"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveImageEdit} variant="contained">
+            Update Image
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add Image Dialog */}
       <AddImageDialog
@@ -531,6 +604,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   );
 };
 
+// Add Image Dialog component
 const AddImageDialog: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -614,7 +688,7 @@ const AddImageDialog: React.FC<{
           disabled={isAddingUrls || isProcessing}
           label="Image URLs"
         />
-        
+
         {isProcessing && (
           <Box className="dialog-processing">
             <CircularProgress size={24} />
