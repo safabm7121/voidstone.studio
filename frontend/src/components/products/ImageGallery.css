@@ -344,3 +344,65 @@
     height: 50px;
   }
 }
+/* Dropzone Area */
+.dropzone-area {
+  border: 2px dashed rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: transparent;
+}
+
+.dropzone-area:hover {
+  border-color: black;
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.dropzone-area.drag-active {
+  border-color: black;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .dropzone-area {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .dropzone-area:hover {
+  border-color: white;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .dropzone-area.drag-active {
+  border-color: white;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dropzone-icon {
+  font-size: 48px;
+  color: rgba(0, 0, 0, 0.5);
+  margin-bottom: 8px;
+}
+
+[data-theme="dark"] .dropzone-icon {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.browse-button {
+  margin-top: 16px;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.url-input-label {
+  margin-top: 16px;
+}
+
+/* Reorder Handle Icon Size */
+.reorder-handle svg {
+  font-size: 14px;
+}

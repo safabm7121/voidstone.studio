@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Box,
-  IconButton,
-  Slider,
-  Typography,
-  Switch,
-  Paper,
-  Popover,
-  Tooltip,
-  Badge,
-  CircularProgress,
+  Box, IconButton, Slider, Typography, Switch, FormControlLabel,
+  Paper, Popover, Tooltip, Badge, CircularProgress, useTheme, useMediaQuery,
   Button
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,7 +23,7 @@ interface ImageSliderProps {
   isEditable?: boolean;
 }
 
-// Image compression utility
+// Image compression utility (unchanged)
 const compressImage = async (base64String: string, maxWidth = 2000, maxHeight = 2000, quality = 0.9): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -68,8 +60,8 @@ const compressImage = async (base64String: string, maxWidth = 2000, maxHeight = 
       ctx.drawImage(img, 0, 0, width, height);
       
       const format = base64String.includes('image/png') ? 'image/png' : 
-                    base64String.includes('image/webp') ? 'image/webp' : 
-                    'image/jpeg';
+                      base64String.includes('image/webp') ? 'image/webp' : 
+                      'image/jpeg';
       
       const compressed = canvas.toDataURL(format, quality);
       resolve(compressed);
@@ -94,20 +86,53 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
   onImagesChange,
   isEditable = false 
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  
+  const getResponsiveWidth = () => {
+    if (isMobile) return window.innerWidth - 40;
+    if (isTablet) return 550;
+    return 650;
+  };
+  
+  const getResponsiveHeight = () => {
+    if (isMobile) return 350;
+    if (isTablet) return 400;
+    return 450;
+  };
+
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [,setDirection] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   const [autoRotate, setAutoRotate] = useState(true);
   const [rotationSpeed, setRotationSpeed] = useState(5);
+  const [zDepth, setZDepth] = useState(200);
+  const [imageWidth, setImageWidth] = useState(getResponsiveWidth());
+  const [imageHeight, setImageHeight] = useState(getResponsiveHeight());
+  const [borderRadius, setBorderRadius] = useState(16);
+  const [backfaceVisible, setBackfaceVisible] = useState(true);
+  const [pauseOnHover] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [showPlaceholders] = useState(false);
   const [localImages, setLocalImages] = useState<string[]>(images);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
   
   const sliderRef = useRef<HTMLDivElement>(null);
   const autoRotateRef = useRef<NodeJS.Timeout>();
+
+  // Update dimensions on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setImageWidth(getResponsiveWidth());
+      setImageHeight(getResponsiveHeight());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile, isTablet]);
 
   // Update local images when prop changes
   useEffect(() => {
@@ -129,39 +154,73 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
 
   const handleNext = useCallback(() => {
     if (localImages.length === 0) return;
+    console.log('Next clicked, current index:', currentIndex);
     setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % localImages.length);
-  }, [localImages.length]);
+  }, [localImages.length, currentIndex]);
 
   const handlePrev = useCallback(() => {
     if (localImages.length === 0) return;
+    console.log('Prev clicked, current index:', currentIndex);
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + localImages.length) % localImages.length);
-  }, [localImages.length]);
+  }, [localImages.length, currentIndex]);
 
-  const handlePrevClick = useCallback((e: React.MouseEvent) => {
+  // Simple direct handlers without preventDefault to avoid passive listener issues
+  const handlePrevClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    console.log('Prev button touched/clicked');
     handlePrev();
   }, [handlePrev]);
 
-  const handleNextClick = useCallback((e: React.MouseEvent) => {
+  const handleNextClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    console.log('Next button touched/clicked');
     handleNext();
   }, [handleNext]);
 
-  // Touch handlers for swipe
+  const handleDragStart = (e: React.MouseEvent) => {
+    if (isMobile) return;
+    setIsDragging(true);
+    setDragStartX(e.clientX);
+  };
+
+  const handleDragMove = (e: React.MouseEvent) => {
+    if (!isDragging || isMobile) return;
+    const diff = e.clientX - dragStartX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        handlePrev();
+      } else {
+        handleNext();
+      }
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Touch handlers for swipe - without preventDefault
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const isSwiping = useRef(false);
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
+    isSwiping.current = true;
+    touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.touches[0].clientX);
+    if (!isSwiping.current) return;
+    touchEndX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = () => {
-    if (!touchStartX || !touchEndX) return;
+    if (!isSwiping.current) return;
     
-    const diff = touchStartX - touchEndX;
+    const diff = touchStartX.current - touchEndX.current;
     if (Math.abs(diff) > 50) {
       if (diff > 0) {
         handleNext();
@@ -170,8 +229,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
       }
     }
     
-    setTouchStartX(0);
-    setTouchEndX(0);
+    isSwiping.current = false;
   };
 
   const handleAddImage = async () => {
@@ -227,16 +285,12 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
     input.click();
   };
 
-  const handleRemoveCurrentImage = () => {
-    if (localImages.length === 0) return;
-    
-    const newImages = localImages.filter((_, i) => i !== currentIndex);
+  const handleRemoveImage = (index: number) => {
+    const newImages = localImages.filter((_, i) => i !== index);
     setLocalImages(newImages);
-    
     if (currentIndex >= newImages.length) {
       setCurrentIndex(Math.max(0, newImages.length - 1));
     }
-    
     onImagesChange?.(newImages);
     toast.success('Image deleted successfully');
   };
@@ -249,237 +303,440 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
     onImagesChange?.(newImages);
   };
 
-  // Variants for simple fade animation
   const variants = {
-    enter: { opacity: 0 },
-    center: { opacity: 1 },
-    exit: { opacity: 0 }
+    enter: (direction: number) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0,
+      scale: 0.8,
+      rotateY: direction > 0 ? 45 : -45,
+      z: -zDepth,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      rotateY: 0,
+      z: 0,
+      transition: {
+        duration: 0.5,
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      },
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0,
+      scale: 0.8,
+      rotateY: direction < 0 ? 45 : -45,
+      z: -zDepth,
+      transition: {
+        duration: 0.5,
+      },
+    }),
   };
 
   const placeholderCount = Math.max(0, 6 - localImages.length);
 
   // Settings popover content
   const settingsContent = (
-    <Paper className="settings-panel">
-      <Typography className="settings-title">
+    <Paper className="slider-settings-paper">
+      <Typography variant="h6" className="slider-settings-title">
         Slider Settings
       </Typography>
       
-      <div className="settings-control">
-        <div className="settings-label">
-          <span>Auto Rotate</span>
-          <Switch 
-            checked={autoRotate} 
-            onChange={(e) => setAutoRotate(e.target.checked)}
-            size="small"
-          />
-        </div>
-      </div>
+      <FormControlLabel
+        control={<Switch checked={autoRotate} onChange={(e) => setAutoRotate(e.target.checked)} />}
+        label="Auto Rotate"
+      />
       
       {autoRotate && (
-        <div className="settings-control">
-          <div className="settings-label">
-            <span>Speed</span>
-            <span>{rotationSpeed}s</span>
-          </div>
+        <Box className="slider-speed-control">
+          <Typography gutterBottom>Rotation Speed: {rotationSpeed}s</Typography>
           <Slider
             value={rotationSpeed}
             onChange={(_, val) => setRotationSpeed(val as number)}
             min={2}
             max={10}
             step={0.5}
-            size="small"
+            marks={[
+              { value: 2, label: 'Fast' },
+              { value: 5, label: 'Normal' },
+              { value: 10, label: 'Slow' },
+            ]}
           />
-        </div>
+        </Box>
       )}
+      
+      <Box className="slider-depth-control">
+        <Typography gutterBottom>Z-Depth: {zDepth}px</Typography>
+        <Slider
+          value={zDepth}
+          onChange={(_, val) => setZDepth(val as number)}
+          min={0}
+          max={500}
+          step={10}
+        />
+      </Box>
+      
+      <Box className="slider-radius-control">
+        <Typography gutterBottom>Border Radius: {borderRadius}px</Typography>
+        <Slider
+          value={borderRadius}
+          onChange={(_, val) => setBorderRadius(val as number)}
+          min={0}
+          max={50}
+          step={1}
+        />
+      </Box>
+      
+      <FormControlLabel
+        control={<Switch checked={backfaceVisible} onChange={(e) => setBackfaceVisible(e.target.checked)} />}
+        label="Backface Visibility"
+      />
     </Paper>
   );
 
   return (
     <Box className="slider-container">
-      {/* Processing Overlay */}
+      {/* Processing Indicator */}
       {isProcessing && (
-        <div className="processing-overlay">
-          <div className="processing-content">
-            <CircularProgress />
-            <Typography>Processing images...</Typography>
-          </div>
-        </div>
+        <Box className="slider-processing">
+          <CircularProgress color="primary" />
+          <Typography color="white">Processing images...</Typography>
+        </Box>
       )}
 
-      {/* Settings Button */}
-      <Tooltip title="Slider Settings">
-        <IconButton
-          className="settings-button"
-          onClick={(e) => setSettingsAnchor(e.currentTarget)}
+      {/* Settings Button - Left side */}
+      <Box className="slider-settings-button slider-settings-left">
+        <Tooltip title="Slider Settings">
+          <IconButton onClick={(e) => setSettingsAnchor(e.currentTarget)}>
+            <SettingsIcon />
+          </IconButton>
+        </Tooltip>
+        
+        <Popover
+          open={Boolean(settingsAnchor)}
+          anchorEl={settingsAnchor}
+          onClose={() => setSettingsAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         >
-          <SettingsIcon />
-        </IconButton>
-      </Tooltip>
-
-      <Popover
-        open={Boolean(settingsAnchor)}
-        anchorEl={settingsAnchor}
-        onClose={() => setSettingsAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-      >
-        {settingsContent}
-      </Popover>
+          {settingsContent}
+        </Popover>
+      </Box>
 
       {/* Play/Pause Button */}
       {autoRotate && localImages.length > 1 && (
-        <Tooltip title={isPaused ? "Play" : "Pause"}>
-          <IconButton
-            className="play-pause-button"
-            onClick={() => setIsPaused(!isPaused)}
-          >
-            {isPaused ? <PlayArrowIcon /> : <PauseIcon />}
-          </IconButton>
-        </Tooltip>
+        <Box className="slider-play-pause slider-play-pause-shifted">
+          <Tooltip title={isPaused ? "Play" : "Pause"}>
+            <IconButton onClick={() => setIsPaused(!isPaused)}>
+              {isPaused ? <PlayArrowIcon /> : <PauseIcon />}
+            </IconButton>
+          </Tooltip>
+        </Box>
       )}
 
-      {/* Main Image Container */}
-      <div 
-        className="main-image-container"
+      {/* Add Image Button */}
+      {isEditable && (
+        <Box className="slider-add-image">
+          <Tooltip title="Add Images">
+            <IconButton onClick={handleAddImage} disabled={isProcessing}>
+              <AddPhotoAlternateIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+
+      {/* Main Slider */}
+      <Box 
         ref={sliderRef}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className={`slider-main ${isDragging ? 'dragging' : ''}`}
+        style={{ height: imageHeight }}
+        onMouseEnter={() => pauseOnHover && setIsHovered(true)}
+        onMouseLeave={() => {
+          if (pauseOnHover) setIsHovered(false);
+          handleDragEnd();
+        }}
+        onMouseDown={handleDragStart}
+        onMouseMove={handleDragMove}
+        onMouseUp={handleDragEnd}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => { isSwiping.current = false; }}
       >
-        <AnimatePresence mode="wait" initial={false}>
+        {/* Main Image with Animation */}
+        <AnimatePresence initial={false} custom={direction} mode="wait">
           {localImages.length > 0 ? (
-            <motion.img
+            <motion.div
               key={currentIndex}
-              src={localImages[currentIndex]}
-              alt={`${productName} - ${currentIndex + 1}`}
-              className="main-image"
+              custom={direction}
               variants={variants}
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.3 }}
-            />
+              className="slider-image-container"
+              style={{
+                width: imageWidth,
+                height: imageHeight,
+                backfaceVisibility: backfaceVisible ? 'visible' : 'hidden' as any,
+                pointerEvents: 'none',
+              }}
+            >
+              <Box
+                className="slider-image-box"
+                style={{ borderRadius }}
+              >
+                <img
+                  src={localImages[currentIndex]}
+                  alt={`${productName} - Image ${currentIndex + 1}`}
+                  className="slider-image-contain"
+                />
+                
+                {/* Image Index Badge */}
+                <Badge
+                  badgeContent={`${currentIndex + 1}/${localImages.length}`}
+                  color="primary"
+                  className="slider-image-badge"
+                />
+
+                {/* Delete Button on Main Image - Bottom Right */}
+                {isEditable && (
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveImage(currentIndex);
+                    }}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation();
+                      handleRemoveImage(currentIndex);
+                    }}
+                    className="slider-delete-button slider-delete-bottom-right"
+                    sx={{ pointerEvents: 'auto' }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            </motion.div>
           ) : (
-            <div className="no-image-placeholder">
-              <Typography color="textSecondary">No images available</Typography>
+            <Box
+              className="slider-no-image"
+              style={{
+                width: imageWidth,
+                height: imageHeight,
+                borderRadius,
+              }}
+            >
+              <Typography color="text.secondary">No images available</Typography>
               {isEditable && (
                 <Button 
                   variant="contained" 
                   onClick={handleAddImage}
                   startIcon={<AddPhotoAlternateIcon />}
+                  className="slider-add-button"
                 >
                   Add Images
                 </Button>
               )}
-            </div>
+            </Box>
           )}
         </AnimatePresence>
 
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows - Always visible when > 1 image */}
         {localImages.length > 1 && (
           <>
-            <Tooltip title="Previous">
-              <IconButton
-                className="nav-button left"
-                onClick={handlePrevClick}
-              >
-                <ChevronLeftIcon />
-              </IconButton>
-            </Tooltip>
+            <IconButton
+              onClick={handlePrevClick}
+              onTouchEnd={handlePrevClick}
+              size={isMobile ? "small" : "medium"}
+              sx={{
+                position: 'absolute',
+                left: { xs: 5, sm: 10 },
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: { xs: 48, sm: 48 },
+                height: { xs: 48, sm: 48 },
+                bgcolor: 'rgba(0,0,0,0.5)', 
+                color: 'white',
+                zIndex: 2000,
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                '&:active': { 
+                  transform: 'translateY(-50%) scale(0.95)',
+                  bgcolor: 'rgba(0,0,0,0.9)'
+                },
+                pointerEvents: 'auto',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                transition: 'background-color 0.2s, transform 0.1s',
+                '&:focus': {
+                  outline: 'none'
+                },
+                // Add a subtle border to make it more visible
+                border: '1px solid rgba(255,255,255,0.2)',
+              }}
+            >
+              <ChevronLeftIcon fontSize={isMobile ? "large" : "medium"} />
+            </IconButton>
 
-            <Tooltip title="Next">
-              <IconButton
-                className="nav-button right"
-                onClick={handleNextClick}
-              >
-                <ChevronRightIcon />
-              </IconButton>
-            </Tooltip>
+            <IconButton
+              onClick={handleNextClick}
+              onTouchEnd={handleNextClick}
+              size={isMobile ? "small" : "medium"}
+              sx={{
+                position: 'absolute',
+                right: { xs: 5, sm: 10 },
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: { xs: 48, sm: 48 },
+                height: { xs: 48, sm: 48 },
+                bgcolor: 'rgba(0,0,0,0.5)',
+                color: 'white',
+                zIndex: 2000,
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                '&:active': { 
+                  transform: 'translateY(-50%) scale(0.95)',
+                  bgcolor: 'rgba(0,0,0,0.9)'
+                },
+                pointerEvents: 'auto',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                transition: 'background-color 0.2s, transform 0.1s',
+                '&:focus': {
+                  outline: 'none'
+                },
+                border: '1px solid rgba(255,255,255,0.2)',
+              }}
+            >
+              <ChevronRightIcon fontSize={isMobile ? "large" : "medium"} />
+            </IconButton>
           </>
         )}
 
-        {/* Image Counter */}
-        {localImages.length > 0 && (
-          <Badge
-            badgeContent={`${currentIndex + 1}/${localImages.length}`}
-            color="primary"
-            className="image-counter"
-          />
-        )}
+        {/* Side Cards for 3D Effect - Only when more than 2 images */}
+        {localImages.length > 2 && (
+          <>
+            <motion.div
+              className="slider-side-card left"
+              style={{
+                width: isMobile ? 80 : 120,
+                height: imageHeight * 0.6,
+                borderRadius,
+                transform: `translateZ(-${zDepth}px) rotateY(20deg)`,
+              }}
+              whileHover={{ opacity: 0.8, scale: 1.05 }}
+              onClick={() => {
+                setDirection(-1);
+                setCurrentIndex((prev) => (prev - 1 + localImages.length) % localImages.length);
+              }}
+            >
+              <img
+                src={localImages[(currentIndex - 1 + localImages.length) % localImages.length]}
+                alt="Previous"
+                className="slider-side-image"
+              />
+            </motion.div>
 
-        {/* Admin Buttons */}
-        {isEditable && localImages.length > 0 && (
-          <div className="admin-buttons">
-            <Tooltip title="Delete current image">
-              <IconButton
-                className="admin-button delete"
-                onClick={handleRemoveCurrentImage}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Add images">
-              <IconButton
-                className="admin-button add"
-                onClick={handleAddImage}
-              >
-                <AddPhotoAlternateIcon />
-              </IconButton>
-            </Tooltip>
-          </div>
+            <motion.div
+              className="slider-side-card right"
+              style={{
+                width: isMobile ? 80 : 120,
+                height: imageHeight * 0.6,
+                borderRadius,
+                transform: `translateZ(-${zDepth}px) rotateY(-20deg)`,
+              }}
+              whileHover={{ opacity: 0.8, scale: 1.05 }}
+              onClick={() => {
+                setDirection(1);
+                setCurrentIndex((prev) => (prev + 1) % localImages.length);
+              }}
+            >
+              <img
+                src={localImages[(currentIndex + 1) % localImages.length]}
+                alt="Next"
+                className="slider-side-image"
+              />
+            </motion.div>
+          </>
         )}
-      </div>
+      </Box>
 
       {/* Thumbnail Strip */}
-      {localImages.length > 0 && (
-        <div className="thumbnail-strip">
+      {localImages.length > 1 && (!isMobile || localImages.length <= 5) && (
+        <Box className="slider-thumbnails">
           {localImages.map((img, idx) => (
-            <div
+            <motion.div
               key={idx}
-              className={`thumbnail-item ${idx === currentIndex ? 'active' : ''}`}
-              onClick={() => setCurrentIndex(idx)}
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <img src={img} alt={`thumb-${idx}`} />
-              
-              {isEditable && (
-                <div
-                  className="reorder-handle"
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData('text/plain', idx.toString());
-                    const dragImg = new Image();
-                    dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-                    e.dataTransfer.setDragImage(dragImg, 0, 0);
-                  }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                    if (!isNaN(fromIndex) && fromIndex !== idx) {
-                      handleReorderImages(fromIndex, idx);
-                    }
-                  }}
-                >
-                  <ReorderIcon style={{ fontSize: 14 }} />
-                </div>
-              )}
-            </div>
+              <Box
+                onClick={() => {
+                  setDirection(idx > currentIndex ? 1 : -1);
+                  setCurrentIndex(idx);
+                }}
+                className={`slider-thumbnail ${currentIndex === idx ? 'active' : 'inactive'}`}
+              >
+                <img src={img} alt={`Thumbnail ${idx + 1}`} />
+                
+                {isEditable && (
+                  <Tooltip title="Drag to reorder">
+                    <IconButton
+                      size="small"
+                      draggable={true}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        e.dataTransfer.setData('text/plain', idx.toString());
+                        const img = new Image();
+                        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+                        e.dataTransfer.setDragImage(img, 0, 0);
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                        if (!isNaN(fromIndex) && fromIndex !== idx) {
+                          handleReorderImages(fromIndex, idx);
+                        }
+                      }}
+                      className="slider-reorder-handle"
+                    >
+                      <ReorderIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+            </motion.div>
           ))}
 
           {/* Placeholders */}
-          {isEditable && placeholderCount > 0 && Array(placeholderCount).fill(0).map((_, idx) => (
-            <div
-              key={`placeholder-${idx}`}
-              className="placeholder-thumb"
-              onClick={handleAddImage}
-            >
+          {showPlaceholders && placeholderCount > 0 && Array(placeholderCount).fill(0).map((_, idx) => (
+            <Box key={`placeholder-${idx}`} className="slider-placeholder">
               <AddPhotoAlternateIcon />
-            </div>
+            </Box>
           ))}
-        </div>
+        </Box>
+      )}
+      
+      {/* Mobile indicator dots */}
+      {isMobile && localImages.length > 5 && (
+        <Box className="slider-dots">
+          {localImages.map((_, idx) => (
+            <Box
+              key={idx}
+              onClick={() => {
+                setDirection(idx > currentIndex ? 1 : -1);
+                setCurrentIndex(idx);
+              }}
+              className={`slider-dot ${idx === currentIndex ? 'active' : ''}`}
+            />
+          ))}
+        </Box>
       )}
     </Box>
   );

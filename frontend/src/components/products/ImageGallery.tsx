@@ -95,15 +95,6 @@ const formatFileSize = (bytes: number): string => {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 };
 
-const validateImageUrl = (url: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
-};
-
 const ImageGallery: React.FC<ImageGalleryProps> = ({
   images,
   productName,
@@ -139,12 +130,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = () => {
     if (localImages.length <= 1) {
       showSnackbar('Cannot delete the last image', 'warning');
       return;
     }
-    const newImages = localImages.filter((_, i) => i !== index);
+    const newImages = localImages.filter((_, i) => i !== currentIndex);
     setLocalImages(newImages);
     onImagesChange?.(newImages);
     if (currentIndex >= newImages.length) {
@@ -153,10 +144,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     showSnackbar('Image deleted successfully', 'success');
   };
 
-  const handleReorder = (fromIndex: number, toIndex: number) => {
+  const handleReorderImages = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    
     const newImages = [...localImages];
-    const [moved] = newImages.splice(fromIndex, 1);
-    newImages.splice(toIndex, 0, moved);
+    const [movedImage] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, movedImage);
     setLocalImages(newImages);
     onImagesChange?.(newImages);
     showSnackbar('Images reordered successfully', 'success');
@@ -219,7 +212,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     maxSize: 15 * 1024 * 1024,
   });
 
-  const handleAddUrls = async () => {
+  const addImageLinks = async () => {
     if (!imageUrls.trim()) return;
     
     const urls = imageUrls
@@ -236,10 +229,15 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     const validUrls: string[] = [];
 
     for (const url of urls) {
-      const isValid = await validateImageUrl(url);
-      if (isValid) {
+      try {
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = url;
+        });
         validUrls.push(url);
-      } else {
+      } catch (error) {
         showSnackbar(`Invalid image URL: ${url}`, 'warning');
       }
     }
@@ -286,11 +284,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               variant="outlined"
               startIcon={<AddPhotoAlternateIcon />}
               onClick={() => setAddDialogOpen(true)}
-              sx={{ 
-                borderColor: 'rgba(0,0,0,0.3)', 
-                color: 'text.primary',
-                '&:hover': { borderColor: 'rgba(0,0,0,0.5)' }
-              }}
             >
               Add Images
             </Button>
@@ -305,7 +298,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           isDragActive={isDragActive}
           imageUrls={imageUrls}
           setImageUrls={setImageUrls}
-          handleAddUrls={handleAddUrls}
+          addImageLinks={addImageLinks}
           handleFileSelect={handleFileSelect}
           fileInputRef={fileInputRef}
           handleFileInputChange={handleFileInputChange}
@@ -365,15 +358,14 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           {/* Image Counter */}
           <Badge
             badgeContent={`${currentIndex + 1}/${localImages.length}`}
-            color="primary"
             className="image-counter"
           />
 
-          {/* Admin Delete Button */}
+          {/* Admin Buttons - Delete Button */}
           {isEditable && (
             <Tooltip title="Delete current image">
               <IconButton
-                onClick={() => handleDelete(currentIndex)}
+                onClick={handleDelete}
                 className="delete-button"
               >
                 <DeleteIcon />
@@ -385,45 +377,48 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         {/* Thumbnail Strip */}
         <Box className="thumbnail-strip">
           {localImages.map((img, idx) => (
-            <Box
+            <div
               key={idx}
               className={`thumbnail-item ${idx === currentIndex ? 'active' : ''}`}
               onClick={() => setCurrentIndex(idx)}
             >
               <img src={img} alt={`Thumbnail ${idx + 1}`} />
-
-              {/* Admin Reorder Handle */}
+              
+              {/* Reorder Handle */}
               {isEditable && (
                 <div
                   className="reorder-handle"
                   draggable
                   onDragStart={(e) => {
                     e.dataTransfer.setData('text/plain', idx.toString());
+                    const dragImg = new Image();
+                    dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+                    e.dataTransfer.setDragImage(dragImg, 0, 0);
                   }}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
-                    const from = parseInt(e.dataTransfer.getData('text/plain'));
-                    if (!isNaN(from) && from !== idx) {
-                      handleReorder(from, idx);
+                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    if (!isNaN(fromIndex) && fromIndex !== idx) {
+                      handleReorderImages(fromIndex, idx);
                     }
                   }}
                 >
                   <ReorderIcon />
                 </div>
               )}
-            </Box>
+            </div>
           ))}
 
-          {/* Admin Add Button */}
+          {/* Add Button */}
           {isEditable && (
             <Tooltip title="Add images">
-              <Box
+              <div
                 className="thumbnail-item add-button"
                 onClick={() => setAddDialogOpen(true)}
               >
                 <AddPhotoAlternateIcon />
-              </Box>
+              </div>
             </Tooltip>
           )}
         </Box>
@@ -448,7 +443,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         isDragActive={isDragActive}
         imageUrls={imageUrls}
         setImageUrls={setImageUrls}
-        handleAddUrls={handleAddUrls}
+        addImageLinks={addImageLinks}
         handleFileSelect={handleFileSelect}
         fileInputRef={fileInputRef}
         handleFileInputChange={handleFileInputChange}
@@ -478,7 +473,7 @@ const AddImageDialog: React.FC<{
   isDragActive: boolean;
   imageUrls: string;
   setImageUrls: (val: string) => void;
-  handleAddUrls: () => void;
+  addImageLinks: () => void;
   handleFileSelect: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -491,7 +486,7 @@ const AddImageDialog: React.FC<{
   isDragActive,
   imageUrls,
   setImageUrls,
-  handleAddUrls,
+  addImageLinks,
   handleFileSelect,
   fileInputRef,
   handleFileInputChange,
@@ -501,6 +496,7 @@ const AddImageDialog: React.FC<{
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Add Images</DialogTitle>
       <DialogContent>
+        {/* Drag & Drop Area */}
         <div
           {...getRootProps()}
           className={`dropzone-area ${isDragActive ? 'drag-active' : ''}`}
@@ -513,7 +509,12 @@ const AddImageDialog: React.FC<{
           <Typography variant="caption" color="text.secondary">
             (JPG, PNG, WebP, GIF up to 15MB each)
           </Typography>
-          <Button variant="outlined" size="small" onClick={handleFileSelect} className="browse-button">
+          <Button 
+            variant="outlined" 
+            size="small" 
+            onClick={handleFileSelect} 
+            className="browse-button"
+          >
             Browse Files
           </Button>
           <input
@@ -528,6 +529,7 @@ const AddImageDialog: React.FC<{
           />
         </div>
 
+        {/* URL Input */}
         <Typography variant="subtitle2" gutterBottom className="url-input-label">
           Or Add Image URLs
         </Typography>
@@ -547,7 +549,7 @@ const AddImageDialog: React.FC<{
       <DialogActions>
         <Button onClick={onClose} disabled={isAddingUrls}>Cancel</Button>
         <Button 
-          onClick={handleAddUrls} 
+          onClick={addImageLinks} 
           variant="contained" 
           startIcon={isAddingUrls ? <CircularProgress size={20} /> : <LinkIcon />}
           disabled={isAddingUrls || !imageUrls.trim()}
