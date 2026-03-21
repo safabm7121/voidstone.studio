@@ -1194,9 +1194,28 @@ footer,
 .MuiCard-root,
 .MuiCard-root *,
 [class*="product-card"],
-[class*="carousel-item"] {
+[class*="carousel-item"],
+/* ADD THESE LINES FOR YOUR GALLERY */
+.gallery-container,
+.main-image-wrapper,
+.thumbnail-strip,
+.thumbnail-item,
+.add-button-container,
+.thumbnail-menu-button,
+.reorder-handle,
+.delete-button,
+.nav-arrow {
   pointer-events: auto !important;
   cursor: pointer !important;
+}
+
+/* Also add these to ensure ALL gallery elements are clickable */
+.gallery-container *,
+.main-image-wrapper *,
+.thumbnail-strip *,
+.thumbnail-item *,
+.add-button-container * {
+  pointer-events: auto !important;
 }
 
 /* Ensure interactive elements inside cards remain clickable */
@@ -1206,7 +1225,13 @@ footer,
 .carousel-item button,
 .carousel-item a,
 .carousel-nav-btn,
-.carousel-control-btn {
+.carousel-control-btn,
+/* ADD THESE */
+.gallery-container button,
+.gallery-container a,
+.gallery-container .MuiButtonBase-root,
+.thumbnail-item button,
+.thumbnail-item .MuiIconButton-root {
   pointer-events: auto !important;
   z-index: 10000 !important;
 }
