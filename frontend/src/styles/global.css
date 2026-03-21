@@ -1204,6 +1204,16 @@ footer,
 .thumbnail-menu-button,
 .reorder-handle,
 .delete-button,
+/* ADD THESE FOR YOUR GALLERY THUMBNAILS */
+.thumbnail-strip,
+.thumbnail-item,
+.thumbnail-item *,
+.gallery-container .thumbnail-strip,
+.gallery-container .thumbnail-item {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 .nav-arrow {
   pointer-events: auto !important;
   cursor: pointer !important;
@@ -1281,4 +1291,14 @@ textarea,
 .MuiToolbar-root button {
   pointer-events: auto !important;
   z-index: 10000 !important;
+}
+.thumbnail-strip {
+  pointer-events: auto !important;
+  cursor: default !important;
+}
+
+/* Make sure thumbnails are clickable */
+.thumbnail-item {
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
