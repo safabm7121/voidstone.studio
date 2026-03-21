@@ -14,6 +14,10 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -22,6 +26,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReorderIcon from '@mui/icons-material/Reorder';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LinkIcon from '@mui/icons-material/Link';
+import EditIcon from '@mui/icons-material/Edit';
+
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useDropzone } from 'react-dropzone';
 import './ImageGallery.css';
 
@@ -29,6 +36,7 @@ interface ImageGalleryProps {
   images: string[];
   productName: string;
   onImagesChange?: (images: string[]) => void;
+  onImageEdit?: (image: string, index: number, newImage: string) => void;
   isEditable?: boolean;
 }
 
@@ -99,15 +107,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   images,
   productName,
   onImagesChange,
+  onImageEdit,
   isEditable = false
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [localImages, setLocalImages] = useState(images);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [imageUrls, setImageUrls] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [addingUrls, setAddingUrls] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedThumbIndex, setSelectedThumbIndex] = useState<number | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({
     open: false,
     message: '',
@@ -160,6 +174,54 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
       setCurrentIndex(currentIndex - 1);
     } else if (currentIndex < fromIndex && currentIndex >= toIndex) {
       setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  // Handle menu open for thumbnail options
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, index: number) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedThumbIndex(index);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedThumbIndex(null);
+  };
+
+  // Handle edit image
+  const handleEditImage = () => {
+    if (selectedThumbIndex !== null) {
+      setEditImageUrl(localImages[selectedThumbIndex]);
+      setEditingIndex(selectedThumbIndex);
+      setEditDialogOpen(true);
+    }
+    handleMenuClose();
+  };
+
+  const handleSaveImageEdit = async () => {
+    if (editingIndex !== null && editImageUrl.trim()) {
+      // Validate URL
+      try {
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = editImageUrl;
+        });
+        
+        const newImages = [...localImages];
+        newImages[editingIndex] = editImageUrl;
+        setLocalImages(newImages);
+        onImagesChange?.(newImages);
+        onImageEdit?.(localImages[editingIndex], editingIndex, editImageUrl);
+        showSnackbar('Image updated successfully', 'success');
+        setEditDialogOpen(false);
+        setEditImageUrl('');
+        setEditingIndex(null);
+      } catch (error) {
+        showSnackbar('Invalid image URL', 'error');
+      }
     }
   };
 
@@ -384,28 +446,42 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             >
               <img src={img} alt={`Thumbnail ${idx + 1}`} />
               
-              {/* Reorder Handle */}
+              {/* Admin Controls */}
               {isEditable && (
-                <div
-                  className="reorder-handle"
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData('text/plain', idx.toString());
-                    const dragImg = new Image();
-                    dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-                    e.dataTransfer.setDragImage(dragImg, 0, 0);
-                  }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                    if (!isNaN(fromIndex) && fromIndex !== idx) {
-                      handleReorderImages(fromIndex, idx);
-                    }
-                  }}
-                >
-                  <ReorderIcon />
-                </div>
+                <>
+                  {/* Reorder Handle */}
+                  <div
+                    className="reorder-handle"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', idx.toString());
+                      const dragImg = new Image();
+                      dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+                      e.dataTransfer.setDragImage(dragImg, 0, 0);
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                      if (!isNaN(fromIndex) && fromIndex !== idx) {
+                        handleReorderImages(fromIndex, idx);
+                      }
+                    }}
+                  >
+                    <ReorderIcon />
+                  </div>
+
+                  {/* Edit Menu Button */}
+                  <Tooltip title="Edit image">
+                    <IconButton
+                      className="thumbnail-menu-button"
+                      size="small"
+                      onClick={(e) => handleMenuOpen(e, idx)}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  </Tooltip>
+                </>
               )}
             </div>
           ))}
@@ -433,6 +509,64 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           </div>
         )}
       </Box>
+
+      {/* Edit Menu Dropdown */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        className="thumbnail-menu"
+      >
+        <MenuItem onClick={handleEditImage}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit Image URL</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => {
+          if (selectedThumbIndex !== null) {
+            const newImages = localImages.filter((_, i) => i !== selectedThumbIndex);
+            setLocalImages(newImages);
+            onImagesChange?.(newImages);
+            if (currentIndex === selectedThumbIndex) {
+              setCurrentIndex(Math.max(0, newImages.length - 1));
+            } else if (currentIndex > selectedThumbIndex) {
+              setCurrentIndex(currentIndex - 1);
+            }
+            showSnackbar('Image deleted successfully', 'success');
+          }
+          handleMenuClose();
+        }}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete Image</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Edit Image Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Image</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Enter a new image URL to replace the current image
+          </Typography>
+          <TextField
+            fullWidth
+            label="Image URL"
+            value={editImageUrl}
+            onChange={(e) => setEditImageUrl(e.target.value)}
+            margin="normal"
+            placeholder="https://example.com/new-image.jpg"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveImageEdit} variant="contained">
+            Update Image
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add Image Dialog */}
       <AddImageDialog

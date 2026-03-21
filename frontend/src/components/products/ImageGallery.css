@@ -406,3 +406,41 @@
 .reorder-handle svg {
   font-size: 14px;
 }
+/* Thumbnail Menu Button */
+.thumbnail-menu-button {
+  position: absolute !important;
+  bottom: 2px;
+  right: 2px;
+  width: 22px !important;
+  height: 22px !important;
+  background: rgba(128, 128, 128, 0.7) !important;
+  color: white !important;
+  z-index: 5;
+}
+
+.thumbnail-menu-button:hover {
+  background: rgba(100, 100, 100, 0.9) !important;
+  transform: scale(1.1);
+}
+
+.thumbnail-menu-button svg {
+  font-size: 14px;
+}
+
+/* Thumbnail Menu */
+.thumbnail-menu .MuiPaper-root {
+  border-radius: 8px;
+  min-width: 180px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .thumbnail-menu-button {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  .thumbnail-menu-button svg {
+    font-size: 12px;
+  }
+}
