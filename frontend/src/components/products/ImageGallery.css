@@ -922,3 +922,19 @@
     height: 50px;
   }
 }
+/* Force thumbnails to be clickable */
+.thumbnail-strip,
+.thumbnail-strip *,
+.thumbnail-item,
+.thumbnail-item * {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.thumbnail-item {
+  cursor: pointer !important;
+}
+
+.thumbnail-item img {
+  pointer-events: none !important;
+}
