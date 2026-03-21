@@ -79,51 +79,6 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Pagination Dots - Pure Black & White */
-.pagination-dots {
-  position: absolute;
-  bottom: 12px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  z-index: 10;
-}
-
-.dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.2s ease;
-}
-
-.dot.active {
-  background: white;
-  transform: scale(1.2);
-}
-
-.dot:hover {
-  background: white;
-  transform: scale(1.1);
-}
-
-[data-theme='dark'] .dot {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-[data-theme='dark'] .dot.active {
-  background: white;
-}
-
-[data-theme='dark'] .dot:hover {
-  background: white;
-}
-
 /* Admin Buttons - Pure Black & White */
 .admin-buttons {
   display: flex;
@@ -450,11 +405,6 @@
   .reorder-handle svg {
     font-size: 12px;
   }
-
-  .dot {
-    width: 3px;
-    height: 3px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -491,7 +441,6 @@
 
 /* Accessibility Focus Styles - Pure Black & White */
 .nav-arrow:focus-visible,
-.dot:focus-visible,
 .thumbnail-item:focus-visible,
 .admin-delete:focus-visible,
 .admin-add:focus-visible,
@@ -501,7 +450,6 @@
 }
 
 [data-theme="dark"] .nav-arrow:focus-visible,
-[data-theme="dark"] .dot:focus-visible,
 [data-theme="dark"] .thumbnail-item:focus-visible,
 [data-theme="dark"] .admin-delete:focus-visible,
 [data-theme="dark"] .admin-add:focus-visible,

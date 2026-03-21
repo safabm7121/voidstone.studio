@@ -144,8 +144,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const [isSwiping, setIsSwiping] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dragStartIndex = useRef<number | null>(null);
-
+  
   // Preload adjacent images for smoother navigation
   useEffect(() => {
     if (localImages.length > 1) {
@@ -163,10 +162,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   }, [currentIndex, localImages]);
 
   const handleNext = () => {
+    if (localImages.length <= 1) return;
     setCurrentIndex((prev) => (prev + 1) % localImages.length);
   };
 
   const handlePrev = () => {
+    if (localImages.length <= 1) return;
     setCurrentIndex((prev) => (prev - 1 + localImages.length) % localImages.length);
   };
 
@@ -185,7 +186,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     
     const diff = touchEndX.current - touchStartX.current;
     if (mainImageRef.current && Math.abs(diff) > 0) {
-      // Add visual feedback while swiping
       const translateX = diff * 0.5;
       mainImageRef.current.style.transform = `translateX(${translateX}px)`;
     }
@@ -205,7 +205,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
       }
     }
     
-    // Reset
     setIsSwiping(false);
     touchStartX.current = 0;
     touchEndX.current = 0;
@@ -241,85 +240,24 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setDeleteConfirmOpen(false);
   };
 
-  // Desktop drag and drop reordering
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    dragStartIndex.current = index;
-    e.dataTransfer.setData('text/plain', index.toString());
-    const dragImg = new Image();
-    dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-    e.dataTransfer.setDragImage(dragImg, 0, 0);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    const fromIndex = dragStartIndex.current;
-    if (fromIndex !== null && fromIndex !== targetIndex) {
-      const newImages = [...localImages];
-      const [moved] = newImages.splice(fromIndex, 1);
-      newImages.splice(targetIndex, 0, moved);
-      setLocalImages(newImages);
-      onImagesChange?.(newImages);
-      showSnackbar('Images reordered', 'success');
-      
-      // Update current index if needed
-      if (currentIndex === fromIndex) {
-        setCurrentIndex(targetIndex);
-      } else if (currentIndex > fromIndex && currentIndex <= targetIndex) {
-        setCurrentIndex(currentIndex - 1);
-      } else if (currentIndex < fromIndex && currentIndex >= targetIndex) {
-        setCurrentIndex(currentIndex + 1);
-      }
-    }
-    dragStartIndex.current = null;
-  };
-
-  // Improved touch reordering for mobile
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  
-  const handleReorderTouchStart = (index: number) => {
-    setDraggedIndex(index);
-    const element = document.querySelector(`.thumbnail-item[data-index="${index}"]`) as HTMLElement;
-    if (element) {
-      element.style.opacity = '0.5';
-    }
-  };
-
-  const handleReorderTouchMove = (e: React.TouchEvent, _index: number) => {
-    if (draggedIndex === null) return;
-    e.preventDefault();
+  // Reordering function
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
     
-    const touch = e.touches[0];
-    const targetElement = document.elementsFromPoint(touch.clientX, touch.clientY);
-    const thumbnailElement = targetElement.find(el => el.closest?.('.thumbnail-item')) as HTMLElement;
+    const newImages = [...localImages];
+    const [moved] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, moved);
+    setLocalImages(newImages);
+    onImagesChange?.(newImages);
+    showSnackbar('Images reordered', 'success');
     
-    if (thumbnailElement) {
-      const targetIndex = parseInt(thumbnailElement.getAttribute('data-index') || '-1');
-      if (targetIndex !== -1 && targetIndex !== draggedIndex) {
-        const newImages = [...localImages];
-        const [moved] = newImages.splice(draggedIndex, 1);
-        newImages.splice(targetIndex, 0, moved);
-        setLocalImages(newImages);
-        onImagesChange?.(newImages);
-        setDraggedIndex(targetIndex);
-        
-        if (currentIndex === draggedIndex) {
-          setCurrentIndex(targetIndex);
-        }
-      }
-    }
-  };
-
-  const handleReorderTouchEnd = () => {
-    if (draggedIndex !== null) {
-      document.querySelectorAll('.thumbnail-item').forEach(el => {
-        (el as HTMLElement).style.opacity = '';
-      });
-      setDraggedIndex(null);
-      showSnackbar('Images reordered', 'success');
+    // Update current index if needed
+    if (currentIndex === fromIndex) {
+      setCurrentIndex(toIndex);
+    } else if (currentIndex > fromIndex && currentIndex <= toIndex) {
+      setCurrentIndex(currentIndex - 1);
+    } else if (currentIndex < fromIndex && currentIndex >= toIndex) {
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
@@ -387,14 +325,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
 
     setAddingUrls(true);
-    let validCount = 0;
     const validUrls: string[] = [];
 
     for (const url of urls) {
       const isValid = await validateImageUrl(url);
       if (isValid) {
         validUrls.push(url);
-        validCount++;
       } else {
         showSnackbar(`Invalid image URL: ${url}`, 'warning');
       }
@@ -509,7 +445,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             }}
           />
 
-          {/* Navigation Arrows - visible on ALL devices */}
+          {/* Navigation Arrows - VISIBLE on ALL devices */}
           {localImages.length > 1 && (
             <>
               <button onClick={handlePrev} className="nav-arrow left" aria-label="Previous image">
@@ -519,20 +455,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                 <ChevronRightIcon />
               </button>
             </>
-          )}
-
-          {/* Pagination Dots - ONLY inside the image */}
-          {localImages.length > 1 && (
-            <div className="pagination-dots">
-              {localImages.map((_, idx) => (
-                <button
-                  key={idx}
-                  className={`dot ${idx === currentIndex ? 'active' : ''}`}
-                  onClick={() => setCurrentIndex(idx)}
-                  aria-label={`Go to image ${idx + 1}`}
-                />
-              ))}
-            </div>
           )}
         </div>
 
@@ -561,17 +483,24 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               className={`thumbnail-item ${idx === currentIndex ? 'active' : ''}`}
               onClick={() => setCurrentIndex(idx)}
               draggable={isEditable}
-              onDragStart={(e) => isEditable && handleDragStart(e, idx)}
-              onDragOver={handleDragOver}
-              onDrop={(e) => isEditable && handleDrop(e, idx)}
-              onTouchStart={(e) => {
+              onDragStart={(e) => {
                 if (isEditable) {
-                  e.preventDefault();
-                  handleReorderTouchStart(idx);
+                  e.dataTransfer.setData('text/plain', idx.toString());
+                  const dragImg = new Image();
+                  dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+                  e.dataTransfer.setDragImage(dragImg, 0, 0);
                 }
               }}
-              onTouchMove={(e) => isEditable && handleReorderTouchMove(e, idx)}
-              onTouchEnd={handleReorderTouchEnd}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                if (isEditable) {
+                  e.preventDefault();
+                  const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                  if (!isNaN(fromIndex) && fromIndex !== idx) {
+                    handleReorder(fromIndex, idx);
+                  }
+                }
+              }}
             >
               <img src={img} alt={`Thumbnail ${idx + 1}`} loading="lazy" />
               {isEditable && (
@@ -600,7 +529,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={confirmDelete} color="error" variant="contained">
+          <Button onClick={confirmDelete} variant="contained" sx={{ bgcolor: 'black', '&:hover': { bgcolor: '#333' } }}>
             Delete
           </Button>
         </DialogActions>
