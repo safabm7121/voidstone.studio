@@ -127,7 +127,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Navigation
   const handleNext = () => {
     if (isTransitioning || localImages.length <= 1) return;
     setIsTransitioning(true);
@@ -142,7 +141,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setTimeout(() => setIsTransitioning(false), 300);
   };
 
-  // Delete current image (main)
   const handleDelete = () => {
     if (localImages.length <= 1) {
       showSnackbar('Cannot delete the last image', 'warning');
@@ -157,12 +155,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     showSnackbar('Image deleted successfully', 'success');
   };
 
-  // Reorder
-  const handleReorderImages = (fromIndex: number, toIndex: number) => {
+  // Reorder function
+  const handleReorder = (fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
+    
     const newImages = [...localImages];
-    const [movedImage] = newImages.splice(fromIndex, 1);
-    newImages.splice(toIndex, 0, movedImage);
+    const [moved] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, moved);
     setLocalImages(newImages);
     onImagesChange?.(newImages);
     showSnackbar('Images reordered successfully', 'success');
@@ -177,7 +176,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   };
 
-  // Thumbnail menu
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, index: number) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -189,7 +187,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setSelectedThumbIndex(null);
   };
 
-  // Edit image (from menu)
   const handleEditImage = () => {
     if (selectedThumbIndex !== null) {
       setEditImageUrl(localImages[selectedThumbIndex]);
@@ -223,7 +220,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   };
 
-  // Delete image from menu
   const handleDeleteFromMenu = () => {
     if (selectedThumbIndex !== null) {
       const newImages = localImages.filter((_, i) => i !== selectedThumbIndex);
@@ -239,7 +235,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     handleMenuClose();
   };
 
-  // File upload handlers
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -358,9 +353,10 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           <Typography color="textSecondary">No images</Typography>
           {isEditable && (
             <Button
-              variant="outlined"
+              variant="contained"
               startIcon={<AddPhotoAlternateIcon />}
               onClick={() => setAddDialogOpen(true)}
+              className="add-images-button"
             >
               Add Images
             </Button>
@@ -452,6 +448,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           )}
         </Box>
 
+        {/* SEPARATE ADD BUTTON - Outside thumbnail strip */}
+        {isEditable && (
+          <Box className="add-button-container">
+            <Button
+              variant="contained"
+              startIcon={<AddPhotoAlternateIcon />}
+              onClick={() => setAddDialogOpen(true)}
+              className="add-images-button"
+              fullWidth
+            >
+              Add New Images
+            </Button>
+          </Box>
+        )}
+
         {/* Thumbnail Strip */}
         <Box className="thumbnail-strip">
           {localImages.map((img, idx) => (
@@ -462,58 +473,44 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             >
               <img src={img} alt={`Thumbnail ${idx + 1}`} />
               
-              {/* Admin Controls on thumbnails */}
+              {/* Reorder Handle */}
               {isEditable && (
-                <>
-                  {/* Reorder Handle */}
-                  <div
-                    className="reorder-handle"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('text/plain', idx.toString());
-                      const dragImg = new Image();
-                      dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
-                      e.dataTransfer.setDragImage(dragImg, 0, 0);
-                    }}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                      if (!isNaN(fromIndex) && fromIndex !== idx) {
-                        handleReorderImages(fromIndex, idx);
-                      }
-                    }}
-                  >
-                    <ReorderIcon />
-                  </div>
+                <div
+                  className="reorder-handle"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', idx.toString());
+                    const dragImg = new Image();
+                    dragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+                    e.dataTransfer.setDragImage(dragImg, 0, 0);
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    if (!isNaN(fromIndex) && fromIndex !== idx) {
+                      handleReorder(fromIndex, idx);
+                    }
+                  }}
+                >
+                  <ReorderIcon />
+                </div>
+              )}
 
-                  {/* Menu Button (three dots) */}
-                  <Tooltip title="Image options">
-                    <IconButton
-                      className="thumbnail-menu-button"
-                      size="small"
-                      onClick={(e) => handleMenuOpen(e, idx)}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </Tooltip>
-                </>
+              {/* Menu Button */}
+              {isEditable && (
+                <Tooltip title="Image options">
+                  <IconButton
+                    className="thumbnail-menu-button"
+                    size="small"
+                    onClick={(e) => handleMenuOpen(e, idx)}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Tooltip>
               )}
             </div>
           ))}
-
-          {/* Add Button (last thumbnail) */}
-          {isEditable && (
-            <div
-              className="thumbnail-item add-button"
-              onClick={() => setAddDialogOpen(true)}
-            >
-              <AddPhotoAlternateIcon />
-              <Typography variant="caption" className="add-button-text">
-                Add
-              </Typography>
-            </div>
-          )}
         </Box>
 
         {/* Processing Overlay */}
@@ -604,7 +601,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   );
 };
 
-// Add Image Dialog component
 const AddImageDialog: React.FC<{
   open: boolean;
   onClose: () => void;
