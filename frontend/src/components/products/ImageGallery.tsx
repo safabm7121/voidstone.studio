@@ -26,8 +26,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ReorderIcon from '@mui/icons-material/Reorder';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LinkIcon from '@mui/icons-material/Link';
-import EditIcon from '@mui/icons-material/Edit';
-
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useDropzone } from 'react-dropzone';
 import './ImageGallery.css';
@@ -36,7 +34,6 @@ interface ImageGalleryProps {
   images: string[];
   productName: string;
   onImagesChange?: (images: string[]) => void;
-  onImageEdit?: (image: string, index: number, newImage: string) => void;
   isEditable?: boolean;
 }
 
@@ -107,16 +104,12 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   images,
   productName,
   onImagesChange,
-  onImageEdit,
   isEditable = false
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [localImages, setLocalImages] = useState(images);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editImageUrl, setEditImageUrl] = useState('');
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [imageUrls, setImageUrls] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [addingUrls, setAddingUrls] = useState(false);
@@ -177,7 +170,6 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   };
 
-  // Handle menu open for thumbnail options
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, index: number) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -189,42 +181,22 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     setSelectedThumbIndex(null);
   };
 
-  // Handle edit image
-  const handleEditImage = () => {
+  const handleDeleteFromMenu = () => {
     if (selectedThumbIndex !== null) {
-      setEditImageUrl(localImages[selectedThumbIndex]);
-      setEditingIndex(selectedThumbIndex);
-      setEditDialogOpen(true);
+      const newImages = localImages.filter((_, i) => i !== selectedThumbIndex);
+      setLocalImages(newImages);
+      onImagesChange?.(newImages);
+      if (currentIndex === selectedThumbIndex) {
+        setCurrentIndex(Math.max(0, newImages.length - 1));
+      } else if (currentIndex > selectedThumbIndex) {
+        setCurrentIndex(currentIndex - 1);
+      }
+      showSnackbar('Image deleted successfully', 'success');
     }
     handleMenuClose();
   };
 
-  const handleSaveImageEdit = async () => {
-    if (editingIndex !== null && editImageUrl.trim()) {
-      // Validate URL
-      try {
-        const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = editImageUrl;
-        });
-        
-        const newImages = [...localImages];
-        newImages[editingIndex] = editImageUrl;
-        setLocalImages(newImages);
-        onImagesChange?.(newImages);
-        onImageEdit?.(localImages[editingIndex], editingIndex, editImageUrl);
-        showSnackbar('Image updated successfully', 'success');
-        setEditDialogOpen(false);
-        setEditImageUrl('');
-        setEditingIndex(null);
-      } catch (error) {
-        showSnackbar('Invalid image URL', 'error');
-      }
-    }
-  };
-
+  // File upload handlers
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
@@ -365,6 +337,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           fileInputRef={fileInputRef}
           handleFileInputChange={handleFileInputChange}
           isAddingUrls={addingUrls}
+          isProcessing={isProcessing}
         />
 
         <Snackbar
@@ -423,7 +396,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
             className="image-counter"
           />
 
-          {/* Admin Buttons - Delete Button */}
+          {/* Admin Delete Button */}
           {isEditable && (
             <Tooltip title="Delete current image">
               <IconButton
@@ -471,8 +444,8 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     <ReorderIcon />
                   </div>
 
-                  {/* Edit Menu Button */}
-                  <Tooltip title="Edit image">
+                  {/* Menu Button */}
+                  <Tooltip title="Image options">
                     <IconButton
                       className="thumbnail-menu-button"
                       size="small"
@@ -488,14 +461,15 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
           {/* Add Button */}
           {isEditable && (
-            <Tooltip title="Add images">
-              <div
-                className="thumbnail-item add-button"
-                onClick={() => setAddDialogOpen(true)}
-              >
-                <AddPhotoAlternateIcon />
-              </div>
-            </Tooltip>
+            <div
+              className="thumbnail-item add-button"
+              onClick={() => setAddDialogOpen(true)}
+            >
+              <AddPhotoAlternateIcon />
+              <Typography variant="caption" className="add-button-text">
+                Add
+              </Typography>
+            </div>
           )}
         </Box>
 
@@ -510,63 +484,20 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         )}
       </Box>
 
-      {/* Edit Menu Dropdown */}
+      {/* Menu Dropdown */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         className="thumbnail-menu"
       >
-        <MenuItem onClick={handleEditImage}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Edit Image URL</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => {
-          if (selectedThumbIndex !== null) {
-            const newImages = localImages.filter((_, i) => i !== selectedThumbIndex);
-            setLocalImages(newImages);
-            onImagesChange?.(newImages);
-            if (currentIndex === selectedThumbIndex) {
-              setCurrentIndex(Math.max(0, newImages.length - 1));
-            } else if (currentIndex > selectedThumbIndex) {
-              setCurrentIndex(currentIndex - 1);
-            }
-            showSnackbar('Image deleted successfully', 'success');
-          }
-          handleMenuClose();
-        }}>
+        <MenuItem onClick={handleDeleteFromMenu}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Delete Image</ListItemText>
         </MenuItem>
       </Menu>
-
-      {/* Edit Image Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Image</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Enter a new image URL to replace the current image
-          </Typography>
-          <TextField
-            fullWidth
-            label="Image URL"
-            value={editImageUrl}
-            onChange={(e) => setEditImageUrl(e.target.value)}
-            margin="normal"
-            placeholder="https://example.com/new-image.jpg"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleSaveImageEdit} variant="contained">
-            Update Image
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Add Image Dialog */}
       <AddImageDialog
@@ -582,6 +513,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         fileInputRef={fileInputRef}
         handleFileInputChange={handleFileInputChange}
         isAddingUrls={addingUrls}
+        isProcessing={isProcessing}
       />
 
       {/* Snackbar for notifications */}
@@ -612,6 +544,7 @@ const AddImageDialog: React.FC<{
   fileInputRef: React.RefObject<HTMLInputElement>;
   handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isAddingUrls: boolean;
+  isProcessing: boolean;
 }> = ({
   open,
   onClose,
@@ -625,6 +558,7 @@ const AddImageDialog: React.FC<{
   fileInputRef,
   handleFileInputChange,
   isAddingUrls,
+  isProcessing,
 }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -648,6 +582,7 @@ const AddImageDialog: React.FC<{
             size="small" 
             onClick={handleFileSelect} 
             className="browse-button"
+            disabled={isProcessing}
           >
             Browse Files
           </Button>
@@ -676,17 +611,24 @@ const AddImageDialog: React.FC<{
           onChange={(e) => setImageUrls(e.target.value)}
           variant="outlined"
           size="small"
-          disabled={isAddingUrls}
+          disabled={isAddingUrls || isProcessing}
           label="Image URLs"
         />
+        
+        {isProcessing && (
+          <Box className="dialog-processing">
+            <CircularProgress size={24} />
+            <Typography variant="body2">Processing images...</Typography>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isAddingUrls}>Cancel</Button>
+        <Button onClick={onClose} disabled={isAddingUrls || isProcessing}>Cancel</Button>
         <Button 
           onClick={addImageLinks} 
           variant="contained" 
           startIcon={isAddingUrls ? <CircularProgress size={20} /> : <LinkIcon />}
-          disabled={isAddingUrls || !imageUrls.trim()}
+          disabled={isAddingUrls || !imageUrls.trim() || isProcessing}
         >
           {isAddingUrls ? 'Validating URLs...' : 'Add URLs'}
         </Button>
